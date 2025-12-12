@@ -7,7 +7,7 @@ export async function getRestaurantes(): Promise<Restaurante[]> {
   const { data, error } = await supabase
     .from('restaurante')
     .select('*')
-    .order('nombre', { ascending: true });
+    .order('id', { ascending: true }); // Ordenar por ID para obtener siempre el primer restaurante creado
 
   if (error) {
     console.error('Error fetching restaurantes:', error);

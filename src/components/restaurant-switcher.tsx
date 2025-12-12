@@ -24,8 +24,15 @@ export function RestaurantSwitcher({
   defaultRestaurant?: Restaurante;
 }) {
   const [selectedRestaurant, setSelectedRestaurant] = React.useState<Restaurante | undefined>(
-    defaultRestaurant || restaurantes[0],
+    defaultRestaurant || (restaurantes.length > 0 ? restaurantes[0] : undefined),
   );
+
+  // Sincronizar si cambian los restaurantes y no hay uno seleccionado
+  React.useEffect(() => {
+    if (!selectedRestaurant && restaurantes.length > 0) {
+      setSelectedRestaurant(restaurantes[0]);
+    }
+  }, [restaurantes, selectedRestaurant]);
 
   return (
     <SidebarMenu>

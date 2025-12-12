@@ -153,12 +153,15 @@ export function AppSidebar({
 }: React.ComponentProps<typeof Sidebar> & {
   restaurantes: Restaurante[];
 }) {
+  // Seleccionar el primer restaurante de la lista como predeterminado
+  const primerRestaurante = restaurantes.length > 0 ? restaurantes[0] : undefined;
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
         <RestaurantSwitcher
           restaurantes={restaurantes}
-          defaultRestaurant={restaurantes[0]}
+          defaultRestaurant={primerRestaurante}
         />
         <SearchForm />
       </SidebarHeader>
