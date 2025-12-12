@@ -1,7 +1,10 @@
 'use client';
 
 import type { DomicilioConRestaurantes } from '@/services/restaurante.service';
+import { Search } from 'lucide-react';
 import Link from 'next/link';
+import * as React from 'react';
+import { Input } from '@/components/ui/input';
 
 type EstadoVisual = 'disponible' | 'con-pedido';
 
@@ -14,6 +17,8 @@ export function DomiciliosCard({
   domicilios: DomicilioConRestaurantes[];
   domiciliosConCarrito?: number[];
 }) {
+  const [filter, setFilter] = React.useState('');
+
   // Función para determinar el estado visual de un domicilio
   const getEstadoVisual = (domicilio: DomicilioConRestaurantes): EstadoVisual => {
     // Si tiene carrito activo con productos, mostrar "con-pedido"
@@ -24,8 +29,22 @@ export function DomiciliosCard({
     return 'disponible';
   };
 
-  const domiciliosDisponibles = domicilios.filter(d => getEstadoVisual(d) === 'disponible');
-  const domiciliosConPedido = domicilios.filter(d => getEstadoVisual(d) === 'con-pedido');
+  // Filtrar domicilios basado en el filtro de búsqueda
+  const domiciliosFiltrados = React.useMemo(() => {
+    if (!filter.trim()) {
+      return domicilios;
+    }
+    const filterLower = filter.toLowerCase();
+    return domicilios.filter(domicilio =>
+      domicilio.direccion.toLowerCase().includes(filterLower) ||
+      domicilio.ciudad?.toLowerCase().includes(filterLower) ||
+      domicilio.referencia?.toLowerCase().includes(filterLower) ||
+      domicilio.cliente_id.toString().includes(filterLower),
+    );
+  }, [domicilios, filter]);
+
+  const domiciliosDisponibles = domiciliosFiltrados.filter(d => getEstadoVisual(d) === 'disponible');
+  const domiciliosConPedido = domiciliosFiltrados.filter(d => getEstadoVisual(d) === 'con-pedido');
 
   // Obtener el restauranteId del primer restaurante asociado (o usar 1 como fallback)
   const getRestauranteId = (domicilio: DomicilioConRestaurantes): number => {
@@ -42,26 +61,36 @@ export function DomiciliosCard({
           {' '}
           (Direcciones de Clientes)
         </h2>
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-            {domiciliosDisponibles.length}
-            {' '}
-            Disponibles
-          </span>
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">
-            {domiciliosConPedido.length}
-            {' '}
-            Con pedido
-          </span>
+        <div className="relative">
+          <Search className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Filter domicilios..."
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            className="h-8 w-40 pl-8 text-sm"
+          />
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-500 border border-emerald-500/30 dark:bg-emerald-950/40">
+          {domiciliosDisponibles.length}
+          {' '}
+          Disponibles
+        </span>
+        <span className="rounded-full bg-red-500/15 px-3 py-1 text-sm font-medium text-red-500 border border-red-500/30 dark:bg-red-950/40">
+          {domiciliosConPedido.length}
+          {' '}
+          Con pedido
+        </span>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="hide-scrollbar overflow-x-auto">
-          {domicilios.length === 0
+          {domiciliosFiltrados.length === 0
             ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">
-                  No hay domicilios registrados
+                  {domicilios.length === 0 ? 'No hay domicilios registrados' : 'No se encontraron domicilios'}
                 </div>
               )
             : (
@@ -86,12 +115,12 @@ export function DomiciliosCard({
                     </tr>
                   </thead>
                   <tbody>
-                    {domicilios.map((domicilio) => {
+                    {domiciliosFiltrados.map((domicilio) => {
                       const estadoVisual = getEstadoVisual(domicilio);
 
                       const coloresBadge = {
-                        'disponible': 'bg-blue-100 text-blue-800',
-                        'con-pedido': 'bg-amber-200 text-amber-800',
+                        'disponible': 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 dark:bg-emerald-950/40',
+                        'con-pedido': 'bg-red-500/15 text-red-500 border border-red-500/30 dark:bg-red-950/40',
                       };
 
                       const textoEstado = {
@@ -128,7 +157,7 @@ export function DomiciliosCard({
                             </span>
                           </td>
                           <td className="px-3 py-2">
-                            <span className={`rounded-full px-2 py-1 text-xs font-medium ${coloresBadge[estadoVisual]}`}>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-light ${coloresBadge[estadoVisual]}`}>
                               {textoEstado[estadoVisual]}
                             </span>
                           </td>
