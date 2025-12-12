@@ -48,7 +48,7 @@ export default async function DashboardLayout(props: {
           </li>
 
           <li>
-            <LocaleSwitcher />
+            <LocaleSwitcher locale={locale} pathname="/dashboard" />
           </li>
         </>
       )}
