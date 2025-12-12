@@ -1,5 +1,7 @@
-import * as React from 'react';
+import type { Restaurante } from '@/types/database';
 
+import * as React from 'react';
+import { RestaurantSwitcher } from '@/components/restaurant-switcher';
 import { SearchForm } from '@/components/search-form';
 import {
   Sidebar,
@@ -13,11 +15,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
-import { VersionSwitcher } from '@/components/version-switcher';
 
 // This is sample data.
 const data = {
-  versions: ['1.0.1', '1.1.0-alpha', '2.0.0-beta1'],
   navMain: [
     {
       title: 'Getting Started',
@@ -147,13 +147,18 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  restaurantes,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  restaurantes: Restaurante[];
+}) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>
-        <VersionSwitcher
-          versions={data.versions}
-          defaultVersion={data.versions[0] || '1.0.0'}
+        <RestaurantSwitcher
+          restaurantes={restaurantes}
+          defaultRestaurant={restaurantes[0]}
         />
         <SearchForm />
       </SidebarHeader>

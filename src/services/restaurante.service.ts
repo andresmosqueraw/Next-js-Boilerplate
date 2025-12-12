@@ -1,5 +1,21 @@
-import type { Domicilio, Mesa } from '@/types/database';
+import type { Domicilio, Mesa, Restaurante } from '@/types/database';
 import { createClient } from '@/libs/supabase/server';
+
+export async function getRestaurantes(): Promise<Restaurante[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('restaurante')
+    .select('*')
+    .order('nombre', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching restaurantes:', error);
+    return [];
+  }
+
+  return data || [];
+}
 
 export async function getMesas(): Promise<Mesa[]> {
   const supabase = await createClient();

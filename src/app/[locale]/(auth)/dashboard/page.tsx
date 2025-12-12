@@ -15,15 +15,18 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { getDomicilios, getMesas } from '@/services/restaurante.service';
+import { getDomicilios, getMesas, getRestaurantes } from '@/services/restaurante.service';
 
 export default async function Page() {
-  const mesas = await getMesas();
-  const domicilios = await getDomicilios();
+  const [mesas, domicilios, restaurantes] = await Promise.all([
+    getMesas(),
+    getDomicilios(),
+    getRestaurantes(),
+  ]);
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar restaurantes={restaurantes} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
