@@ -27,17 +27,18 @@ import {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: { restauranteId?: string };
+  searchParams: Promise<{ restauranteId?: string }>;
 }) {
-  const [mesas, domicilios, restaurantes] = await Promise.all([
+  const [mesas, domicilios, restaurantes, resolvedSearchParams] = await Promise.all([
     getMesas(),
     getDomiciliosConRelaciones(),
     getRestaurantes(),
+    searchParams,
   ]);
 
   // Determinar qué restaurante usar: el de la URL o el primero por defecto
-  const restauranteIdFromUrl = searchParams?.restauranteId
-    ? Number.parseInt(searchParams.restauranteId, 10)
+  const restauranteIdFromUrl = resolvedSearchParams?.restauranteId
+    ? Number.parseInt(resolvedSearchParams.restauranteId, 10)
     : null;
   
   const restauranteSeleccionado = restauranteIdFromUrl

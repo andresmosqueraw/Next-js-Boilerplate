@@ -374,6 +374,38 @@ export async function getDomiciliosConCarritoActivo(restauranteId: number): Prom
     })),
   });
 
+  // DEBUG: Verificar qué tipo_pedido tienen los carritos de otros restaurantes (especialmente domicilios)
+  if (todosLosCarritos && todosLosCarritos.length > 0) {
+    const otrosRestaurantes = todosLosCarritos.filter(c => c.restaurante_id !== restauranteId);
+    if (otrosRestaurantes.length > 0) {
+      console.warn('🔍 [getDomiciliosConCarritoActivo] DEBUG - Carritos de otros restaurantes:', {
+        count: otrosRestaurantes.length,
+        carritos: otrosRestaurantes.map(c => ({
+          id: c.id,
+          tipoPedidoId: c.tipo_pedido_id,
+          restauranteId: c.restaurante_id,
+        })),
+      });
+
+      // Verificar qué tipo_pedido tienen estos carritos
+      for (const carrito of otrosRestaurantes) {
+        const { data: tipoPedidoDetalle, error: errorDetalle } = await supabase
+          .from('tipo_pedido')
+          .select('id, mesa_id, domicilio_id')
+          .eq('id', carrito.tipo_pedido_id)
+          .single();
+        
+        console.warn(`🔍 [getDomiciliosConCarritoActivo] DEBUG - tipo_pedido para carrito ${carrito.id} (restaurante ${carrito.restaurante_id}):`, {
+          tipoPedidoId: carrito.tipo_pedido_id,
+          tipoPedido: tipoPedidoDetalle,
+          error: errorDetalle,
+          esDomicilio: tipoPedidoDetalle?.domicilio_id !== null,
+          esMesa: tipoPedidoDetalle?.mesa_id !== null,
+        });
+      }
+    }
+  }
+
   if (carritosError || !carritos || carritos.length === 0) {
     console.warn('⚠️ [getDomiciliosConCarritoActivo] No hay carritos activos o hubo error:', carritosError);
     return [];
