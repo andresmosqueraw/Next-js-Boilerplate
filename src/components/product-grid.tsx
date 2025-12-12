@@ -1,21 +1,30 @@
 'use client';
 
+import type { Product } from '../app/[locale]/(auth)/pos/context/cart-context';
 import { PlusCircle } from 'lucide-react';
 import Image from 'next/image';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { useCart } from '../app/[locale]/(auth)/pos/context/cart-context';
-import { products } from '../app/[locale]/(auth)/pos/data/products';
+import { products as productosEstaticos } from '../app/[locale]/(auth)/pos/data/products';
 
 type ProductGridProps = {
   category: string;
   searchQuery: string;
+  productos?: Product[];
 };
 
-export default function ProductGrid({ category, searchQuery }: ProductGridProps) {
+export default function ProductGrid({
+  category,
+  searchQuery,
+  productos,
+}: ProductGridProps) {
   const { addToCart } = useCart();
 
-  const filteredProducts = products.filter((product) => {
+  // Usar productos dinámicos si están disponibles, o los estáticos como fallback
+  const todosLosProductos = productos || productosEstaticos;
+
+  const filteredProducts = todosLosProductos.filter((product) => {
     const matchesCategory = category === 'all' || product.category === category;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
