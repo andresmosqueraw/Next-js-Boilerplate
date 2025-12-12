@@ -38,6 +38,11 @@ export default async function proxy(
   request: NextRequest,
   event: NextFetchEvent,
 ) {
+  // Skip proxy processing for API routes
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
   // Verify the request with Arcjet
   // Use `process.env` instead of Env to reduce bundle size in middleware
   if (process.env.ARCJET_KEY) {
@@ -72,7 +77,8 @@ export default async function proxy(
 
 export const config = {
   // Match all pathnames except for
+  // - … if they start with `/api` (API routes)
   // - … if they start with `/_next`, `/_vercel` or `monitoring`
   // - … the ones containing a dot (e.g. `favicon.ico`)
-  matcher: '/((?!_next|_vercel|monitoring|.*\\..*).*)',
+  matcher: '/((?!api|_next|_vercel|monitoring|.*\\..*).*)',
 };
