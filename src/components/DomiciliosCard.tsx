@@ -80,7 +80,7 @@ export function DomiciliosCard({
                   return (
                     <Link
                       key={domicilio.id}
-                      href={`/pos?tipo=domicilio&id=${domicilio.id}&clienteId=${domicilio.cliente_id}`}
+                      href={`/pos?tipo=domicilio&id=${domicilio.id}&clienteId=${domicilio.cliente_id}&restauranteId=1`}
                       className={`block cursor-pointer rounded-lg border p-4 transition-all hover:shadow-lg ${coloresCard[estadoVisual]}`}
                     >
                       <div className="flex items-start justify-between">

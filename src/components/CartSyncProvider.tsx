@@ -11,33 +11,18 @@ import { useCart } from '@/app/[locale]/(auth)/pos/context/cart-context';
 export function CartSyncProvider({ children }: { children: React.ReactNode }) {
   const { cart } = useCart();
   const searchParams = useSearchParams();
-  const [carritoId, setCarritoId] = useState<number | null>(null);
-  const [restauranteId, setRestauranteId] = useState<number | null>(null);
-  const isCreating = useRef(false);
-  const lastSyncedCart = useRef<string>('');
-
   // Obtener información del pedido
   const tipo = searchParams.get('tipo') as 'mesa' | 'domicilio' | null;
   const id = searchParams.get('id');
   const clienteId = searchParams.get('clienteId');
+  const restauranteIdFromUrl = searchParams.get('restauranteId');
 
-  // Obtener restauranteId de la mesa cuando sea necesario
-  useEffect(() => {
-    if (tipo === 'mesa' && id && !restauranteId) {
-      const obtenerRestauranteDeMesa = async () => {
-        try {
-          const response = await fetch(`/api/mesa/${id}`);
-          const data = await response.json();
-          if (data.success && data.mesa) {
-            setRestauranteId(data.mesa.restaurante_id);
-          }
-        } catch (error) {
-          console.error('Error obteniendo restaurante de mesa:', error);
-        }
-      };
-      obtenerRestauranteDeMesa();
-    }
-  }, [tipo, id, restauranteId]);
+  // Derivar restauranteId directamente desde la URL (sin estado)
+  const restauranteId = restauranteIdFromUrl ? Number.parseInt(restauranteIdFromUrl) : null;
+
+  const [carritoId, setCarritoId] = useState<number | null>(null);
+  const isCreating = useRef(false);
+  const lastSyncedCart = useRef<string>('');
 
   useEffect(() => {
     // Solo sincronizar si hay productos en el carrito y tenemos tipo/id/restauranteId
@@ -66,12 +51,14 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
             restauranteId,
             clienteId: clienteId ? Number.parseInt(clienteId) : undefined,
             productos: cart.map(item => ({
-              productoRestauranteId: item.id, // TODO: Mapear al producto_restaurante_id real
+              productoId: item.id, // Ahora usamos productoId directamente
               cantidad: item.quantity,
               precioUnitario: item.price,
               subtotal: item.price * item.quantity,
             })),
           };
+
+          console.warn('🛒 Creando carrito con datos:', { tipoPedido, restauranteId, productos: cart.length });
 
           const response = await fetch('/api/carrito/crear', {
             method: 'POST',

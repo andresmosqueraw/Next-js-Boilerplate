@@ -75,7 +75,7 @@ export function MesasCard({
                   return (
                     <Link
                       key={mesa.id}
-                      href={`/pos?tipo=mesa&id=${mesa.id}&numero=${mesa.numero_mesa}`}
+                      href={`/pos?tipo=mesa&id=${mesa.id}&numero=${mesa.numero_mesa}&restauranteId=${mesa.restaurante_id}`}
                       className={`block cursor-pointer rounded-lg border p-4 transition-all hover:shadow-lg ${coloresCard[estadoVisual]}`}
                     >
                       <div className="flex items-start justify-between">

@@ -1,4 +1,5 @@
 import { createClient } from '@/libs/supabase/server';
+import { mapearProductosARestaurante } from './producto.service';
 
 export type TipoPedidoData = {
   tipo: 'mesa' | 'domicilio';
@@ -10,7 +11,7 @@ export type CarritoData = {
   restauranteId: number;
   clienteId?: number;
   productos: Array<{
-    productoRestauranteId: number;
+    productoId: number; // Ahora usamos productoId, no productoRestauranteId
     cantidad: number;
     precioUnitario: number;
     subtotal: number;
@@ -28,6 +29,29 @@ export async function crearCarrito(
   const supabase = await createClient();
 
   try {
+    // Primero, mapear los producto_id a producto_restaurante_id
+    const productosIds = carritoData.productos.map(p => p.productoId);
+    const mapaProductos = await mapearProductosARestaurante(
+      productosIds,
+      carritoData.restauranteId,
+    );
+
+    console.warn('🗺️ Mapa de productos:', Object.fromEntries(mapaProductos));
+
+    // Verificar que todos los productos tengan un producto_restaurante_id válido
+    const productosInvalidos = carritoData.productos.filter(
+      p => !mapaProductos.has(p.productoId),
+    );
+
+    if (productosInvalidos.length > 0) {
+      const idsInvalidos = productosInvalidos.map(p => p.productoId);
+      console.error('❌ Productos sin producto_restaurante:', idsInvalidos);
+      return {
+        success: false,
+        error: `Productos no disponibles en este restaurante: ${idsInvalidos.join(', ')}`,
+      };
+    }
+
     // Paso 1: Crear tipo_pedido
     const { data: tipoPedidoCreado, error: errorTipoPedido } = await supabase
       .from('tipo_pedido')
@@ -60,14 +84,16 @@ export async function crearCarrito(
       throw new Error('Failed to create carrito');
     }
 
-    // Paso 3: Crear carrito_producto para cada producto
+    // Paso 3: Crear carrito_producto para cada producto usando el mapa
     const productosParaInsertar = carritoData.productos.map(prod => ({
       carrito_id: carritoCreado.id,
-      producto_restaurante_id: prod.productoRestauranteId,
+      producto_restaurante_id: mapaProductos.get(prod.productoId)!,
       cantidad: prod.cantidad,
       precio_unitario: prod.precioUnitario,
       subtotal: prod.subtotal,
     }));
+
+    console.warn('📦 Insertando productos:', productosParaInsertar);
 
     const { error: errorProductos } = await supabase
       .from('carrito_producto')
