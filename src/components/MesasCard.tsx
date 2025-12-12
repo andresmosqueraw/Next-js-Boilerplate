@@ -3,19 +3,47 @@
 import type { Mesa } from '@/types/database';
 import Link from 'next/link';
 
-export function MesasCard({ mesas }: { mesas: Mesa[] }) {
-  const mesasDisponibles = mesas.filter(m => m.estado === 'disponible');
-  const mesasOcupadas = mesas.filter(m => m.estado !== 'disponible');
+type EstadoVisual = 'disponible' | 'con-pedido' | 'ocupada';
+
+export function MesasCard({
+  mesas,
+  mesasConCarrito = [],
+}: {
+  mesas: Mesa[];
+  mesasConCarrito?: number[];
+}) {
+  // Función para determinar el estado visual de una mesa
+  const getEstadoVisual = (mesa: Mesa): EstadoVisual => {
+    // Si tiene carrito activo con productos, mostrar "con-pedido"
+    if (mesasConCarrito.includes(mesa.id)) {
+      return 'con-pedido';
+    }
+    // Si está disponible, mostrar "disponible"
+    if (mesa.estado === 'disponible') {
+      return 'disponible';
+    }
+    // Cualquier otro estado, mostrar "ocupada"
+    return 'ocupada';
+  };
+
+  const mesasDisponibles = mesas.filter(m => getEstadoVisual(m) === 'disponible');
+  const mesasConPedido = mesas.filter(m => getEstadoVisual(m) === 'con-pedido');
+  const mesasOcupadas = mesas.filter(m => getEstadoVisual(m) === 'ocupada');
 
   return (
     <div className="rounded-xl border bg-card p-6 text-card-foreground shadow">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-bold">Mesas</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
             {mesasDisponibles.length}
             {' '}
             Disponibles
+          </span>
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">
+            {mesasConPedido.length}
+            {' '}
+            Con pedido
           </span>
           <span className="rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-800">
             {mesasOcupadas.length}
@@ -34,48 +62,60 @@ export function MesasCard({ mesas }: { mesas: Mesa[] }) {
             )
           : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {mesas.map(mesa => (
-                  <Link
-                    key={mesa.id}
-                    href={`/pos?tipo=mesa&id=${mesa.id}&numero=${mesa.numero_mesa}`}
-                    className={`block cursor-pointer rounded-lg border p-4 transition-all hover:shadow-lg ${
-                      mesa.estado === 'disponible'
-                        ? 'border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100'
-                        : 'border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold">
-                          Mesa
-                          {' '}
-                          {mesa.numero_mesa}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Capacidad:
-                          {' '}
-                          {mesa.capacidad || 'N/A'}
-                          {' '}
-                          personas
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Restaurante ID:
-                          {' '}
-                          {mesa.restaurante_id}
-                        </p>
+                {mesas.map((mesa) => {
+                  const estadoVisual = getEstadoVisual(mesa);
+
+                  const coloresCard = {
+                    'disponible': 'border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100',
+                    'con-pedido': 'border-amber-200 bg-amber-50 hover:border-amber-300 hover:bg-amber-100',
+                    'ocupada': 'border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100',
+                  };
+
+                  const coloresBadge = {
+                    'disponible': 'bg-green-200 text-green-800',
+                    'con-pedido': 'bg-amber-200 text-amber-800',
+                    'ocupada': 'bg-red-200 text-red-800',
+                  };
+
+                  const textoEstado = {
+                    'disponible': 'Disponible',
+                    'con-pedido': 'Con pedido',
+                    'ocupada': 'Ocupada',
+                  };
+
+                  return (
+                    <Link
+                      key={mesa.id}
+                      href={`/pos?tipo=mesa&id=${mesa.id}&numero=${mesa.numero_mesa}`}
+                      className={`block cursor-pointer rounded-lg border p-4 transition-all hover:shadow-lg ${coloresCard[estadoVisual]}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            Mesa
+                            {' '}
+                            {mesa.numero_mesa}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Capacidad:
+                            {' '}
+                            {mesa.capacidad || 'N/A'}
+                            {' '}
+                            personas
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Restaurante ID:
+                            {' '}
+                            {mesa.restaurante_id}
+                          </p>
+                        </div>
+                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${coloresBadge[estadoVisual]}`}>
+                          {textoEstado[estadoVisual]}
+                        </span>
                       </div>
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${
-                          mesa.estado === 'disponible'
-                            ? 'bg-green-200 text-green-800'
-                            : 'bg-red-200 text-red-800'
-                        }`}
-                      >
-                        {mesa.estado}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             )}
       </div>

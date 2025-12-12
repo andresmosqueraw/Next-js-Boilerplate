@@ -15,7 +15,13 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { RestaurantProvider } from '@/contexts/RestaurantContext';
-import { getDomiciliosConRelaciones, getMesas, getRestaurantes } from '@/services/restaurante.service';
+import {
+  getDomiciliosConCarritoActivo,
+  getDomiciliosConRelaciones,
+  getMesas,
+  getMesasConCarritoActivo,
+  getRestaurantes,
+} from '@/services/restaurante.service';
 
 export default async function Page() {
   const [mesas, domicilios, restaurantes] = await Promise.all([
@@ -26,6 +32,14 @@ export default async function Page() {
 
   // Seleccionar el primer restaurante como predeterminado
   const primerRestaurante = restaurantes.length > 0 ? restaurantes[0] : undefined;
+
+  // Obtener mesas y domicilios con carritos activos (con productos)
+  const [mesasConCarrito, domiciliosConCarrito] = primerRestaurante
+    ? await Promise.all([
+        getMesasConCarritoActivo(primerRestaurante.id),
+        getDomiciliosConCarritoActivo(primerRestaurante.id),
+      ])
+    : [[], []];
 
   return (
     <RestaurantProvider defaultRestaurant={primerRestaurante}>
@@ -55,6 +69,8 @@ export default async function Page() {
           <DashboardContent
             todasLasMesas={mesas}
             todosLosDomicilios={domicilios}
+            mesasConCarrito={mesasConCarrito}
+            domiciliosConCarrito={domiciliosConCarrito}
           />
         </SidebarInset>
       </SidebarProvider>

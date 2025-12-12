@@ -216,3 +216,105 @@ export async function getDomiciliosByRestaurante(restauranteId: number): Promise
 
   return domicilios || [];
 }
+
+/**
+ * Obtiene los IDs de las mesas que tienen carritos activos con productos
+ */
+export async function getMesasConCarritoActivo(restauranteId: number): Promise<number[]> {
+  const supabase = await createClient();
+
+  // Paso 1: Obtener carritos activos del restaurante
+  const { data: carritos, error: carritosError } = await supabase
+    .from('carrito')
+    .select('id, tipo_pedido_id')
+    .eq('restaurante_id', restauranteId)
+    .in('estado', ['pendiente', 'en preparación']);
+
+  if (carritosError || !carritos || carritos.length === 0) {
+    return [];
+  }
+
+  // Paso 2: Verificar cuáles tienen productos
+  const carritoIds = carritos.map(c => c.id);
+  const { data: productos, error: productosError } = await supabase
+    .from('carrito_producto')
+    .select('carrito_id')
+    .in('carrito_id', carritoIds);
+
+  if (productosError || !productos || productos.length === 0) {
+    return [];
+  }
+
+  // IDs de carritos que tienen productos
+  const carritosConProductos = new Set(productos.map(p => p.carrito_id));
+  const carritosActivos = carritos.filter(c => carritosConProductos.has(c.id));
+
+  // Paso 3: Obtener los tipo_pedido_ids
+  const tipoPedidoIds = carritosActivos.map(c => c.tipo_pedido_id);
+
+  // Paso 4: Obtener las mesa_ids
+  const { data: tiposPedido, error: tiposError } = await supabase
+    .from('tipo_pedido')
+    .select('mesa_id')
+    .in('id', tipoPedidoIds)
+    .not('mesa_id', 'is', null);
+
+  if (tiposError || !tiposPedido) {
+    return [];
+  }
+
+  return tiposPedido
+    .map(tp => tp.mesa_id)
+    .filter((id): id is number => id !== null);
+}
+
+/**
+ * Obtiene los IDs de los domicilios que tienen carritos activos con productos
+ */
+export async function getDomiciliosConCarritoActivo(restauranteId: number): Promise<number[]> {
+  const supabase = await createClient();
+
+  // Paso 1: Obtener carritos activos del restaurante
+  const { data: carritos, error: carritosError } = await supabase
+    .from('carrito')
+    .select('id, tipo_pedido_id')
+    .eq('restaurante_id', restauranteId)
+    .in('estado', ['pendiente', 'en preparación']);
+
+  if (carritosError || !carritos || carritos.length === 0) {
+    return [];
+  }
+
+  // Paso 2: Verificar cuáles tienen productos
+  const carritoIds = carritos.map(c => c.id);
+  const { data: productos, error: productosError } = await supabase
+    .from('carrito_producto')
+    .select('carrito_id')
+    .in('carrito_id', carritoIds);
+
+  if (productosError || !productos || productos.length === 0) {
+    return [];
+  }
+
+  // IDs de carritos que tienen productos
+  const carritosConProductos = new Set(productos.map(p => p.carrito_id));
+  const carritosActivos = carritos.filter(c => carritosConProductos.has(c.id));
+
+  // Paso 3: Obtener los tipo_pedido_ids
+  const tipoPedidoIds = carritosActivos.map(c => c.tipo_pedido_id);
+
+  // Paso 4: Obtener los domicilio_ids
+  const { data: tiposPedido, error: tiposError } = await supabase
+    .from('tipo_pedido')
+    .select('domicilio_id')
+    .in('id', tipoPedidoIds)
+    .not('domicilio_id', 'is', null);
+
+  if (tiposError || !tiposPedido) {
+    return [];
+  }
+
+  return tiposPedido
+    .map(tp => tp.domicilio_id)
+    .filter((id): id is number => id !== null);
+}

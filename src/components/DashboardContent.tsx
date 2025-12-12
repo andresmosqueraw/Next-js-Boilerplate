@@ -10,9 +10,13 @@ import { useRestaurant } from '@/contexts/RestaurantContext';
 export function DashboardContent({
   todasLasMesas,
   todosLosDomicilios,
+  mesasConCarrito,
+  domiciliosConCarrito,
 }: {
   todasLasMesas: Mesa[];
   todosLosDomicilios: DomicilioConRestaurantes[];
+  mesasConCarrito: number[];
+  domiciliosConCarrito: number[];
 }) {
   const { selectedRestaurant } = useRestaurant();
 
@@ -66,8 +70,8 @@ export function DashboardContent({
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <MesasCard mesas={mesasFiltradas} />
-        <DomiciliosCard domicilios={domiciliosMostrados} />
+        <MesasCard mesas={mesasFiltradas} mesasConCarrito={mesasConCarrito} />
+        <DomiciliosCard domicilios={domiciliosMostrados} domiciliosConCarrito={domiciliosConCarrito} />
       </div>
     </div>
   );
