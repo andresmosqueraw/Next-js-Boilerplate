@@ -2,10 +2,13 @@
 
 import type { DomicilioConRestaurantes } from '@/services/restaurante.service';
 import type { Mesa } from '@/types/database';
+import { Activity } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { DomiciliosCard } from '@/components/DomiciliosCard';
 import { MesasCard } from '@/components/MesasCard';
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { useRestaurant } from '@/contexts/RestaurantContext';
 
 export function DashboardContent({
@@ -66,28 +69,59 @@ export function DashboardContent({
       </div>
 
       {selectedRestaurant && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm font-medium text-blue-900">
-            📍 Mostrando datos de:
-            {' '}
-            <span className="font-bold">{selectedRestaurant.nombre}</span>
-          </p>
-          {selectedRestaurant.direccion && (
-            <p className="mt-1 text-xs text-blue-700">
-              {selectedRestaurant.direccion}
-            </p>
-          )}
-          <p className="mt-2 text-xs text-blue-600">
-            {mesasFiltradas.length}
-            {' '}
-            {mesasFiltradas.length === 1 ? 'mesa' : 'mesas'}
-            {' '}
-            •
-            {' '}
-            {domiciliosFiltrados.length}
-            {' '}
-            {domiciliosFiltrados.length === 1 ? 'domicilio' : 'domicilios'}
-          </p>
+        <div className="group relative rounded-lg bg-border p-[1px] transition-transform duration-500 ease-in-out hover:scale-105">
+          <div
+            className={cn(
+              'absolute inset-0 rounded-lg bg-gradient-to-bl opacity-80 transition-all duration-500 ease-in-out',
+              'from-blue-500 via-blue-500/20 to-transparent',
+            )}
+            style={{
+              maskImage: 'linear-gradient(135deg, black 0%, transparent 50%)',
+              WebkitMaskImage: 'linear-gradient(135deg, black 0%, transparent 50%)',
+            }}
+          />
+          <div
+            className={cn(
+              'absolute inset-0 rounded-lg bg-gradient-to-bl opacity-0 group-hover:opacity-80 transition-opacity duration-500 ease-in-out',
+              'from-blue-500 via-blue-500/20 to-transparent',
+            )}
+            style={{
+              maskImage: 'linear-gradient(135deg, black 0%, transparent 70%)',
+              WebkitMaskImage: 'linear-gradient(135deg, black 0%, transparent 70%)',
+            }}
+          />
+          <div className="relative rounded-lg bg-card">
+            <CardHeader className="px-4 pt-4 pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Activity className="h-4 w-4 text-blue-500" />
+                Mostrando datos de:
+                {' '}
+                <span className="font-bold">{selectedRestaurant.nombre}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="space-y-2">
+                {selectedRestaurant.direccion && (
+                  <p className="text-sm text-muted-foreground">
+                    {selectedRestaurant.direccion}
+                  </p>
+                )}
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm font-light text-muted-foreground tabular-nums">
+                    {mesasFiltradas.length}
+                    {' '}
+                    {mesasFiltradas.length === 1 ? 'mesa' : 'mesas'}
+                  </span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="font-mono text-sm font-light text-muted-foreground tabular-nums">
+                    {domiciliosFiltrados.length}
+                    {' '}
+                    {domiciliosFiltrados.length === 1 ? 'domicilio' : 'domicilios'}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </div>
         </div>
       )}
 
