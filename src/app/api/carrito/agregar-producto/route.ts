@@ -75,6 +75,7 @@ export async function POST(request: Request) {
     // Revalidar dashboard para actualizar estados
     console.warn('🔄 [API /carrito/agregar-producto] Revalidando dashboard...');
     revalidatePath('/dashboard');
+    revalidatePath('/[locale]/dashboard', 'page');
     console.warn('✅ [API /carrito/agregar-producto] Dashboard revalidado');
 
     return NextResponse.json(resultado);
