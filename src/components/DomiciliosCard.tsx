@@ -1,6 +1,6 @@
 'use client';
 
-import type { Domicilio } from '@/types/database';
+import type { DomicilioConRestaurantes } from '@/services/restaurante.service';
 import Link from 'next/link';
 
 type EstadoVisual = 'disponible' | 'con-pedido';
@@ -11,11 +11,11 @@ export function DomiciliosCard({
   domicilios,
   domiciliosConCarrito = EMPTY_ARRAY,
 }: {
-  domicilios: Domicilio[];
+  domicilios: DomicilioConRestaurantes[];
   domiciliosConCarrito?: number[];
 }) {
   // Función para determinar el estado visual de un domicilio
-  const getEstadoVisual = (domicilio: Domicilio): EstadoVisual => {
+  const getEstadoVisual = (domicilio: DomicilioConRestaurantes): EstadoVisual => {
     // Si tiene carrito activo con productos, mostrar "con-pedido"
     if (domiciliosConCarrito.includes(domicilio.id)) {
       return 'con-pedido';
@@ -27,12 +27,18 @@ export function DomiciliosCard({
   const domiciliosDisponibles = domicilios.filter(d => getEstadoVisual(d) === 'disponible');
   const domiciliosConPedido = domicilios.filter(d => getEstadoVisual(d) === 'con-pedido');
 
+  // Obtener el restauranteId del primer restaurante asociado (o usar 1 como fallback)
+  const getRestauranteId = (domicilio: DomicilioConRestaurantes): number => {
+    return domicilio.restaurantes_ids && domicilio.restaurantes_ids.length > 0
+      ? domicilio.restaurantes_ids[0]!
+      : 1;
+  };
+
   return (
-    <div className="rounded-xl border bg-card p-6 text-card-foreground shadow">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">
           Domicilios
-          <br />
           {' '}
           (Direcciones de Clientes)
         </h2>
@@ -50,73 +56,89 @@ export function DomiciliosCard({
         </div>
       </div>
 
-      <div className="space-y-2">
-        {domicilios.length === 0
-          ? (
-              <p className="py-8 text-center text-muted-foreground">
-                No hay domicilios registrados
-              </p>
-            )
-          : (
-              <div className="space-y-3">
-                {domicilios.map((domicilio) => {
-                  const estadoVisual = getEstadoVisual(domicilio);
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="hide-scrollbar overflow-x-auto">
+          {domicilios.length === 0
+            ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  No hay domicilios registrados
+                </div>
+              )
+            : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="px-3 py-2 text-left">
+                        <span className="text-xs font-semibold text-muted-foreground">Dirección</span>
+                      </th>
+                      <th className="px-3 py-2 text-left">
+                        <span className="text-xs font-semibold text-muted-foreground">Ciudad</span>
+                      </th>
+                      <th className="px-3 py-2 text-left">
+                        <span className="text-xs font-semibold text-muted-foreground">Referencia</span>
+                      </th>
+                      <th className="px-3 py-2 text-left">
+                        <span className="text-xs font-semibold text-muted-foreground">Cliente ID</span>
+                      </th>
+                      <th className="px-3 py-2 text-left">
+                        <span className="text-xs font-semibold text-muted-foreground">Estado</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {domicilios.map((domicilio) => {
+                      const estadoVisual = getEstadoVisual(domicilio);
 
-                  const coloresCard = {
-                    'disponible': 'border-blue-200 bg-white hover:border-blue-300 hover:bg-blue-50',
-                    'con-pedido': 'border-amber-200 bg-amber-50 hover:border-amber-300 hover:bg-amber-100',
-                  };
+                      const coloresBadge = {
+                        'disponible': 'bg-blue-100 text-blue-800',
+                        'con-pedido': 'bg-amber-200 text-amber-800',
+                      };
 
-                  const coloresBadge = {
-                    'disponible': 'bg-blue-100 text-blue-800',
-                    'con-pedido': 'bg-amber-200 text-amber-800',
-                  };
+                      const textoEstado = {
+                        'disponible': 'Disponible',
+                        'con-pedido': 'Con pedido',
+                      };
 
-                  const textoEstado = {
-                    'disponible': 'Disponible',
-                    'con-pedido': 'Con pedido',
-                  };
-
-                  return (
-                    <Link
-                      key={domicilio.id}
-                      href={`/pos?tipo=domicilio&id=${domicilio.id}&clienteId=${domicilio.cliente_id}&restauranteId=1`}
-                      className={`block cursor-pointer rounded-lg border p-4 transition-all hover:shadow-lg ${coloresCard[estadoVisual]}`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-base font-semibold">
-                            {domicilio.direccion}
-                          </h3>
-                          {domicilio.ciudad && (
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              📍
-                              {' '}
-                              {domicilio.ciudad}
-                            </p>
-                          )}
-                          {domicilio.referencia && (
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              ℹ️
-                              {' '}
-                              {domicilio.referencia}
-                            </p>
-                          )}
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            Cliente ID:
-                            {' '}
-                            {domicilio.cliente_id}
-                          </p>
-                        </div>
-                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${coloresBadge[estadoVisual]}`}>
-                          {textoEstado[estadoVisual]}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
+                      return (
+                        <tr
+                          key={domicilio.id}
+                          className="border-b border-border/50 transition-colors hover:bg-muted/20"
+                        >
+                          <td className="px-3 py-2">
+                            <Link
+                              href={`/pos?tipo=domicilio&id=${domicilio.id}&clienteId=${domicilio.cliente_id}&restauranteId=${getRestauranteId(domicilio)}`}
+                              className="cursor-pointer text-sm font-medium text-foreground hover:text-primary"
+                            >
+                              {domicilio.direccion}
+                            </Link>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className="text-sm text-muted-foreground">
+                              {domicilio.ciudad || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className="text-sm text-muted-foreground">
+                              {domicilio.referencia || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className="text-sm text-muted-foreground">
+                              {domicilio.cliente_id}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`rounded-full px-2 py-1 text-xs font-medium ${coloresBadge[estadoVisual]}`}>
+                              {textoEstado[estadoVisual]}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+        </div>
       </div>
     </div>
   );

@@ -183,6 +183,15 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Hide scrollbars on cards with overflow-x */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Added marquee animations for testimonials section */

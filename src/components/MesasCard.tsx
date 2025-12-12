@@ -44,9 +44,9 @@ export function MesasCard({
   const mesasOcupadas = mesas.filter(m => getEstadoVisual(m) === 'ocupada');
 
   return (
-    <div className="rounded-xl border bg-card p-6 text-card-foreground shadow">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Mesas</h2>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">Mesas</h2>
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
             {mesasDisponibles.length}
@@ -61,68 +61,85 @@ export function MesasCard({
         </div>
       </div>
 
-      <div className="space-y-2">
-        {mesas.length === 0
-          ? (
-              <p className="py-8 text-center text-muted-foreground">
-                No hay mesas registradas
-              </p>
-            )
-          : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {mesas.map((mesa) => {
-                  const estadoVisual = getEstadoVisual(mesa);
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="hide-scrollbar overflow-x-auto">
+          {mesas.length === 0
+            ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  No hay mesas registradas
+                </div>
+              )
+            : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="px-3 py-2 text-left">
+                        <span className="text-xs font-semibold text-muted-foreground">Mesa</span>
+                      </th>
+                      <th className="px-3 py-2 text-left">
+                        <span className="text-xs font-semibold text-muted-foreground">Capacidad</span>
+                      </th>
+                      <th className="px-3 py-2 text-left">
+                        <span className="text-xs font-semibold text-muted-foreground">Restaurante ID</span>
+                      </th>
+                      <th className="px-3 py-2 text-left">
+                        <span className="text-xs font-semibold text-muted-foreground">Estado</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mesas.map((mesa) => {
+                      const estadoVisual = getEstadoVisual(mesa);
 
-                  const coloresCard = {
-                    disponible: 'border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100',
-                    ocupada: 'border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100',
-                  };
+                      const coloresBadge = {
+                        disponible: 'bg-green-200 text-green-800',
+                        ocupada: 'bg-red-200 text-red-800',
+                      };
 
-                  const coloresBadge = {
-                    disponible: 'bg-green-200 text-green-800',
-                    ocupada: 'bg-red-200 text-red-800',
-                  };
+                      const textoEstado = {
+                        disponible: 'Disponible',
+                        ocupada: 'Ocupada',
+                      };
 
-                  const textoEstado = {
-                    disponible: 'Disponible',
-                    ocupada: 'Ocupada',
-                  };
-
-                  return (
-                    <Link
-                      key={mesa.id}
-                      href={`/pos?tipo=mesa&id=${mesa.id}&numero=${mesa.numero_mesa}&restauranteId=${mesa.restaurante_id}`}
-                      className={`block cursor-pointer rounded-lg border p-4 transition-all hover:shadow-lg ${coloresCard[estadoVisual]}`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold">
-                            Mesa
-                            {' '}
-                            {mesa.numero_mesa}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Capacidad:
-                            {' '}
-                            {mesa.capacidad || 'N/A'}
-                            {' '}
-                            personas
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            Restaurante ID:
-                            {' '}
-                            {mesa.restaurante_id}
-                          </p>
-                        </div>
-                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${coloresBadge[estadoVisual]}`}>
-                          {textoEstado[estadoVisual]}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
+                      return (
+                        <tr
+                          key={mesa.id}
+                          className="border-b border-border/50 transition-colors hover:bg-muted/20"
+                        >
+                          <td className="px-3 py-2">
+                            <Link
+                              href={`/pos?tipo=mesa&id=${mesa.id}&numero=${mesa.numero_mesa}&restauranteId=${mesa.restaurante_id}`}
+                              className="cursor-pointer text-sm font-medium text-foreground hover:text-primary"
+                            >
+                              Mesa
+                              {' '}
+                              {mesa.numero_mesa}
+                            </Link>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className="text-sm text-muted-foreground">
+                              {mesa.capacidad || 'N/A'}
+                              {' '}
+                              personas
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className="text-sm text-muted-foreground">
+                              {mesa.restaurante_id}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`rounded-full px-2 py-1 text-xs font-medium ${coloresBadge[estadoVisual]}`}>
+                              {textoEstado[estadoVisual]}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+        </div>
       </div>
     </div>
   );
