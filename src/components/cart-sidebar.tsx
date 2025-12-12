@@ -17,6 +17,7 @@ export default function CartSidebar() {
     const id = searchParams.get('id');
     const numero = searchParams.get('numero');
     const clienteId = searchParams.get('clienteId');
+    const restauranteId = searchParams.get('restauranteId');
 
     // Construir URL del checkout con los parámetros
     const checkoutParams = new URLSearchParams();
@@ -24,6 +25,7 @@ export default function CartSidebar() {
     if (id) checkoutParams.set('id', id);
     if (numero) checkoutParams.set('numero', numero);
     if (clienteId) checkoutParams.set('clienteId', clienteId);
+    if (restauranteId) checkoutParams.set('restauranteId', restauranteId);
 
     router.push(`/pos/checkout?${checkoutParams.toString()}`);
   };

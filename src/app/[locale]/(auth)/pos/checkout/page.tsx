@@ -21,6 +21,7 @@ export default function CheckoutPage() {
   const id = searchParams.get('id');
   const numero = searchParams.get('numero');
   const clienteId = searchParams.get('clienteId');
+  const restauranteId = searchParams.get('restauranteId');
 
   const tax = cartTotal * 0.1;
   const grandTotal = cartTotal + tax;
@@ -45,6 +46,9 @@ export default function CheckoutPage() {
     if (clienteId) {
       successParams.set('clienteId', clienteId);
     }
+    if (restauranteId) {
+      successParams.set('restauranteId', restauranteId);
+    }
     successParams.set('metodo', paymentMethod);
 
     router.push(`/pos/success?${successParams.toString()}`);
@@ -64,6 +68,9 @@ export default function CheckoutPage() {
     }
     if (clienteId) {
       params.set('clienteId', clienteId);
+    }
+    if (restauranteId) {
+      params.set('restauranteId', restauranteId);
     }
     return `/pos?${params.toString()}`;
   };
