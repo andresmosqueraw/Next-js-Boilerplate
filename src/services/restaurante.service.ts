@@ -390,22 +390,49 @@ export async function getDomiciliosConCarritoActivo(restauranteId: number): Prom
   // Paso 3: Obtener los tipo_pedido_ids
   console.warn('📝 [getDomiciliosConCarritoActivo] PASO 3: Obteniendo tipo_pedido_ids...');
   const tipoPedidoIds = carritosActivos.map(c => c.tipo_pedido_id);
+  
+  console.warn('🔍 [getDomiciliosConCarritoActivo] tipo_pedido_ids a buscar:', {
+    count: tipoPedidoIds.length,
+    tipoPedidoIds,
+  });
 
   // Paso 4: Obtener los domicilio_ids
   console.warn('📝 [getDomiciliosConCarritoActivo] PASO 4: Buscando domicilio_ids en tipo_pedido...');
+  
+  // Primero, obtener TODOS los tipo_pedido para ver qué hay
+  const { data: todosLosTiposPedido, error: todosError } = await supabase
+    .from('tipo_pedido')
+    .select('id, mesa_id, domicilio_id')
+    .in('id', tipoPedidoIds);
+  
+  console.warn('🔍 [getDomiciliosConCarritoActivo] Todos los tipo_pedido encontrados (sin filtrar):', {
+    count: todosLosTiposPedido?.length || 0,
+    detalles: todosLosTiposPedido,
+  });
+  
+  // Ahora filtrar solo los que tienen domicilio_id
   const { data: tiposPedido, error: tiposError } = await supabase
     .from('tipo_pedido')
-    .select('domicilio_id')
+    .select('id, domicilio_id, mesa_id')
     .in('id', tipoPedidoIds)
     .not('domicilio_id', 'is', null);
 
-  console.warn('📍 [getDomiciliosConCarritoActivo] Tipos de pedido encontrados:', {
+  console.warn('📍 [getDomiciliosConCarritoActivo] Tipos de pedido encontrados (con domicilio_id):', {
     count: tiposPedido?.length || 0,
     tiposPedido: tiposPedido,
+    error: tiposError,
   });
 
-  if (tiposError || !tiposPedido) {
+  if (tiposError) {
     console.warn('⚠️ [getDomiciliosConCarritoActivo] Error obteniendo tipos_pedido:', tiposError);
+    return [];
+  }
+
+  if (!tiposPedido || tiposPedido.length === 0) {
+    console.warn('⚠️ [getDomiciliosConCarritoActivo] No se encontraron tipo_pedido con domicilio_id. Esto podría significar que:');
+    console.warn('   1. Los tipo_pedido son para mesas, no para domicilios');
+    console.warn('   2. Los tipo_pedido_ids no existen en la tabla tipo_pedido');
+    console.warn('   3. Los tipo_pedido tienen domicilio_id = NULL');
     return [];
   }
 
