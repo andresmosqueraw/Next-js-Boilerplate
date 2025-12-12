@@ -385,6 +385,11 @@ export async function getDomiciliosConCarritoActivo(restauranteId: number): Prom
   console.warn('✅ [getDomiciliosConCarritoActivo] Carritos activos con productos:', {
     count: carritosActivos.length,
     carritoIds: carritosActivos.map(c => c.id),
+    detalles: carritosActivos.map(c => ({
+      carritoId: c.id,
+      tipoPedidoId: c.tipo_pedido_id,
+      estado: c.estado,
+    })),
   });
 
   // Paso 3: Obtener los tipo_pedido_ids
@@ -395,6 +400,24 @@ export async function getDomiciliosConCarritoActivo(restauranteId: number): Prom
     count: tipoPedidoIds.length,
     tipoPedidoIds,
   });
+
+  // Verificar directamente qué tipo_pedido están asociados a estos carritos
+  // Esto nos ayudará a entender si el problema es que tienen mesa_id en lugar de domicilio_id
+  for (const carrito of carritosActivos) {
+    const { data: tipoPedidoDetalle, error: errorDetalle } = await supabase
+      .from('tipo_pedido')
+      .select('id, mesa_id, domicilio_id')
+      .eq('id', carrito.tipo_pedido_id)
+      .single();
+    
+    console.warn(`🔍 [getDomiciliosConCarritoActivo] Detalle tipo_pedido para carrito ${carrito.id}:`, {
+      tipoPedidoId: carrito.tipo_pedido_id,
+      tipoPedido: tipoPedidoDetalle,
+      error: errorDetalle,
+      esDomicilio: tipoPedidoDetalle?.domicilio_id !== null,
+      esMesa: tipoPedidoDetalle?.mesa_id !== null,
+    });
+  }
 
   // Paso 4: Obtener los domicilio_ids
   console.warn('📝 [getDomiciliosConCarritoActivo] PASO 4: Buscando domicilio_ids en tipo_pedido...');
