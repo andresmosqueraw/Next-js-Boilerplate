@@ -1,0 +1,12 @@
+# v0/shadcn generated components with linting issues
+src/components/ui/
+src/components/home/hero.tsx
+src/components/hero.tsx
+src/components/features.tsx
+src/components/pricing-section.tsx
+src/components/testimonials.tsx
+src/components/faq-section.tsx
+src/components/new-release-promo.tsx
+src/components/sticky-footer.tsx
+src/components/magicui/
+

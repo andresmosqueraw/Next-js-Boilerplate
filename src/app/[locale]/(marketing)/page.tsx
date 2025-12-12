@@ -1,134 +1,304 @@
-import type { Metadata } from 'next';
-import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Sponsors } from '@/components/Sponsors';
+'use client';
+import { useEffect, useState } from 'react';
+import { FAQSection } from '@/components/faq-section';
+import Features from '@/components/features';
+import Hero from '@/components/home/hero';
+import { NewReleasePromo } from '@/components/new-release-promo';
+import { PricingSection } from '@/components/pricing-section';
+import { StickyFooter } from '@/components/sticky-footer';
+import { TestimonialsSection } from '@/components/testimonials';
 
-type IIndexProps = {
-  params: Promise<{ locale: string }>;
-};
+export default function Home() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-export async function generateMetadata(props: IIndexProps): Promise<Metadata> {
-  const { locale } = await props.params;
-  const t = await getTranslations({
-    locale,
-    namespace: 'Index',
-  });
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'system');
+    root.classList.add('dark');
+  }, []);
 
-  return {
-    title: t('meta_title'),
-    description: t('meta_description'),
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleMobileNavClick = (elementId: string) => {
+    setIsMobileMenuOpen(false);
+    setTimeout(() => {
+      const element = document.getElementById(elementId);
+      if (element) {
+        const headerOffset = 120; // Account for sticky header height + margin
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        });
+      }
+    }, 100);
   };
-}
-
-export default async function Index(props: IIndexProps) {
-  const { locale } = await props.params;
-  setRequestLocale(locale);
-  const t = await getTranslations({
-    locale,
-    namespace: 'Index',
-  });
 
   return (
-    <>
-      <p>
-        {`Follow `}
+    <div className="relative min-h-screen w-full bg-black">
+      {/* Pearl Mist Background with Top Glow */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: 'radial-gradient(ellipse 50% 35% at 50% 0%, rgba(226, 232, 240, 0.12), transparent 60%), #000000',
+        }}
+      />
+
+      {/* Desktop Header */}
+      <header
+        className={`sticky top-4 z-[9999] mx-auto hidden w-full flex-row items-center justify-between self-start rounded-full border border-border/50 bg-background/80 shadow-lg backdrop-blur-sm transition-all duration-300 md:flex ${
+          isScrolled ? 'max-w-3xl px-2' : 'max-w-5xl px-4'
+        } py-2`}
+        style={{
+          willChange: 'transform',
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          perspective: '1000px',
+        }}
+      >
         <a
-          className="text-blue-700 hover:border-b-2 hover:border-blue-700"
-          href="https://twitter.com/ixartz"
+          className={`z-50 flex items-center justify-center gap-2 transition-all duration-300 ${
+            isScrolled ? 'ml-4' : ''
+          }`}
+          href="https://v0.app"
           target="_blank"
-          rel="noreferrer noopener"
+          rel="noopener noreferrer"
         >
-          @Ixartz on Twitter
+          <svg
+            fill="currentColor"
+            viewBox="0 0 147 70"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            className="size-8 w-8 rounded-full text-foreground"
+          >
+            <path d="M56 50.2031V14H70V60.1562C70 65.5928 65.5928 70 60.1562 70C57.5605 70 54.9982 68.9992 53.1562 67.1573L0 14H19.7969L56 50.2031Z"></path>
+            <path d="M147 56H133V23.9531L100.953 56H133V70H96.6875C85.8144 70 77 61.1856 77 50.3125V14H91V46.1562L123.156 14H91V0H127.312C138.186 0 147 8.81439 147 19.6875V56Z"></path>
+          </svg>
         </a>
-        {` for updates and more information about the boilerplate.`}
-      </p>
-      <h2 className="mt-5 text-2xl font-bold">
-        Boilerplate Code for Your Next.js Project with Tailwind CSS
-      </h2>
-      <p className="text-base">
-        Next.js Boilerplate is a developer-friendly starter code for Next.js projects, built with Tailwind CSS and TypeScript.
-        {' '}
-        <span role="img" aria-label="zap">
-          ⚡️
-        </span>
-        {' '}
-        Designed with developer experience in mind, it includes:
-      </p>
-      <ul className="mt-3 text-base">
-        <li>🚀 Next.js with App Router support</li>
-        <li>🔥 TypeScript for type checking</li>
-        <li>💎 Tailwind CSS integration</li>
-        <li>
-          🔒 Authentication with
-          {' '}
+
+        <div className="absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-muted-foreground transition duration-200 hover:text-foreground md:flex md:space-x-2">
           <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://clerk.com?utm_source=github&amp;utm_medium=sponsorship&amp;utm_campaign=nextjs-boilerplate"
+            className="relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
+            onClick={(e) => {
+              e.preventDefault();
+              const element = document.getElementById('features');
+              if (element) {
+                const headerOffset = 120; // Account for sticky header height + margin
+                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - headerOffset;
+
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth',
+                });
+              }
+            }}
           >
-            Clerk
+            <span className="relative z-20">Features</span>
           </a>
-          {' '}
-          (includes passwordless, social, and multi-factor auth)
-        </li>
-        <li>📦 ORM with DrizzleORM (PostgreSQL, SQLite, MySQL support)</li>
-        <li>
-          💽 Dev database with PGlite and production with Neon (PostgreSQL)
-        </li>
-        <li>
-          🌐 Multi-language support (i18n) with next-intl and
-          {' '}
           <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://l.crowdin.com/next-js"
+            className="relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
+            onClick={(e) => {
+              e.preventDefault();
+              const element = document.getElementById('pricing');
+              if (element) {
+                const headerOffset = 120; // Account for sticky header height + margin
+                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - headerOffset;
+
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth',
+                });
+              }
+            }}
           >
-            Crowdin
+            <span className="relative z-20">Pricing</span>
           </a>
-        </li>
-        <li>🔴 Form handling (React Hook Form) and validation (Zod)</li>
-        <li>📏 Linting and formatting (ESLint, Prettier)</li>
-        <li>🦊 Git hooks and commit linting (Husky, Commitlint)</li>
-        <li>🦺 Testing suite (Vitest, React Testing Library, Playwright)</li>
-        <li>🎉 Storybook for UI development</li>
-        <li>
-          🐰 AI-powered code reviews with
-          {' '}
           <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://www.coderabbit.ai?utm_source=next_js_starter&utm_medium=github&utm_campaign=next_js_starter_oss_2025"
+            className="relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
+            onClick={(e) => {
+              e.preventDefault();
+              const element = document.getElementById('testimonials');
+              if (element) {
+                const headerOffset = 120; // Account for sticky header height + margin
+                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - headerOffset;
+
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth',
+                });
+              }
+            }}
           >
-            CodeRabbit
+            <span className="relative z-20">Testimonials</span>
           </a>
-        </li>
-        <li>
-          🚨 Error monitoring (
           <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://sentry.io/for/nextjs/?utm_source=github&amp;utm_medium=paid-community&amp;utm_campaign=general-fy25q1-nextjs&amp;utm_content=github-banner-nextjsboilerplate-logo"
+            className="relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
+            onClick={(e) => {
+              e.preventDefault();
+              const element = document.getElementById('faq');
+              if (element) {
+                const headerOffset = 120; // Account for sticky header height + margin
+                const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - headerOffset;
+
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth',
+                });
+              }
+            }}
           >
-            Sentry
+            <span className="relative z-20">FAQ</span>
           </a>
-          ) and logging (LogTape, an alternative to Pino.js)
-        </li>
-        <li>🖥️ Monitoring as Code (Checkly)</li>
-        <li>
-          🔐 Security and bot protection (
+        </div>
+
+        <div className="flex items-center gap-4">
           <a
-            className="font-bold text-blue-700 hover:border-b-2 hover:border-blue-700"
-            href="https://launch.arcjet.com/Q6eLbRE"
+            href="/login"
+            className="cursor-pointer text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Arcjet
+            Log In
           </a>
-          )
-        </li>
-        <li>🤖 SEO optimization (metadata, JSON-LD, Open Graph tags)</li>
-        <li>⚙️ Development tools (VSCode config, bundler analyzer, changelog generation)</li>
-      </ul>
-      <p className="text-base">
-        Our sponsors&apos; exceptional support has made this project possible.
-        Their services integrate seamlessly with the boilerplate, and we
-        recommend trying them out.
-      </p>
-      <h2 className="mt-5 text-2xl font-bold">{t('sponsors_title')}</h2>
-      <Sponsors />
-    </>
+
+          <a
+            href="/signup"
+            className="relative inline-block cursor-pointer rounded-md bg-gradient-to-b from-primary to-primary/80 px-4 py-2 text-center text-sm font-bold text-primary-foreground shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] transition duration-200 hover:-translate-y-0.5"
+          >
+            Sign Up
+          </a>
+        </div>
+      </header>
+
+      {/* Mobile Header */}
+      <header className="sticky top-4 z-[9999] mx-4 flex w-auto flex-row items-center justify-between rounded-full border border-border/50 bg-background/80 px-4 py-3 shadow-lg backdrop-blur-sm md:hidden">
+        <a
+          className="flex items-center justify-center gap-2"
+          href="https://v0.app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg
+            fill="currentColor"
+            viewBox="0 0 147 70"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            className="size-7 w-7 rounded-full text-foreground"
+          >
+            <path d="M56 50.2031V14H70V60.1562C70 65.5928 65.5928 70 60.1562 70C57.5605 70 54.9982 68.9992 53.1562 67.1573L0 14H19.7969L56 50.2031Z"></path>
+            <path d="M147 56H133V23.9531L100.953 56H133V70H96.6875C85.8144 70 77 61.1856 77 50.3125V14H91V46.1562L123.156 14H91V0H127.312C138.186 0 147 8.81439 147 19.6875V56Z"></path>
+          </svg>
+        </a>
+
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/50 transition-colors hover:bg-background/80"
+          aria-label="Toggle menu"
+        >
+          <div className="flex h-5 w-5 flex-col items-center justify-center space-y-1">
+            <span
+              className={`block h-0.5 w-4 bg-foreground transition-all duration-300 ${isMobileMenuOpen ? 'translate-y-1.5 rotate-45' : ''}`}
+            >
+            </span>
+            <span
+              className={`block h-0.5 w-4 bg-foreground transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}
+            >
+            </span>
+            <span
+              className={`block h-0.5 w-4 bg-foreground transition-all duration-300 ${isMobileMenuOpen ? '-translate-y-1.5 -rotate-45' : ''}`}
+            >
+            </span>
+          </div>
+        </button>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm md:hidden">
+          <div className="absolute top-20 right-4 left-4 rounded-2xl border border-border/50 bg-background/95 p-6 shadow-2xl backdrop-blur-md">
+            <nav className="flex flex-col space-y-4">
+              <button
+                onClick={() => handleMobileNavClick('features')}
+                className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
+              >
+                Features
+              </button>
+              <button
+                onClick={() => handleMobileNavClick('pricing')}
+                className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
+              >
+                Pricing
+              </button>
+              <button
+                onClick={() => handleMobileNavClick('testimonials')}
+                className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
+              >
+                Testimonials
+              </button>
+              <button
+                onClick={() => handleMobileNavClick('faq')}
+                className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
+              >
+                FAQ
+              </button>
+              <div className="mt-4 flex flex-col space-y-3 border-t border-border/50 pt-4">
+                <a
+                  href="/login"
+                  className="cursor-pointer rounded-lg px-4 py-3 text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
+                >
+                  Log In
+                </a>
+                <a
+                  href="/signup"
+                  className="rounded-lg bg-gradient-to-b from-primary to-primary/80 px-4 py-3 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all duration-200 hover:-translate-y-0.5"
+                >
+                  Sign Up
+                </a>
+              </div>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Hero Section */}
+      <Hero />
+
+      {/* Features Section */}
+      <div id="features">
+        <Features />
+      </div>
+
+      {/* Pricing Section */}
+      <div id="pricing">
+        <PricingSection />
+      </div>
+
+      {/* Testimonials Section */}
+      <div id="testimonials">
+        <TestimonialsSection />
+      </div>
+
+      <NewReleasePromo />
+
+      {/* FAQ Section */}
+      <div id="faq">
+        <FAQSection />
+      </div>
+
+      {/* Sticky Footer */}
+      <StickyFooter />
+    </div>
   );
-};
+}
