@@ -95,7 +95,11 @@ export default function CategorySidebar({
   }, [categorias]);
 
   const handleBackToDashboard = () => {
+    console.warn('🔄 [CategorySidebar] Navegando a dashboard y refrescando datos...');
+    // Navegar al dashboard - el revalidatePath del API ya invalidó el cache
+    // pero hacemos refresh explícito para asegurar datos frescos
     router.push('/dashboard');
+    router.refresh();
   };
 
   return (

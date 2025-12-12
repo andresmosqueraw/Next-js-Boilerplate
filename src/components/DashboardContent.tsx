@@ -23,11 +23,11 @@ export function DashboardContent({
   const { selectedRestaurant } = useRestaurant();
   const router = useRouter();
 
-  // Auto-refresh cuando la página se vuelve visible (usuario regresa del POS)
+  // Auto-refresh cuando la página se vuelve visible (usuario regresa del POS o cambia de pestaña)
   React.useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.warn('🔄 [DashboardContent] Página visible, refrescando...');
+        console.warn('🔄 [DashboardContent] Página visible, refrescando datos...');
         router.refresh();
       }
     };
@@ -36,29 +36,6 @@ export function DashboardContent({
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [router]);
-
-  // Auto-refresh periódico para detectar cambios en carritos (cada 3 segundos)
-  React.useEffect(() => {
-    // Solo hacer polling si la página está visible
-    if (document.visibilityState !== 'visible') {
-      return;
-    }
-
-    console.warn('⏰ [DashboardContent] Iniciando auto-refresh periódico (cada 3s)');
-
-    const intervalId = setInterval(() => {
-      // Solo refrescar si la página está visible
-      if (document.visibilityState === 'visible') {
-        console.warn('🔄 [DashboardContent] Auto-refresh periódico ejecutado');
-        router.refresh();
-      }
-    }, 3000); // Refrescar cada 3 segundos
-
-    return () => {
-      console.warn('⏰ [DashboardContent] Deteniendo auto-refresh periódico');
-      clearInterval(intervalId);
     };
   }, [router]);
 
