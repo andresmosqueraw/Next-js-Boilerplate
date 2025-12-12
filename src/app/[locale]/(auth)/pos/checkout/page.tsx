@@ -13,7 +13,7 @@ import { useCart } from '../context/cart-context';
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { cart, cartTotal, clearCart } = useCart();
+  const { cart, cartTotal } = useCart();
   const [paymentMethod, setPaymentMethod] = useState('card');
 
   // Obtener información del tipo de pedido
@@ -31,24 +31,40 @@ export default function CheckoutPage() {
     // - tipo_pedido (mesa_id o domicilio_id)
     // - carrito con productos
     // - venta final
-    
+
     const successParams = new URLSearchParams();
-    if (tipo) successParams.set('tipo', tipo);
-    if (id) successParams.set('id', id);
-    if (numero) successParams.set('numero', numero);
-    if (clienteId) successParams.set('clienteId', clienteId);
+    if (tipo) {
+      successParams.set('tipo', tipo);
+    }
+    if (id) {
+      successParams.set('id', id);
+    }
+    if (numero) {
+      successParams.set('numero', numero);
+    }
+    if (clienteId) {
+      successParams.set('clienteId', clienteId);
+    }
     successParams.set('metodo', paymentMethod);
-    
+
     router.push(`/pos/success?${successParams.toString()}`);
   };
 
   // Construir URL de regreso al POS con parámetros
   const getPosUrl = () => {
     const params = new URLSearchParams();
-    if (tipo) params.set('tipo', tipo);
-    if (id) params.set('id', id);
-    if (numero) params.set('numero', numero);
-    if (clienteId) params.set('clienteId', clienteId);
+    if (tipo) {
+      params.set('tipo', tipo);
+    }
+    if (id) {
+      params.set('id', id);
+    }
+    if (numero) {
+      params.set('numero', numero);
+    }
+    if (clienteId) {
+      params.set('clienteId', clienteId);
+    }
     return `/pos?${params.toString()}`;
   };
 
