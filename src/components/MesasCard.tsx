@@ -5,9 +5,11 @@ import Link from 'next/link';
 
 type EstadoVisual = 'disponible' | 'con-pedido' | 'ocupada';
 
+const EMPTY_ARRAY: number[] = [];
+
 export function MesasCard({
   mesas,
-  mesasConCarrito = [],
+  mesasConCarrito = EMPTY_ARRAY,
 }: {
   mesas: Mesa[];
   mesasConCarrito?: number[];

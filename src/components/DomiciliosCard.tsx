@@ -5,9 +5,11 @@ import Link from 'next/link';
 
 type EstadoVisual = 'disponible' | 'con-pedido';
 
+const EMPTY_ARRAY: number[] = [];
+
 export function DomiciliosCard({
   domicilios,
-  domiciliosConCarrito = [],
+  domiciliosConCarrito = EMPTY_ARRAY,
 }: {
   domicilios: Domicilio[];
   domiciliosConCarrito?: number[];
