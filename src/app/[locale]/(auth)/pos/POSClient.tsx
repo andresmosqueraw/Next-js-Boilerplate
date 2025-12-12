@@ -1,6 +1,7 @@
 'use client';
 
 import type { Product } from './context/cart-context';
+import type { CategoriaConSlug } from '@/services/producto.service';
 import { MapPin, Search, Table } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -9,7 +10,15 @@ import CategorySidebar from '@/components/category-sidebar';
 import ProductGrid from '@/components/product-grid';
 import { Input } from '@/components/ui/input';
 
-export function POSClient({ productos }: { productos: Product[] }) {
+const EMPTY_CATEGORIAS: CategoriaConSlug[] = [];
+
+export function POSClient({
+  productos,
+  categorias = EMPTY_CATEGORIAS,
+}: {
+  productos: Product[];
+  categorias?: CategoriaConSlug[];
+}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const searchParams = useSearchParams();
@@ -22,7 +31,11 @@ export function POSClient({ productos }: { productos: Product[] }) {
 
   return (
     <div className="flex h-screen bg-background">
-      <CategorySidebar selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
+      <CategorySidebar
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+        categorias={categorias}
+      />
 
       <main className="flex h-screen flex-1 flex-col overflow-hidden">
         <div className="sticky top-0 z-10 border-b bg-background p-4">

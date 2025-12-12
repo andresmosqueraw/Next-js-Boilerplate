@@ -32,6 +32,13 @@ export type Restaurante = {
   creado_en: string;
 };
 
+export type Categoria = {
+  id: number;
+  nombre: string;
+  descripcion: string | null;
+  orden: number;
+};
+
 export type TipoPedido = {
   id: number;
   mesa_id: number | null;

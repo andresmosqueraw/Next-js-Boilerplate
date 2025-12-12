@@ -1,4 +1,4 @@
-import { getProductosByRestaurante } from '@/services/producto.service';
+import { getCategoriasConSlug, getProductosByRestaurante } from '@/services/producto.service';
 import { POSClient } from './POSClient';
 
 export default async function POSPage({
@@ -9,10 +9,13 @@ export default async function POSPage({
   const params = await searchParams;
   const restauranteId = params.restauranteId;
 
-  // Obtener productos del restaurante
-  const productos = restauranteId
-    ? await getProductosByRestaurante(Number(restauranteId))
-    : [];
+  // Obtener productos y categorías del restaurante
+  const [productos, categorias] = restauranteId
+    ? await Promise.all([
+        getProductosByRestaurante(Number(restauranteId)),
+        getCategoriasConSlug(),
+      ])
+    : [[], []];
 
   if (!restauranteId) {
     return (
@@ -40,5 +43,5 @@ export default async function POSPage({
     );
   }
 
-  return <POSClient productos={productos} />;
+  return <POSClient productos={productos} categorias={categorias} />;
 }

@@ -1,4 +1,5 @@
 import type { Product } from '@/app/[locale]/(auth)/pos/context/cart-context';
+import type { Categoria } from '@/types/database';
 import { createClient } from '@/libs/supabase/server';
 
 // Imágenes disponibles para asignar aleatoriamente
@@ -29,35 +30,29 @@ function asignarImagenAProducto(productoId: number): string {
 }
 
 /**
- * Determina la categoría del producto basándose en su nombre
+ * Mapea el nombre de categoría de Supabase a un slug usado en el frontend
  */
-function determinarCategoria(nombre: string): string {
-  const nombreLower = nombre.toLowerCase();
+function mapearNombreCategoriaASlug(nombreCategoria: string): string {
+  const nombreLower = nombreCategoria.toLowerCase();
 
-  if (nombreLower.includes('burger') || nombreLower.includes('hamburguesa')
-    || nombreLower.includes('pizza') || nombreLower.includes('salad')
-    || nombreLower.includes('ensalada') || nombreLower.includes('wings')
-    || nombreLower.includes('alitas') || nombreLower.includes('fries')
-    || nombreLower.includes('papas')) {
+  // Mapeo directo de nombres comunes
+  if (nombreLower === 'comida' || nombreLower === 'food'
+    || nombreLower === 'platos' || nombreLower === 'entradas') {
     return 'food';
   }
 
-  if (nombreLower.includes('cake') || nombreLower.includes('pastel')
-    || nombreLower.includes('ice cream') || nombreLower.includes('helado')
-    || nombreLower.includes('pie') || nombreLower.includes('brownie')
-    || nombreLower.includes('cheese')) {
-    return 'desserts';
-  }
-
-  if (nombreLower.includes('cola') || nombreLower.includes('coffee')
-    || nombreLower.includes('café') || nombreLower.includes('tea')
-    || nombreLower.includes('té') || nombreLower.includes('juice')
-    || nombreLower.includes('jugo') || nombreLower.includes('water')
-    || nombreLower.includes('agua') || nombreLower.includes('latte')) {
+  if (nombreLower === 'bebidas' || nombreLower === 'drinks'
+    || nombreLower === 'refrescos') {
     return 'drinks';
   }
 
-  return 'food'; // Default
+  if (nombreLower === 'postres' || nombreLower === 'desserts'
+    || nombreLower === 'dulces') {
+    return 'desserts';
+  }
+
+  // Por defecto, crear slug (lowercase, sin espacios)
+  return nombreCategoria.toLowerCase().replace(/\s+/g, '-');
 }
 
 /**
@@ -77,7 +72,11 @@ export async function getProductosByRestaurante(
         id,
         nombre,
         descripcion,
-        precio
+        precio,
+        categoria_id,
+        categoria:categoria_id (
+          nombre
+        )
       )
     `)
     .eq('restaurante_id', restauranteId)
@@ -104,12 +103,24 @@ export async function getProductosByRestaurante(
         throw new Error('Producto no encontrado después del filtro');
       }
 
+      // Obtener nombre de categoría (puede ser objeto o string)
+      const categoria = producto.categoria;
+      let nombreCategoria = 'food'; // default
+
+      if (categoria) {
+        if (Array.isArray(categoria) && categoria[0] && typeof categoria[0] === 'object' && 'nombre' in categoria[0]) {
+          nombreCategoria = String(categoria[0].nombre);
+        } else if (typeof categoria === 'object' && 'nombre' in categoria && typeof categoria.nombre === 'string') {
+          nombreCategoria = categoria.nombre;
+        }
+      }
+
       return {
         id: producto.id,
         name: producto.nombre,
         price: Number(producto.precio),
         image: asignarImagenAProducto(producto.id),
-        category: determinarCategoria(producto.nombre),
+        category: mapearNombreCategoriaASlug(nombreCategoria),
       };
     });
 
@@ -169,4 +180,43 @@ export async function mapearProductosARestaurante(
   });
 
   return mapa;
+}
+
+/**
+ * Obtiene todas las categorías ordenadas
+ */
+export async function getCategorias(): Promise<Categoria[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('categoria')
+    .select('*')
+    .order('orden', { ascending: true })
+    .order('nombre', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching categorias:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Tipo para categorías con slug para el frontend
+ */
+export type CategoriaConSlug = Categoria & {
+  slug: string;
+};
+
+/**
+ * Obtiene categorías y agrega slug para el frontend
+ */
+export async function getCategoriasConSlug(): Promise<CategoriaConSlug[]> {
+  const categorias = await getCategorias();
+
+  return categorias.map(cat => ({
+    ...cat,
+    slug: mapearNombreCategoriaASlug(cat.nombre),
+  }));
 }

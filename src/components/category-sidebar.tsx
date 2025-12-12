@@ -2,14 +2,19 @@
 
 import type React from 'react';
 
-import { ArrowLeft, Coffee, IceCream, LayoutGrid, Utensils } from 'lucide-react';
+import type { CategoriaConSlug } from '@/services/producto.service';
+import { ArrowLeft, Coffee, IceCream, LayoutGrid, ShoppingBag, Utensils } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+const EMPTY_CATEGORIAS: CategoriaConSlug[] = [];
 
 type CategorySidebarProps = {
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
+  categorias?: CategoriaConSlug[];
 };
 
 type CategoryItem = {
@@ -18,7 +23,8 @@ type CategoryItem = {
   icon: React.ElementType;
 };
 
-const categories: CategoryItem[] = [
+// Categorías por defecto (fallback)
+const categoriasEstaticas: CategoryItem[] = [
   {
     id: 'all',
     name: 'All Products',
@@ -41,8 +47,52 @@ const categories: CategoryItem[] = [
   },
 ];
 
-export default function CategorySidebar({ selectedCategory, onSelectCategory }: CategorySidebarProps) {
+// Mapa de iconos por slug de categoría
+const ICONOS_POR_CATEGORIA: Record<string, React.ElementType> = {
+  all: LayoutGrid,
+  food: Utensils,
+  comida: Utensils,
+  drinks: Coffee,
+  bebidas: Coffee,
+  desserts: IceCream,
+  postres: IceCream,
+  default: ShoppingBag,
+};
+
+export default function CategorySidebar({
+  selectedCategory,
+  onSelectCategory,
+  categorias = EMPTY_CATEGORIAS,
+}: CategorySidebarProps) {
   const router = useRouter();
+
+  // Construir lista de categorías dinámicamente
+  const categoriasMostradas = useMemo(() => {
+    if (categorias.length === 0) {
+      return categoriasEstaticas;
+    }
+
+    // Agregar "All Products" al inicio
+    const todasLasCategorias: CategoryItem[] = [
+      {
+        id: 'all',
+        name: 'Todos',
+        icon: LayoutGrid,
+      },
+    ];
+
+    // Agregar categorías de Supabase
+    categorias.forEach((cat) => {
+      const icon = ICONOS_POR_CATEGORIA[cat.slug] || ICONOS_POR_CATEGORIA.default || ShoppingBag;
+      todasLasCategorias.push({
+        id: cat.slug,
+        name: cat.nombre,
+        icon,
+      });
+    });
+
+    return todasLasCategorias;
+  }, [categorias]);
 
   const handleBackToDashboard = () => {
     router.push('/dashboard');
@@ -58,9 +108,9 @@ export default function CategorySidebar({ selectedCategory, onSelectCategory }: 
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Dashboard
       </Button>
-      <h2 className="mb-4 text-lg font-semibold">Categories</h2>
+      <h2 className="mb-4 text-lg font-semibold">Categorías</h2>
       <div className="grid gap-3">
-        {categories.map((category) => {
+        {categoriasMostradas.map((category) => {
           const Icon = category.icon;
           return (
             <Button
