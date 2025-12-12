@@ -36,6 +36,7 @@ export async function getMesas(): Promise<Mesa[]> {
 
 export type DomicilioConRestaurantes = Domicilio & {
   restaurantes_ids: number[];
+  cliente_nombre?: string;
 };
 
 export async function getDomicilios(): Promise<Domicilio[]> {
@@ -57,10 +58,16 @@ export async function getDomicilios(): Promise<Domicilio[]> {
 export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaurantes[]> {
   const supabase = await createClient();
 
-  // Paso 1: Obtener todos los domicilios
+  // Paso 1: Obtener todos los domicilios con información del cliente
   const { data: domicilios, error: domiciliosError } = await supabase
     .from('domicilio')
-    .select('*')
+    .select(`
+      *,
+      cliente:cliente_id (
+        id,
+        nombre
+      )
+    `)
     .order('creado_en', { ascending: false });
 
   if (domiciliosError) {
@@ -122,9 +129,17 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
   // Paso 5: Combinar la información
   const domiciliosConRestaurantes = domicilios.map((domicilio) => {
     const restaurantesIds = domicilioRestaurantesMap.get(domicilio.id) || new Set();
+    // Extraer el nombre del cliente (Supabase retorna el objeto cliente anidado)
+    const cliente = (domicilio as any).cliente;
+    const clienteNombre = cliente?.nombre || undefined;
+    
+    // Remover el objeto cliente del domicilio antes de retornar
+    const { cliente: _, ...domicilioSinCliente } = domicilio as any;
+    
     return {
-      ...domicilio,
+      ...domicilioSinCliente,
       restaurantes_ids: Array.from(restaurantesIds),
+      cliente_nombre: clienteNombre,
     } as DomicilioConRestaurantes;
   });
 

@@ -39,6 +39,7 @@ export function DomiciliosCard({
       domicilio.direccion.toLowerCase().includes(filterLower) ||
       domicilio.ciudad?.toLowerCase().includes(filterLower) ||
       domicilio.referencia?.toLowerCase().includes(filterLower) ||
+      domicilio.cliente_nombre?.toLowerCase().includes(filterLower) ||
       domicilio.cliente_id.toString().includes(filterLower),
     );
   }, [domicilios, filter]);
@@ -107,7 +108,7 @@ export function DomiciliosCard({
                         <span className="text-xs font-semibold text-muted-foreground">Referencia</span>
                       </th>
                       <th className="px-3 py-2 text-left">
-                        <span className="text-xs font-semibold text-muted-foreground">Cliente ID</span>
+                        <span className="text-xs font-semibold text-muted-foreground">Cliente</span>
                       </th>
                       <th className="px-3 py-2 text-left">
                         <span className="text-xs font-semibold text-muted-foreground">Estado</span>
@@ -152,8 +153,8 @@ export function DomiciliosCard({
                             </span>
                           </td>
                           <td className="px-3 py-2">
-                            <span className="text-sm text-muted-foreground">
-                              {domicilio.cliente_id}
+                            <span className="text-sm font-medium text-foreground">
+                              {domicilio.cliente_nombre || `Cliente #${domicilio.cliente_id}`}
                             </span>
                           </td>
                           <td className="px-3 py-2">
