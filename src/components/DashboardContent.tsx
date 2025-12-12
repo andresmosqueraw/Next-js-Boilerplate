@@ -2,7 +2,9 @@
 
 import type { DomicilioConRestaurantes } from '@/services/restaurante.service';
 import type { Mesa } from '@/types/database';
+import { useRouter } from 'next/navigation';
 import * as React from 'react';
+import { DashboardRefresh } from '@/components/DashboardRefresh';
 import { DomiciliosCard } from '@/components/DomiciliosCard';
 import { MesasCard } from '@/components/MesasCard';
 import { useRestaurant } from '@/contexts/RestaurantContext';
@@ -19,6 +21,22 @@ export function DashboardContent({
   domiciliosConCarrito: number[];
 }) {
   const { selectedRestaurant } = useRestaurant();
+  const router = useRouter();
+
+  // Auto-refresh cuando la página se vuelve visible (usuario regresa del POS)
+  React.useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        router.refresh();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [router]);
 
   // Filtrar mesas por restaurante seleccionado
   const mesasFiltradas = React.useMemo(() => {
@@ -43,6 +61,11 @@ export function DashboardContent({
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Mesas y Domicilios</h1>
+        <DashboardRefresh />
+      </div>
+
       {selectedRestaurant && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm font-medium text-blue-900">
