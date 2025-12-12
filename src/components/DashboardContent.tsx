@@ -4,7 +4,6 @@ import type { DomicilioConRestaurantes } from '@/services/restaurante.service';
 import type { Mesa } from '@/types/database';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
-import { DashboardRefresh } from '@/components/DashboardRefresh';
 import { DomiciliosCard } from '@/components/DomiciliosCard';
 import { MesasCard } from '@/components/MesasCard';
 import { useRestaurant } from '@/contexts/RestaurantContext';
@@ -64,7 +63,6 @@ export function DashboardContent({
     <div className="flex flex-1 flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mesas y Domicilios</h1>
-        <DashboardRefresh />
       </div>
 
       {selectedRestaurant && (
