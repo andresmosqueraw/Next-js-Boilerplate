@@ -32,13 +32,25 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
   const productosSincronizados = useRef<ProductoSincronizado[]>([]);
 
   useEffect(() => {
+    console.warn('🔄 [CartSync] Estado del carrito:', {
+      productosEnCarrito: cart.length,
+      carritoId,
+      tipo,
+      mesaDomicilioId: id,
+      restauranteId,
+      isCreating: isCreating.current,
+      productosSincronizados: productosSincronizados.current.length,
+    });
+
     // Solo sincronizar si hay productos en el carrito y tenemos tipo/id/restauranteId
     if (cart.length === 0 || !tipo || !id || !restauranteId) {
+      console.warn('⏸️ [CartSync] Sincronización pausada - faltan datos o carrito vacío');
       return;
     }
 
     // Evitar múltiples llamadas simultáneas
     if (isCreating.current) {
+      console.warn('⏸️ [CartSync] Sincronización ya en progreso, esperando...');
       return;
     }
 
@@ -67,11 +79,17 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
             })),
           };
 
-          console.warn('🛒 Creando carrito con datos:', {
+          console.warn('🛒 [CartSync] PASO 1: Creando carrito nuevo en Supabase:', {
             tipo,
-            id,
+            mesaDomicilioId: id,
             restauranteId,
-            productos: cart.length,
+            productosIniciales: cart.length,
+            detalleProductos: cart.map(p => ({
+              id: p.id,
+              nombre: p.name,
+              cantidad: p.quantity,
+              precio: p.price,
+            })),
           });
 
           const response = await fetch('/api/carrito/crear', {
@@ -79,6 +97,19 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tipoPedido, carritoData }),
           });
+
+          console.warn(`📡 [CartSync] Respuesta del servidor: ${response.status} ${response.statusText}`);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [CartSync] Error HTTP al crear carrito:', {
+              status: response.status,
+              url: response.url,
+              errorText,
+            });
+            isCreating.current = false;
+            return;
+          }
 
           const data = await response.json();
 
@@ -89,12 +120,14 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
               id: item.id,
               quantity: item.quantity,
             }));
-            console.warn('✅ Carrito creado:', {
+            console.warn('✅ [CartSync] PASO 2: Carrito creado exitosamente en Supabase:', {
               carritoId: data.carritoId,
               productos: cart.length,
+              estadoMesa: tipo === 'mesa' ? 'DEBERÍA ESTAR OCUPADA AHORA' : 'N/A',
+              siguientePaso: 'Dashboard debe recargar y mostrar mesa como OCUPADA',
             });
           } else {
-            console.error('❌ Error creando carrito:', data.error);
+            console.error('❌ [CartSync] Error en respuesta al crear carrito:', data.error);
           }
 
           isCreating.current = false;
@@ -118,13 +151,26 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
 
           isCreating.current = true;
 
-          console.warn('➕ Agregando productos al carrito:', {
+          console.warn('➕ [CartSync] CASO 2: Agregando productos nuevos al carrito existente:', {
             carritoId,
-            productosNuevos: productosNuevos.length,
+            productosEnCarritoTotal: cart.length,
+            productosNuevosAgregar: productosNuevos.length,
+            detalleNuevos: productosNuevos.map(p => ({
+              id: p.id,
+              nombre: p.name,
+              cantidad: p.quantity,
+            })),
           });
 
           // Agregar cada producto nuevo
           for (const producto of productosNuevos) {
+            console.warn(`➕ [CartSync] Agregando producto individual:`, {
+              carritoId,
+              productoId: producto.id,
+              nombre: producto.name,
+              cantidad: producto.quantity,
+            });
+
             const response = await fetch('/api/carrito/agregar-producto', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -136,6 +182,18 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
                 precioUnitario: producto.price,
               }),
             });
+
+            console.warn(`📡 [CartSync] Respuesta agregar-producto: ${response.status}`);
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error('❌ [CartSync] Error HTTP al agregar producto:', {
+                status: response.status,
+                productoId: producto.id,
+                errorText,
+              });
+              continue;
+            }
 
             const data = await response.json();
 
@@ -152,14 +210,21 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
                   quantity: producto.quantity,
                 });
               }
-              console.warn('✅ Producto agregado:', {
+              console.warn('✅ [CartSync] Producto agregado exitosamente:', {
                 productoId: producto.id,
+                nombre: producto.name,
                 cantidad: producto.quantity,
+                productosSincronizadosTotal: productosSincronizados.current.length,
               });
             } else {
-              console.error('❌ Error agregando producto:', data.error);
+              console.error('❌ [CartSync] Error en respuesta al agregar producto:', data.error);
             }
           }
+
+          console.warn('✅ [CartSync] Finalizada actualización del carrito:', {
+            carritoId,
+            productosSincronizados: productosSincronizados.current.length,
+          });
 
           isCreating.current = false;
         }

@@ -223,33 +223,47 @@ export async function getDomiciliosByRestaurante(restauranteId: number): Promise
 export async function getMesasConCarritoActivo(restauranteId: number): Promise<number[]> {
   const supabase = await createClient();
 
-  console.warn('🔍 Buscando mesas con carrito activo para restaurante:', restauranteId);
+  console.warn('🔍 [getMesasConCarritoActivo] INICIO - Buscando mesas con carrito activo:', {
+    restauranteId,
+  });
 
   // Paso 1: Obtener carritos activos del restaurante
+  console.warn('📝 [getMesasConCarritoActivo] PASO 1: Consultando carritos activos en Supabase...');
   const { data: carritos, error: carritosError } = await supabase
     .from('carrito')
-    .select('id, tipo_pedido_id')
+    .select('id, tipo_pedido_id, estado')
     .eq('restaurante_id', restauranteId)
     .in('estado', ['pendiente', 'en preparación']);
 
-  console.warn('📦 Carritos activos encontrados:', carritos?.length || 0, carritos);
+  console.warn('📦 [getMesasConCarritoActivo] Carritos encontrados:', {
+    count: carritos?.length || 0,
+    carritos: carritos?.map(c => ({
+      id: c.id,
+      tipoPedidoId: c.tipo_pedido_id,
+      estado: c.estado,
+    })),
+  });
 
   if (carritosError || !carritos || carritos.length === 0) {
-    console.warn('⚠️ No hay carritos activos o hubo error:', carritosError);
+    console.warn('⚠️ [getMesasConCarritoActivo] No hay carritos activos o hubo error:', carritosError);
     return [];
   }
 
   // Paso 2: Verificar cuáles tienen productos
+  console.warn('📝 [getMesasConCarritoActivo] PASO 2: Verificando productos en carritos...');
   const carritoIds = carritos.map(c => c.id);
   const { data: productos, error: productosError } = await supabase
     .from('carrito_producto')
-    .select('carrito_id')
+    .select('carrito_id, cantidad')
     .in('carrito_id', carritoIds);
 
-  console.warn('🛒 Productos en carritos:', productos?.length || 0, productos);
+  console.warn('🛒 [getMesasConCarritoActivo] Productos encontrados:', {
+    count: productos?.length || 0,
+    detalleProductos: productos,
+  });
 
   if (productosError || !productos || productos.length === 0) {
-    console.warn('⚠️ No hay productos en carritos o hubo error:', productosError);
+    console.warn('⚠️ [getMesasConCarritoActivo] No hay productos en carritos o hubo error:', productosError);
     return [];
   }
 
@@ -257,22 +271,30 @@ export async function getMesasConCarritoActivo(restauranteId: number): Promise<n
   const carritosConProductos = new Set(productos.map(p => p.carrito_id));
   const carritosActivos = carritos.filter(c => carritosConProductos.has(c.id));
 
-  console.warn('✅ Carritos con productos:', carritosActivos.length, carritosActivos);
+  console.warn('✅ [getMesasConCarritoActivo] Carritos activos con productos:', {
+    count: carritosActivos.length,
+    carritoIds: carritosActivos.map(c => c.id),
+  });
 
   // Paso 3: Obtener los tipo_pedido_ids
+  console.warn('📝 [getMesasConCarritoActivo] PASO 3: Obteniendo tipo_pedido_ids...');
   const tipoPedidoIds = carritosActivos.map(c => c.tipo_pedido_id);
 
   // Paso 4: Obtener las mesa_ids
+  console.warn('📝 [getMesasConCarritoActivo] PASO 4: Buscando mesa_ids en tipo_pedido...');
   const { data: tiposPedido, error: tiposError } = await supabase
     .from('tipo_pedido')
     .select('mesa_id')
     .in('id', tipoPedidoIds)
     .not('mesa_id', 'is', null);
 
-  console.warn('🍽️ Tipo pedidos con mesa_id:', tiposPedido?.length || 0, tiposPedido);
+  console.warn('🍽️ [getMesasConCarritoActivo] Tipos pedidos encontrados:', {
+    count: tiposPedido?.length || 0,
+    detalles: tiposPedido,
+  });
 
   if (tiposError || !tiposPedido) {
-    console.warn('⚠️ Error obteniendo tipo_pedido:', tiposError);
+    console.warn('⚠️ [getMesasConCarritoActivo] Error obteniendo tipo_pedido:', tiposError);
     return [];
   }
 
@@ -280,7 +302,13 @@ export async function getMesasConCarritoActivo(restauranteId: number): Promise<n
     .map(tp => tp.mesa_id)
     .filter((id): id is number => id !== null);
 
-  console.warn('🎯 IDs de mesas con carrito activo:', mesaIds);
+  console.warn('🎉 [getMesasConCarritoActivo] RESULTADO FINAL - Mesas con carrito activo:', {
+    count: mesaIds.length,
+    mesaIds,
+    interpretacion: mesaIds.length > 0
+      ? 'Estas mesas DEBEN mostrarse como OCUPADAS en el dashboard'
+      : 'No hay mesas ocupadas - todas DISPONIBLES',
+  });
 
   return mesaIds;
 }

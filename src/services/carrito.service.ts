@@ -28,15 +28,28 @@ export async function crearCarrito(
 ) {
   const supabase = await createClient();
 
+  console.warn('🔨 [Service crearCarrito] INICIO - Creando carrito:', {
+    tipo: tipoPedido.tipo,
+    mesaId: tipoPedido.mesaId,
+    domicilioId: tipoPedido.domicilioId,
+    restauranteId: carritoData.restauranteId,
+    productosCount: carritoData.productos.length,
+  });
+
   try {
     // Primero, mapear los producto_id a producto_restaurante_id
     const productosIds = carritoData.productos.map(p => p.productoId);
+    console.warn('🔍 [Service crearCarrito] Mapeando productos a restaurante:', {
+      productosIds,
+      restauranteId: carritoData.restauranteId,
+    });
+
     const mapaProductos = await mapearProductosARestaurante(
       productosIds,
       carritoData.restauranteId,
     );
 
-    console.warn('🗺️ Mapa de productos:', Object.fromEntries(mapaProductos));
+    console.warn('🗺️ [Service crearCarrito] Mapa de productos obtenido:', Object.fromEntries(mapaProductos));
 
     // Verificar que todos los productos tengan un producto_restaurante_id válido
     const productosInvalidos = carritoData.productos.filter(
@@ -53,6 +66,7 @@ export async function crearCarrito(
     }
 
     // Paso 1: Crear tipo_pedido
+    console.warn('📝 [Service crearCarrito] PASO 1: Creando tipo_pedido en Supabase...');
     const { data: tipoPedidoCreado, error: errorTipoPedido } = await supabase
       .from('tipo_pedido')
       .insert({
@@ -63,11 +77,16 @@ export async function crearCarrito(
       .single();
 
     if (errorTipoPedido || !tipoPedidoCreado) {
-      console.error('Error creating tipo_pedido:', errorTipoPedido);
+      console.error('❌ [Service crearCarrito] Error creating tipo_pedido:', errorTipoPedido);
       throw new Error('Failed to create tipo_pedido');
     }
 
+    console.warn('✅ [Service crearCarrito] tipo_pedido creado:', {
+      tipoPedidoId: tipoPedidoCreado.id,
+    });
+
     // Paso 2: Crear carrito
+    console.warn('📝 [Service crearCarrito] PASO 2: Creando carrito en Supabase...');
     const { data: carritoCreado, error: errorCarrito } = await supabase
       .from('carrito')
       .insert({
@@ -80,11 +99,17 @@ export async function crearCarrito(
       .single();
 
     if (errorCarrito || !carritoCreado) {
-      console.error('Error creating carrito:', errorCarrito);
+      console.error('❌ [Service crearCarrito] Error creating carrito:', errorCarrito);
       throw new Error('Failed to create carrito');
     }
 
+    console.warn('✅ [Service crearCarrito] Carrito creado:', {
+      carritoId: carritoCreado.id,
+      restauranteId: carritoCreado.restaurante_id,
+    });
+
     // Paso 3: Crear carrito_producto para cada producto usando el mapa
+    console.warn('📝 [Service crearCarrito] PASO 3: Creando carrito_producto...');
     const productosParaInsertar = carritoData.productos.map(prod => ({
       carrito_id: carritoCreado.id,
       producto_restaurante_id: mapaProductos.get(prod.productoId)!,
@@ -93,29 +118,48 @@ export async function crearCarrito(
       subtotal: prod.subtotal,
     }));
 
-    console.warn('📦 Insertando productos:', productosParaInsertar);
+    console.warn('📦 [Service crearCarrito] Insertando productos:', {
+      carritoId: carritoCreado.id,
+      productosCount: productosParaInsertar.length,
+      productos: productosParaInsertar,
+    });
 
     const { error: errorProductos } = await supabase
       .from('carrito_producto')
       .insert(productosParaInsertar);
 
     if (errorProductos) {
-      console.error('Error creating carrito_producto:', errorProductos);
+      console.error('❌ [Service crearCarrito] Error creating carrito_producto:', errorProductos);
       throw new Error('Failed to create carrito_producto');
     }
 
+    console.warn('✅ [Service crearCarrito] Productos insertados exitosamente');
+
     // Paso 4: Si es mesa, actualizar estado a 'ocupada'
     if (tipoPedido.tipo === 'mesa' && tipoPedido.mesaId) {
+      console.warn('📝 [Service crearCarrito] PASO 4: Actualizando mesa a OCUPADA:', {
+        mesaId: tipoPedido.mesaId,
+      });
+
       const { error: errorMesa } = await supabase
         .from('mesa')
         .update({ estado: 'ocupada' })
         .eq('id', tipoPedido.mesaId);
 
       if (errorMesa) {
-        console.error('Error updating mesa estado:', errorMesa);
+        console.error('❌ [Service crearCarrito] Error updating mesa estado:', errorMesa);
         // No lanzar error, el carrito ya está creado
+      } else {
+        console.warn('✅ [Service crearCarrito] Mesa actualizada a OCUPADA exitosamente');
       }
     }
+
+    console.warn('🎉 [Service crearCarrito] PROCESO COMPLETADO EXITOSAMENTE:', {
+      carritoId: carritoCreado.id,
+      tipoPedidoId: tipoPedidoCreado.id,
+      mesaActualizada: tipoPedido.tipo === 'mesa' ? 'SÍ - OCUPADA' : 'N/A',
+      siguientePaso: 'Dashboard debería revalidar y mostrar mesa como OCUPADA',
+    });
 
     return {
       success: true,
@@ -123,7 +167,7 @@ export async function crearCarrito(
       tipoPedidoId: tipoPedidoCreado.id,
     };
   } catch (error) {
-    console.error('Error in crearCarrito:', error);
+    console.error('❌ [Service crearCarrito] Error inesperado:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
