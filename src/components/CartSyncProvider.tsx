@@ -10,9 +10,10 @@ type ProductoSincronizado = {
 };
 
 /**
- * Componente que sincroniza el carrito del localStorage con Supabase
+ * Componente que sincroniza el carrito con Supabase
  * Crea tipo_pedido, carrito y carrito_producto cuando se agrega el primer producto
  * Agrega productos subsecuentes usando la API de agregar-producto
+ * NOTA: Todo el estado del carrito se maneja en Supabase, no se usa localStorage
  */
 export function CartSyncProvider({ children }: { children: React.ReactNode }) {
   const { cart } = useCart();

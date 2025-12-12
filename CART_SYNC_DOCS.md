@@ -2,7 +2,7 @@
 
 ## 📋 Resumen
 
-Este sistema sincroniza automáticamente el carrito de compras (localStorage) con la base de datos de Supabase cuando un usuario agrega productos en el POS.
+Este sistema gestiona el carrito de compras completamente en Supabase. Todo el estado del carrito se almacena y sincroniza con la base de datos de Supabase cuando un usuario agrega productos en el POS. **NO se usa localStorage** - todo el estado se maneja en Supabase.
 
 ## 🎯 Flujo de Trabajo
 
@@ -15,8 +15,9 @@ Este sistema sincroniza automáticamente el carrito de compras (localStorage) co
 Cuando se agrega el primer producto al carrito, el `CartSyncProvider` detecta el cambio y ejecuta:
 
 #### a) Obtener el `restaurante_id`
-- Si es **mesa**: llama a `/api/mesa/[id]` para obtener `restaurante_id`
-- Si es **domicilio**: podría obtenerse del cliente (TODO)
+- El `restaurante_id` se obtiene directamente de los parámetros de la URL (`restauranteId`)
+- Se pasa desde el dashboard cuando se hace clic en una mesa o domicilio
+- No se necesita hacer llamadas adicionales a la API
 
 #### b) Crear `tipo_pedido`
 ```sql
@@ -140,9 +141,10 @@ venta
    - Reintentos en caso de fallos
    - Notificaciones al usuario
 
-6. **Sincronización bidireccional**
-   - Cargar carrito existente al entrar al POS
-   - Actualizar localStorage si el carrito cambió en Supabase
+6. **Carga del carrito desde Supabase**
+   - Cargar carrito existente al entrar al POS desde Supabase
+   - El estado del carrito siempre se mantiene sincronizado con Supabase
+   - No se usa localStorage - todo se almacena en Supabase
 
 ## 🧪 Cómo Probar
 
