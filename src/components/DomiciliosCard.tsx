@@ -2,7 +2,7 @@
 
 import type { DomicilioConRestaurantes } from '@/services/restaurante.service';
 import { Search } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
 
@@ -18,6 +18,7 @@ export function DomiciliosCard({
   domiciliosConCarrito?: number[];
 }) {
   const [filter, setFilter] = React.useState('');
+  const router = useRouter();
 
   // Función para determinar el estado visual de un domicilio
   const getEstadoVisual = (domicilio: DomicilioConRestaurantes): EstadoVisual => {
@@ -52,6 +53,10 @@ export function DomiciliosCard({
     return domicilio.restaurantes_ids && domicilio.restaurantes_ids.length > 0
       ? domicilio.restaurantes_ids[0]!
       : 1;
+  };
+
+  const handleRowClick = (domicilio: DomicilioConRestaurantes) => {
+    router.push(`/pos?tipo=domicilio&id=${domicilio.id}&clienteId=${domicilio.cliente_id}&restauranteId=${getRestauranteId(domicilio)}`);
   };
 
   return (
@@ -132,15 +137,13 @@ export function DomiciliosCard({
                       return (
                         <tr
                           key={domicilio.id}
-                          className="border-b border-border/50 transition-colors hover:bg-muted/20"
+                          onClick={() => handleRowClick(domicilio)}
+                          className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/20"
                         >
                           <td className="px-3 py-2">
-                            <Link
-                              href={`/pos?tipo=domicilio&id=${domicilio.id}&clienteId=${domicilio.cliente_id}&restauranteId=${getRestauranteId(domicilio)}`}
-                              className="cursor-pointer text-sm font-medium text-foreground hover:text-primary"
-                            >
+                            <span className="text-sm font-medium text-foreground">
                               {domicilio.direccion}
-                            </Link>
+                            </span>
                           </td>
                           <td className="px-3 py-2">
                             <span className="text-sm text-muted-foreground">

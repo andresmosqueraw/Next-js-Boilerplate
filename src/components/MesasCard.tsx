@@ -2,7 +2,7 @@
 
 import type { Mesa } from '@/types/database';
 import { Search } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
 
@@ -69,6 +69,8 @@ export function MesasCard({
     return grupos;
   }, [mesasFiltradas]);
 
+  const router = useRouter();
+
   // Componente para renderizar una tabla de mesas
   const renderTablaMesas = (mesasGrupo: Mesa[], indiceGrupo: number) => {
     const coloresBadge = {
@@ -79,6 +81,10 @@ export function MesasCard({
     const textoEstado = {
       disponible: 'Disponible',
       ocupada: 'Ocupada',
+    };
+
+    const handleRowClick = (mesa: Mesa) => {
+      router.push(`/pos?tipo=mesa&id=${mesa.id}&numero=${mesa.numero_mesa}&restauranteId=${mesa.restaurante_id}`);
     };
 
     return (
@@ -105,17 +111,15 @@ export function MesasCard({
                 return (
                   <tr
                     key={mesa.id}
-                    className="border-b border-border/50 transition-colors hover:bg-muted/20"
+                    onClick={() => handleRowClick(mesa)}
+                    className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/20"
                   >
                     <td className="px-3 py-2">
-                      <Link
-                        href={`/pos?tipo=mesa&id=${mesa.id}&numero=${mesa.numero_mesa}&restauranteId=${mesa.restaurante_id}`}
-                        className="cursor-pointer text-sm font-medium text-foreground hover:text-primary"
-                      >
+                      <span className="text-sm font-medium text-foreground">
                         Mesa
                         {' '}
                         {mesa.numero_mesa}
-                      </Link>
+                      </span>
                     </td>
                     <td className="px-3 py-2">
                       <span className="text-sm text-muted-foreground">
