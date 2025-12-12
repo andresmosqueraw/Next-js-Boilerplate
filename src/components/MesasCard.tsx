@@ -3,7 +3,7 @@
 import type { Mesa } from '@/types/database';
 import Link from 'next/link';
 
-type EstadoVisual = 'disponible' | 'con-pedido' | 'ocupada';
+type EstadoVisual = 'disponible' | 'ocupada';
 
 const EMPTY_ARRAY: number[] = [];
 
@@ -16,20 +16,15 @@ export function MesasCard({
 }) {
   // Función para determinar el estado visual de una mesa
   const getEstadoVisual = (mesa: Mesa): EstadoVisual => {
-    // Si tiene carrito activo con productos, mostrar "con-pedido"
+    // Si tiene carrito activo con productos → Ocupada
     if (mesasConCarrito.includes(mesa.id)) {
-      return 'con-pedido';
+      return 'ocupada';
     }
-    // Si está disponible, mostrar "disponible"
-    if (mesa.estado === 'disponible') {
-      return 'disponible';
-    }
-    // Cualquier otro estado, mostrar "ocupada"
-    return 'ocupada';
+    // Si no tiene pedidos → Disponible
+    return 'disponible';
   };
 
   const mesasDisponibles = mesas.filter(m => getEstadoVisual(m) === 'disponible');
-  const mesasConPedido = mesas.filter(m => getEstadoVisual(m) === 'con-pedido');
   const mesasOcupadas = mesas.filter(m => getEstadoVisual(m) === 'ocupada');
 
   return (
@@ -41,11 +36,6 @@ export function MesasCard({
             {mesasDisponibles.length}
             {' '}
             Disponibles
-          </span>
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">
-            {mesasConPedido.length}
-            {' '}
-            Con pedido
           </span>
           <span className="rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-800">
             {mesasOcupadas.length}
@@ -68,21 +58,18 @@ export function MesasCard({
                   const estadoVisual = getEstadoVisual(mesa);
 
                   const coloresCard = {
-                    'disponible': 'border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100',
-                    'con-pedido': 'border-amber-200 bg-amber-50 hover:border-amber-300 hover:bg-amber-100',
-                    'ocupada': 'border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100',
+                    disponible: 'border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100',
+                    ocupada: 'border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100',
                   };
 
                   const coloresBadge = {
-                    'disponible': 'bg-green-200 text-green-800',
-                    'con-pedido': 'bg-amber-200 text-amber-800',
-                    'ocupada': 'bg-red-200 text-red-800',
+                    disponible: 'bg-green-200 text-green-800',
+                    ocupada: 'bg-red-200 text-red-800',
                   };
 
                   const textoEstado = {
-                    'disponible': 'Disponible',
-                    'con-pedido': 'Con pedido',
-                    'ocupada': 'Ocupada',
+                    disponible: 'Disponible',
+                    ocupada: 'Ocupada',
                   };
 
                   return (
