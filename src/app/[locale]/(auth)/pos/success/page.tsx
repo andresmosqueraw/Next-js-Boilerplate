@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Printer } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { useCart } from '../context/cart-context';
 
 export default function SuccessPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { cart, cartTotal, clearCart } = useCart();
 
   const tax = cartTotal * 0.1;
@@ -20,13 +21,21 @@ export default function SuccessPage() {
   useEffect(() => {
     // If there's no cart data, redirect to dashboard
     if (cart.length === 0) {
-      router.push('/dashboard');
+      const restauranteId = searchParams.get('restauranteId');
+      const dashboardUrl = restauranteId
+        ? `/dashboard?restauranteId=${restauranteId}`
+        : '/dashboard';
+      router.push(dashboardUrl);
     }
-  }, [cart, router]);
+  }, [cart, router, searchParams]);
 
   const handleBackToDashboard = () => {
     clearCart();
-    router.push('/dashboard');
+    const restauranteId = searchParams.get('restauranteId');
+    const dashboardUrl = restauranteId
+      ? `/dashboard?restauranteId=${restauranteId}`
+      : '/dashboard';
+    router.push(dashboardUrl);
   };
 
   const handlePrint = () => {

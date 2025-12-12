@@ -4,7 +4,7 @@ import type React from 'react';
 
 import type { CategoriaConSlug } from '@/services/producto.service';
 import { ArrowLeft, Coffee, IceCream, LayoutGrid, ShoppingBag, Utensils } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -65,6 +65,7 @@ export default function CategorySidebar({
   categorias = EMPTY_CATEGORIAS,
 }: CategorySidebarProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Construir lista de categorías dinámicamente
   const categoriasMostradas = useMemo(() => {
@@ -96,9 +97,17 @@ export default function CategorySidebar({
 
   const handleBackToDashboard = () => {
     console.warn('🔄 [CategorySidebar] Navegando a dashboard y refrescando datos...');
+    // Obtener restauranteId de la URL del POS para mantener el restaurante seleccionado
+    const restauranteId = searchParams.get('restauranteId');
+    
+    // Construir URL del dashboard con restauranteId si existe
+    const dashboardUrl = restauranteId
+      ? `/dashboard?restauranteId=${restauranteId}`
+      : '/dashboard';
+    
     // Navegar al dashboard - el revalidatePath del API ya invalidó el cache
     // pero hacemos refresh explícito para asegurar datos frescos
-    router.push('/dashboard');
+    router.push(dashboardUrl);
     router.refresh();
   };
 

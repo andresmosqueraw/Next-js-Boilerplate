@@ -15,6 +15,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { RestaurantProvider } from '@/contexts/RestaurantContext';
+import { RestaurantUrlSync } from '@/components/RestaurantUrlSync';
 import {
   getDomiciliosConCarritoActivo,
   getDomiciliosConRelaciones,
@@ -23,26 +24,40 @@ import {
   getRestaurantes,
 } from '@/services/restaurante.service';
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: { restauranteId?: string };
+}) {
   const [mesas, domicilios, restaurantes] = await Promise.all([
     getMesas(),
     getDomiciliosConRelaciones(),
     getRestaurantes(),
   ]);
 
-  // Seleccionar el primer restaurante como predeterminado
-  const primerRestaurante = restaurantes.length > 0 ? restaurantes[0] : undefined;
+  // Determinar qué restaurante usar: el de la URL o el primero por defecto
+  const restauranteIdFromUrl = searchParams?.restauranteId
+    ? Number.parseInt(searchParams.restauranteId, 10)
+    : null;
+  
+  const restauranteSeleccionado = restauranteIdFromUrl
+    ? restaurantes.find(r => r.id === restauranteIdFromUrl) || restaurantes[0]
+    : restaurantes[0];
 
-  // Obtener mesas y domicilios con carritos activos (con productos)
-  const [mesasConCarrito, domiciliosConCarrito] = primerRestaurante
+  // Seleccionar el restaurante como predeterminado
+  const restauranteDefault = restaurantes.length > 0 ? restauranteSeleccionado : undefined;
+
+  // Obtener mesas y domicilios con carritos activos (con productos) para el restaurante seleccionado
+  const [mesasConCarrito, domiciliosConCarrito] = restauranteDefault
     ? await Promise.all([
-        getMesasConCarritoActivo(primerRestaurante.id),
-        getDomiciliosConCarritoActivo(primerRestaurante.id),
+        getMesasConCarritoActivo(restauranteDefault.id),
+        getDomiciliosConCarritoActivo(restauranteDefault.id),
       ])
     : [[], []];
 
   console.warn('📊 Dashboard cargado:', {
-    restaurante: primerRestaurante?.nombre,
+    restaurante: restauranteDefault?.nombre,
+    restauranteId: restauranteDefault?.id,
     totalMesas: mesas.length,
     mesasConCarrito: mesasConCarrito.length,
     mesasConCarritoIds: mesasConCarrito,
@@ -50,8 +65,9 @@ export default async function Page() {
   });
 
   return (
-    <RestaurantProvider defaultRestaurant={primerRestaurante}>
-    <SidebarProvider defaultOpen={false}>
+    <RestaurantProvider defaultRestaurant={restauranteDefault}>
+      <RestaurantUrlSync restaurantes={restaurantes} />
+      <SidebarProvider defaultOpen={false}>
         <AppSidebar restaurantes={restaurantes} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">

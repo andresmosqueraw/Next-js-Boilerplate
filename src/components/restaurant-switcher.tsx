@@ -2,6 +2,7 @@
 
 import type { Restaurante } from '@/types/database';
 import { Check, ChevronsUpDown, Store } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +22,19 @@ export function RestaurantSwitcher({
   restaurantes: Restaurante[];
 }) {
   const { selectedRestaurant, setSelectedRestaurant } = useRestaurant();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleSelectRestaurant = (restaurante: Restaurante) => {
+    setSelectedRestaurant(restaurante);
+    
+    // Actualizar la URL con el restauranteId si estamos en el dashboard
+    if (pathname?.includes('/dashboard')) {
+      const newUrl = `/dashboard?restauranteId=${restaurante.id}`;
+      router.push(newUrl);
+      router.refresh();
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -57,7 +71,7 @@ export function RestaurantSwitcher({
                   restaurantes.map(restaurante => (
                     <DropdownMenuItem
                       key={restaurante.id}
-                      onSelect={() => setSelectedRestaurant(restaurante)}
+                      onSelect={() => handleSelectRestaurant(restaurante)}
                     >
                       <div className="flex flex-col">
                         <span className="font-medium">{restaurante.nombre}</span>

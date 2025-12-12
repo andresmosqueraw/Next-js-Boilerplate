@@ -123,7 +123,7 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
           setCarritoId(data.carritoId);
           // Recargar carrito
           await cargarCarrito();
-        }
+      }
       } else {
         // Agregar producto al carrito existente
         const response = await fetch('/api/carrito/agregar-producto', {
@@ -256,13 +256,13 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
 
   const contextValue = useMemo(
     () => ({
-      cart,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      cartTotal,
-      itemCount,
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        cartTotal,
+        itemCount,
       isLoading,
       carritoId,
     }),
