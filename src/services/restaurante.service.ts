@@ -340,18 +340,37 @@ export async function getDomiciliosConCarritoActivo(restauranteId: number): Prom
 
   // Paso 1: Obtener carritos activos del restaurante
   console.warn('📝 [getDomiciliosConCarritoActivo] PASO 1: Consultando carritos activos en Supabase...');
+  console.warn('  ↳ Filtrando por restaurante_id:', restauranteId);
   const { data: carritos, error: carritosError } = await supabase
     .from('carrito')
-    .select('id, tipo_pedido_id, estado')
+    .select('id, tipo_pedido_id, estado, restaurante_id')
     .eq('restaurante_id', restauranteId)
     .in('estado', ['pendiente', 'en preparación']);
 
   console.warn('📦 [getDomiciliosConCarritoActivo] Carritos encontrados:', {
     count: carritos?.length || 0,
+    restauranteId,
     carritos: carritos?.map(c => ({
       id: c.id,
       tipoPedidoId: c.tipo_pedido_id,
       estado: c.estado,
+      restauranteId: c.restaurante_id,
+    })),
+  });
+
+  // DEBUG: Verificar TODOS los carritos activos (sin filtrar por restaurante) para diagnóstico
+  const { data: todosLosCarritos, error: errorTodos } = await supabase
+    .from('carrito')
+    .select('id, tipo_pedido_id, estado, restaurante_id')
+    .in('estado', ['pendiente', 'en preparación']);
+  
+  console.warn('🔍 [getDomiciliosConCarritoActivo] DEBUG - TODOS los carritos activos (sin filtrar por restaurante):', {
+    count: todosLosCarritos?.length || 0,
+    carritos: todosLosCarritos?.map(c => ({
+      id: c.id,
+      tipoPedidoId: c.tipo_pedido_id,
+      estado: c.estado,
+      restauranteId: c.restaurante_id,
     })),
   });
 
@@ -410,13 +429,35 @@ export async function getDomiciliosConCarritoActivo(restauranteId: number): Prom
       .eq('id', carrito.tipo_pedido_id)
       .single();
     
+    // Obtener restaurante_id del carrito original
+    const carritoOriginal = carritos.find(c => c.id === carrito.id);
+    
     console.warn(`🔍 [getDomiciliosConCarritoActivo] Detalle tipo_pedido para carrito ${carrito.id}:`, {
+      carritoId: carrito.id,
+      restauranteId: carritoOriginal?.restaurante_id || restauranteId,
       tipoPedidoId: carrito.tipo_pedido_id,
       tipoPedido: tipoPedidoDetalle,
       error: errorDetalle,
       esDomicilio: tipoPedidoDetalle?.domicilio_id !== null,
       esMesa: tipoPedidoDetalle?.mesa_id !== null,
+      domicilioId: tipoPedidoDetalle?.domicilio_id,
+      mesaId: tipoPedidoDetalle?.mesa_id,
     });
+    
+    // Si es un domicilio, verificar que el domicilio existe
+    if (tipoPedidoDetalle?.domicilio_id) {
+      const { data: domicilio, error: errorDomicilio } = await supabase
+        .from('domicilio')
+        .select('id, direccion, cliente_id')
+        .eq('id', tipoPedidoDetalle.domicilio_id)
+        .single();
+      
+      console.warn(`  ↳ Domicilio asociado:`, {
+        domicilioId: tipoPedidoDetalle.domicilio_id,
+        domicilio,
+        error: errorDomicilio,
+      });
+    }
   }
 
   // Paso 4: Obtener los domicilio_ids
