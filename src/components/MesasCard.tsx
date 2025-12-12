@@ -1,4 +1,7 @@
+'use client';
+
 import type { Mesa } from '@/types/database';
+import Link from 'next/link';
 
 export function MesasCard({ mesas }: { mesas: Mesa[] }) {
   const mesasDisponibles = mesas.filter(m => m.estado === 'disponible');
@@ -32,12 +35,13 @@ export function MesasCard({ mesas }: { mesas: Mesa[] }) {
           : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {mesas.map(mesa => (
-                  <div
+                  <Link
                     key={mesa.id}
-                    className={`rounded-lg border p-4 transition-colors ${
+                    href={`/pos?tipo=mesa&id=${mesa.id}&numero=${mesa.numero_mesa}`}
+                    className={`block cursor-pointer rounded-lg border p-4 transition-all hover:shadow-lg ${
                       mesa.estado === 'disponible'
-                        ? 'border-green-200 bg-green-50 hover:bg-green-100'
-                        : 'border-red-200 bg-red-50 hover:bg-red-100'
+                        ? 'border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100'
+                        : 'border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100'
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -70,7 +74,7 @@ export function MesasCard({ mesas }: { mesas: Mesa[] }) {
                         {mesa.estado}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
