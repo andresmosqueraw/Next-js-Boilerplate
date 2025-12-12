@@ -223,6 +223,8 @@ export async function getDomiciliosByRestaurante(restauranteId: number): Promise
 export async function getMesasConCarritoActivo(restauranteId: number): Promise<number[]> {
   const supabase = await createClient();
 
+  console.warn('🔍 Buscando mesas con carrito activo para restaurante:', restauranteId);
+
   // Paso 1: Obtener carritos activos del restaurante
   const { data: carritos, error: carritosError } = await supabase
     .from('carrito')
@@ -230,7 +232,10 @@ export async function getMesasConCarritoActivo(restauranteId: number): Promise<n
     .eq('restaurante_id', restauranteId)
     .in('estado', ['pendiente', 'en preparación']);
 
+  console.warn('📦 Carritos activos encontrados:', carritos?.length || 0, carritos);
+
   if (carritosError || !carritos || carritos.length === 0) {
+    console.warn('⚠️ No hay carritos activos o hubo error:', carritosError);
     return [];
   }
 
@@ -241,13 +246,18 @@ export async function getMesasConCarritoActivo(restauranteId: number): Promise<n
     .select('carrito_id')
     .in('carrito_id', carritoIds);
 
+  console.warn('🛒 Productos en carritos:', productos?.length || 0, productos);
+
   if (productosError || !productos || productos.length === 0) {
+    console.warn('⚠️ No hay productos en carritos o hubo error:', productosError);
     return [];
   }
 
   // IDs de carritos que tienen productos
   const carritosConProductos = new Set(productos.map(p => p.carrito_id));
   const carritosActivos = carritos.filter(c => carritosConProductos.has(c.id));
+
+  console.warn('✅ Carritos con productos:', carritosActivos.length, carritosActivos);
 
   // Paso 3: Obtener los tipo_pedido_ids
   const tipoPedidoIds = carritosActivos.map(c => c.tipo_pedido_id);
@@ -259,13 +269,20 @@ export async function getMesasConCarritoActivo(restauranteId: number): Promise<n
     .in('id', tipoPedidoIds)
     .not('mesa_id', 'is', null);
 
+  console.warn('🍽️ Tipo pedidos con mesa_id:', tiposPedido?.length || 0, tiposPedido);
+
   if (tiposError || !tiposPedido) {
+    console.warn('⚠️ Error obteniendo tipo_pedido:', tiposError);
     return [];
   }
 
-  return tiposPedido
+  const mesaIds = tiposPedido
     .map(tp => tp.mesa_id)
     .filter((id): id is number => id !== null);
+
+  console.warn('🎯 IDs de mesas con carrito activo:', mesaIds);
+
+  return mesaIds;
 }
 
 /**

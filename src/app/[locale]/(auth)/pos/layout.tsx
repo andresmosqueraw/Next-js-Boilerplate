@@ -1,26 +1,21 @@
 import type { Metadata } from 'next';
 import type React from 'react';
-import { Inter } from 'next/font/google';
+import { CartSyncProvider } from '@/components/CartSyncProvider';
 import { CartProvider } from './context/cart-context';
-import '../../globals.css';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'POS System',
   description: 'Point of Sale System',
 };
 
-export default function RootLayout({
+export default function POSLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-gray-100`}>
-        <CartProvider>{children}</CartProvider>
-      </body>
-    </html>
+    <CartProvider>
+      <CartSyncProvider>{children}</CartSyncProvider>
+    </CartProvider>
   );
 }

@@ -41,6 +41,14 @@ export default async function Page() {
       ])
     : [[], []];
 
+  console.warn('📊 Dashboard cargado:', {
+    restaurante: primerRestaurante?.nombre,
+    totalMesas: mesas.length,
+    mesasConCarrito: mesasConCarrito.length,
+    mesasConCarritoIds: mesasConCarrito,
+    domiciliosConCarrito: domiciliosConCarrito.length,
+  });
+
   return (
     <RestaurantProvider defaultRestaurant={primerRestaurante}>
       <SidebarProvider>
