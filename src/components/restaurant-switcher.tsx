@@ -30,7 +30,8 @@ export function RestaurantSwitcher({
   // Sincronizar si cambian los restaurantes y no hay uno seleccionado
   React.useEffect(() => {
     if (!selectedRestaurant && restaurantes.length > 0) {
-      setSelectedRestaurant(restaurantes[0]);
+      const primerRestaurante = restaurantes[0];
+      setSelectedRestaurant(prev => prev || primerRestaurante);
     }
   }, [restaurantes, selectedRestaurant]);
 
