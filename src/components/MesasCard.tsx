@@ -107,9 +107,6 @@ export function MesasCard({
                         <span className="text-xs font-semibold text-muted-foreground">Capacidad</span>
                       </th>
                       <th className="px-3 py-2 text-left">
-                        <span className="text-xs font-semibold text-muted-foreground">Restaurante ID</span>
-                      </th>
-                      <th className="px-3 py-2 text-left">
                         <span className="text-xs font-semibold text-muted-foreground">Estado</span>
                       </th>
                     </tr>
@@ -148,11 +145,6 @@ export function MesasCard({
                               {mesa.capacidad || 'N/A'}
                               {' '}
                               personas
-                            </span>
-                          </td>
-                          <td className="px-3 py-2">
-                            <span className="text-sm text-muted-foreground">
-                              {mesa.restaurante_id}
                             </span>
                           </td>
                           <td className="px-3 py-2">
