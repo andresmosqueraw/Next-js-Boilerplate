@@ -20,6 +20,21 @@ export function DomiciliosCard({
   const [filter, setFilter] = React.useState('');
   const router = useRouter();
 
+  // Log para debugging
+  React.useEffect(() => {
+    console.warn('📊 [DomiciliosCard] Estado de domicilios:', {
+      totalDomicilios: domicilios.length,
+      domiciliosConCarrito: domiciliosConCarrito.length,
+      domiciliosConCarritoIds: domiciliosConCarrito,
+      domiciliosDetalle: domicilios.map(d => ({
+        id: d.id,
+        direccion: d.direccion,
+        tieneCarrito: domiciliosConCarrito.includes(d.id),
+        estadoVisual: domiciliosConCarrito.includes(d.id) ? 'CON PEDIDO' : 'DISPONIBLE',
+      })),
+    });
+  }, [domicilios, domiciliosConCarrito]);
+
   // Función para determinar el estado visual de un domicilio
   const getEstadoVisual = (domicilio: DomicilioConRestaurantes): EstadoVisual => {
     // Si tiene carrito activo con productos, mostrar "con-pedido"

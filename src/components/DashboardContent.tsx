@@ -57,6 +57,31 @@ export function DashboardContent({
     );
   }, [todosLosDomicilios, selectedRestaurant]);
 
+  // Filtrar domiciliosConCarrito para incluir solo los que están en los domicilios filtrados
+  const domiciliosConCarritoFiltrados = React.useMemo(() => {
+    const domiciliosFiltradosIds = new Set(domiciliosFiltrados.map(d => d.id));
+    return domiciliosConCarrito.filter(id => domiciliosFiltradosIds.has(id));
+  }, [domiciliosFiltrados, domiciliosConCarrito]);
+
+  React.useEffect(() => {
+    console.warn('📊 [DashboardContent] Estado de domicilios:', {
+      restaurante: selectedRestaurant?.nombre,
+      restauranteId: selectedRestaurant?.id,
+      totalDomicilios: todosLosDomicilios.length,
+      domiciliosFiltrados: domiciliosFiltrados.length,
+      domiciliosConCarrito: domiciliosConCarrito.length,
+      domiciliosConCarritoIds: domiciliosConCarrito,
+      domiciliosConCarritoFiltrados: domiciliosConCarritoFiltrados.length,
+      domiciliosConCarritoFiltradosIds: domiciliosConCarritoFiltrados,
+      detalleDomicilios: domiciliosFiltrados.map(d => ({
+        id: d.id,
+        direccion: d.direccion,
+        tieneCarrito: domiciliosConCarritoFiltrados.includes(d.id),
+        estadoVisual: domiciliosConCarritoFiltrados.includes(d.id) ? 'CON PEDIDO' : 'DISPONIBLE',
+      })),
+    });
+  }, [selectedRestaurant, domiciliosFiltrados, domiciliosConCarrito, domiciliosConCarritoFiltrados, todosLosDomicilios.length]);
+
   const domiciliosMostrados = domiciliosFiltrados;
 
   return (
@@ -67,7 +92,7 @@ export function DashboardContent({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <MesasCard mesas={mesasFiltradas} mesasConCarrito={mesasConCarrito} />
-        <DomiciliosCard domicilios={domiciliosMostrados} domiciliosConCarrito={domiciliosConCarrito} />
+        <DomiciliosCard domicilios={domiciliosMostrados} domiciliosConCarrito={domiciliosConCarritoFiltrados} />
       </div>
     </div>
   );
