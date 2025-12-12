@@ -1,45 +1,46 @@
-"use client"
+'use client';
 
-import { useState, useMemo } from "react"
+import type { SortingState } from '@tanstack/react-table';
+import type { Stock } from '@/lib/stock-types';
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  flexRender,
   createColumnHelper,
-  type SortingState,
-} from "@tanstack/react-table"
-import { ArrowUpDown, Plus, Trash2, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { SplitFlapText } from "./split-flap-text"
-import { ChangeBadge } from "./change-badge"
-import { DirectionIcon } from "./direction-icon"
-import type { Stock } from "@/lib/stock-types"
-import { motion, AnimatePresence } from "framer-motion"
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
 
-interface WatchlistTableProps {
-  stocks: Stock[]
-  onAddStock: (symbol: string, name: string) => void
-  onRemoveStock: (id: string) => void
-  soundEnabled: boolean
-}
+  useReactTable,
+} from '@tanstack/react-table';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowUpDown, Plus, Search, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ChangeBadge } from './change-badge';
+import { DirectionIcon } from './direction-icon';
+import { SplitFlapText } from './split-flap-text';
 
-const columnHelper = createColumnHelper<Stock>()
+type WatchlistTableProps = {
+  stocks: Stock[];
+  onAddStock: (symbol: string, name: string) => void;
+  onRemoveStock: (id: string) => void;
+  soundEnabled: boolean;
+};
+
+const columnHelper = createColumnHelper<Stock>();
 
 export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled }: WatchlistTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [globalFilter, setGlobalFilter] = useState("")
-  const [newSymbol, setNewSymbol] = useState("")
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [newSymbol, setNewSymbol] = useState('');
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor("symbol", {
+      columnHelper.accessor('symbol', {
         header: ({ column }) => (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="h-8 px-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
           >
             Symbol
@@ -58,17 +59,17 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
           </div>
         ),
       }),
-      columnHelper.accessor("name", {
+      columnHelper.accessor('name', {
         header: () => <span className="text-xs font-semibold text-muted-foreground">Name</span>,
         cell: ({ getValue }) => (
-          <span className="text-sm text-muted-foreground truncate max-w-[120px] block">{getValue()}</span>
+          <span className="block max-w-[120px] truncate text-sm text-muted-foreground">{getValue()}</span>
         ),
       }),
-      columnHelper.accessor("price", {
+      columnHelper.accessor('price', {
         header: ({ column }) => (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="h-8 px-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
           >
             Last Price
@@ -84,11 +85,11 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
           />
         ),
       }),
-      columnHelper.accessor("change", {
+      columnHelper.accessor('change', {
         header: ({ column }) => (
           <Button
             variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="h-8 px-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
           >
             Change
@@ -97,19 +98,19 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
         ),
         cell: ({ row }) => (
           <SplitFlapText
-            value={`${row.original.change >= 0 ? "+" : ""}${row.original.change.toFixed(2)}`}
+            value={`${row.original.change >= 0 ? '+' : ''}${row.original.change.toFixed(2)}`}
             charset="0123456789.+-"
             direction={row.original.direction}
             soundEnabled={soundEnabled}
           />
         ),
       }),
-      columnHelper.accessor("changePercent", {
+      columnHelper.accessor('changePercent', {
         header: () => <span className="text-xs font-semibold text-muted-foreground">Change %</span>,
         cell: ({ row }) => <ChangeBadge stock={row.original} />,
       }),
       columnHelper.display({
-        id: "actions",
+        id: 'actions',
         header: () => <span className="text-xs font-semibold text-muted-foreground">Actions</span>,
         cell: ({ row }) => (
           <Button
@@ -125,7 +126,7 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
       }),
     ],
     [onRemoveStock, soundEnabled],
-  )
+  );
 
   const table = useReactTable({
     data: stocks,
@@ -139,26 +140,26 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-  })
+  });
 
   const handleAddStock = () => {
     if (newSymbol.trim()) {
-      onAddStock(newSymbol.trim(), "")
-      setNewSymbol("")
+      onAddStock(newSymbol.trim(), '');
+      setNewSymbol('');
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">Watchlist</h2>
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Filter symbols..."
-            value={globalFilter ?? ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="pl-8 h-8 w-40 text-sm"
+            value={globalFilter ?? ''}
+            onChange={e => setGlobalFilter(e.target.value)}
+            className="h-8 w-40 pl-8 text-sm"
           />
         </div>
       </div>
@@ -167,8 +168,8 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
         <Input
           placeholder="Symbol (e.g., AAPL)"
           value={newSymbol}
-          onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
-          className="h-9 flex-1 max-w-[180px] text-sm uppercase"
+          onChange={e => setNewSymbol(e.target.value.toUpperCase())}
+          className="h-9 max-w-[180px] flex-1 text-sm uppercase"
           maxLength={5}
         />
         <Button onClick={handleAddStock} size="sm" className="h-9 gap-1.5">
@@ -177,14 +178,14 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
         </Button>
       </div>
 
-      <div className="rounded-lg border border-border overflow-hidden bg-card">
-        <div className="overflow-x-auto hide-scrollbar">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="hide-scrollbar overflow-x-auto">
           <table className="w-full">
             <thead>
-              {table.getHeaderGroups().map((headerGroup) => (
+              {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id} className="border-b border-border bg-muted/30">
-                  {headerGroup.headers.map((header) => (
-                    <th key={header.id} className="py-2 px-3 text-left">
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className="px-3 py-2 text-left">
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -200,10 +201,10 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ delay: index * 0.03, duration: 0.2 }}
-                    className="border-b border-border/50 hover:bg-muted/20 transition-colors"
+                    className="border-b border-border/50 transition-colors hover:bg-muted/20"
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="py-2 px-3">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="px-3 py-2">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -215,9 +216,9 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
         </div>
 
         {table.getRowModel().rows.length === 0 && (
-          <div className="py-8 text-center text-muted-foreground text-sm">No stocks in watchlist. Add some above!</div>
+          <div className="py-8 text-center text-sm text-muted-foreground">No stocks in watchlist. Add some above!</div>
         )}
       </div>
     </div>
-  )
+  );
 }

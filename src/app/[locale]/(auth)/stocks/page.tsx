@@ -1,5 +1,5 @@
-import { StockTickerPage } from "@/components/stock-ticker-page"
+import { StockTickerPage } from '@/components/stock-ticker-page';
 
 export default function Home() {
-  return <StockTickerPage />
+  return <StockTickerPage />;
 }

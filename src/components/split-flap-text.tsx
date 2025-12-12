@@ -1,19 +1,19 @@
-"use client"
+'use client';
 
-import { useState, useEffect, useRef, memo } from "react"
-import { motion } from "framer-motion"
-import { cn } from "@/lib/utils"
+import { motion } from 'framer-motion';
+import { memo, useEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 
-interface SplitFlapTextProps {
-  value: string
-  charset?: string
-  direction?: "up" | "down" | "flat"
-  flipSpeedMs?: number
-  baseFlips?: number
-  staggerDelay?: number
-}
+type SplitFlapTextProps = {
+  value: string;
+  charset?: string;
+  direction?: 'up' | 'down' | 'flat';
+  flipSpeedMs?: number;
+  baseFlips?: number;
+  staggerDelay?: number;
+};
 
-const SplitFlapTile = memo(function SplitFlapTile({
+const SplitFlapTile = memo(({
   targetChar,
   charset,
   direction,
@@ -22,50 +22,50 @@ const SplitFlapTile = memo(function SplitFlapTile({
   baseFlips,
   staggerDelay,
 }: {
-  targetChar: string
-  charset: string
-  direction: "up" | "down" | "flat"
-  index: number
-  flipSpeedMs: number
-  baseFlips: number
-  staggerDelay: number
-}) {
-  const [displayChar, setDisplayChar] = useState(targetChar)
-  const [isFlipping, setIsFlipping] = useState(false)
-  const prevCharRef = useRef(targetChar)
+  targetChar: string;
+  charset: string;
+  direction: 'up' | 'down' | 'flat';
+  index: number;
+  flipSpeedMs: number;
+  baseFlips: number;
+  staggerDelay: number;
+}) => {
+  const [displayChar, setDisplayChar] = useState(targetChar);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const prevCharRef = useRef(targetChar);
 
   useEffect(() => {
     if (prevCharRef.current !== targetChar) {
-      setIsFlipping(true)
-      const totalFlips = baseFlips + index * 2
-      let flipCount = 0
+      setIsFlipping(true);
+      const totalFlips = baseFlips + index * 2;
+      let flipCount = 0;
 
       const flipInterval = setInterval(() => {
         if (flipCount < totalFlips) {
-          const randomChar = charset[Math.floor(Math.random() * charset.length)]
-          setDisplayChar(randomChar)
-          flipCount++
+          const randomChar = charset[Math.floor(Math.random() * charset.length)];
+          setDisplayChar(randomChar);
+          flipCount++;
         } else {
-          setDisplayChar(targetChar)
-          setIsFlipping(false)
-          clearInterval(flipInterval)
+          setDisplayChar(targetChar);
+          setIsFlipping(false);
+          clearInterval(flipInterval);
         }
-      }, flipSpeedMs)
+      }, flipSpeedMs);
 
-      prevCharRef.current = targetChar
-      return () => clearInterval(flipInterval)
+      prevCharRef.current = targetChar;
+      return () => clearInterval(flipInterval);
     }
-  }, [targetChar, charset, index, flipSpeedMs, baseFlips])
+  }, [targetChar, charset, index, flipSpeedMs, baseFlips]);
 
-  const directionColorClass =
-    direction === "up" ? "text-emerald-500" : direction === "down" ? "text-red-500" : "text-foreground"
+  const directionColorClass
+    = direction === 'up' ? 'text-emerald-500' : direction === 'down' ? 'text-red-500' : 'text-foreground';
 
   return (
     <motion.div
       className="relative inline-flex items-center justify-center"
       style={{
-        width: "0.75em",
-        height: "1.2em",
+        width: '0.75em',
+        height: '1.2em',
       }}
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
@@ -73,33 +73,33 @@ const SplitFlapTile = memo(function SplitFlapTile({
     >
       <div
         className={cn(
-          "relative w-full h-full flex items-center justify-center rounded-sm",
-          "bg-foreground/[3%]",
-          "font-mono text-sm font-light tabular-nums",
+          'relative w-full h-full flex items-center justify-center rounded-sm',
+          'bg-foreground/[3%]',
+          'font-mono text-sm font-light tabular-nums',
           directionColorClass,
-          isFlipping && "animate-pulse",
+          isFlipping && 'animate-pulse',
         )}
       >
         {displayChar}
         {/* Center divider for split-flap aesthetic */}
-        <div className="absolute inset-x-0 top-1/2 h-px bg-foreground/20 pointer-events-none" />
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-foreground/20" />
       </div>
     </motion.div>
-  )
-})
+  );
+});
 
-export const SplitFlapText = memo(function SplitFlapText({
+export const SplitFlapText = memo(({
   value,
-  charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-  direction = "flat",
+  charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+  direction = 'flat',
   flipSpeedMs = 45,
   baseFlips = 6,
   staggerDelay = 0.06,
-}: SplitFlapTextProps) {
-  const chars = value.split("")
+}: SplitFlapTextProps) => {
+  const chars = value.split('');
 
   return (
-    <div className="inline-flex items-center gap-[0.12em] bg-foreground/[3%] p-1 rounded-md shadow-inner">
+    <div className="inline-flex items-center gap-[0.12em] rounded-md bg-foreground/[3%] p-1 shadow-inner">
       {chars.map((char, index) => (
         <SplitFlapTile
           key={`${index}-${char}`}
@@ -113,5 +113,5 @@ export const SplitFlapText = memo(function SplitFlapText({
         />
       ))}
     </div>
-  )
-})
+  );
+});
