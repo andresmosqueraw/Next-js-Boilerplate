@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FAQSection } from '@/components/faq-section';
 import Features from '@/components/features';
@@ -9,6 +10,7 @@ import { StickyFooter } from '@/components/sticky-footer';
 import { TestimonialsSection } from '@/components/testimonials';
 
 export default function Home() {
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -86,9 +88,10 @@ export default function Home() {
           </svg>
         </a>
 
-        <div className="absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-muted-foreground transition duration-200 hover:text-foreground md:flex md:space-x-2">
-          <a
-            className="relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
+        <div className="pointer-events-none absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-muted-foreground transition duration-200 hover:text-foreground md:flex md:space-x-2">
+          <button
+            type="button"
+            className="pointer-events-auto relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
             onClick={(e) => {
               e.preventDefault();
               const element = document.getElementById('features');
@@ -105,9 +108,10 @@ export default function Home() {
             }}
           >
             <span className="relative z-20">Features</span>
-          </a>
-          <a
-            className="relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
+          </button>
+          <button
+            type="button"
+            className="pointer-events-auto relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
             onClick={(e) => {
               e.preventDefault();
               const element = document.getElementById('pricing');
@@ -124,9 +128,10 @@ export default function Home() {
             }}
           >
             <span className="relative z-20">Pricing</span>
-          </a>
-          <a
-            className="relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
+          </button>
+          <button
+            type="button"
+            className="pointer-events-auto relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
             onClick={(e) => {
               e.preventDefault();
               const element = document.getElementById('testimonials');
@@ -143,9 +148,10 @@ export default function Home() {
             }}
           >
             <span className="relative z-20">Testimonials</span>
-          </a>
-          <a
-            className="relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
+          </button>
+          <button
+            type="button"
+            className="pointer-events-auto relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
             onClick={(e) => {
               e.preventDefault();
               const element = document.getElementById('faq');
@@ -162,23 +168,25 @@ export default function Home() {
             }}
           >
             <span className="relative z-20">FAQ</span>
-          </a>
+          </button>
         </div>
 
-        <div className="flex items-center gap-4">
-          <a
-            href="/login"
-            className="cursor-pointer text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        <div className="relative z-10 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => router.push('/sign-in')}
+            className="relative cursor-pointer text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
           >
             Log In
-          </a>
+          </button>
 
-          <a
-            href="/signup"
-            className="relative inline-block cursor-pointer rounded-md bg-gradient-to-b from-primary to-primary/80 px-4 py-2 text-center text-sm font-bold text-primary-foreground shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] transition duration-200 hover:-translate-y-0.5"
+          <button
+            type="button"
+            onClick={() => router.push('/sign-up')}
+            className="relative cursor-pointer rounded-md bg-gradient-to-b from-primary to-primary/80 px-4 py-2 text-center text-sm font-bold text-primary-foreground shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] transition duration-200 hover:-translate-y-0.5"
           >
             Sign Up
-          </a>
+          </button>
         </div>
       </header>
 
@@ -203,6 +211,7 @@ export default function Home() {
         </a>
 
         <button
+          type="button"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/50 transition-colors hover:bg-background/80"
           aria-label="Toggle menu"
@@ -230,42 +239,54 @@ export default function Home() {
           <div className="absolute top-20 right-4 left-4 rounded-2xl border border-border/50 bg-background/95 p-6 shadow-2xl backdrop-blur-md">
             <nav className="flex flex-col space-y-4">
               <button
+                type="button"
                 onClick={() => handleMobileNavClick('features')}
                 className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
               >
                 Features
               </button>
               <button
+                type="button"
                 onClick={() => handleMobileNavClick('pricing')}
                 className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
               >
                 Pricing
               </button>
               <button
+                type="button"
                 onClick={() => handleMobileNavClick('testimonials')}
                 className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
               >
                 Testimonials
               </button>
               <button
+                type="button"
                 onClick={() => handleMobileNavClick('faq')}
                 className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
               >
                 FAQ
               </button>
               <div className="mt-4 flex flex-col space-y-3 border-t border-border/50 pt-4">
-                <a
-                  href="/login"
-                  className="cursor-pointer rounded-lg px-4 py-3 text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    router.push('/sign-in');
+                  }}
+                  className="cursor-pointer rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
                 >
                   Log In
-                </a>
-                <a
-                  href="/signup"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    router.push('/sign-up');
+                  }}
                   className="rounded-lg bg-gradient-to-b from-primary to-primary/80 px-4 py-3 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all duration-200 hover:-translate-y-0.5"
                 >
                   Sign Up
-                </a>
+                </button>
               </div>
             </nav>
           </div>
