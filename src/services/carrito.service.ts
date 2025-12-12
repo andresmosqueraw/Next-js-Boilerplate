@@ -165,16 +165,17 @@ export async function crearCarrito(
     const paso1Duration = Date.now() - paso1StartTime;
     console.warn(`✅ [Service crearCarrito] PASO 1 completado en ${paso1Duration}ms`);
 
-    // Paso 2: Verificar si ya existe un carrito activo para este tipo_pedido
+    // Paso 2: Verificar si ya existe un carrito para este tipo_pedido
+    // NOTA: tipo_pedido_id es UNIQUE, así que solo puede haber UN carrito por tipo_pedido
     console.warn('📝 [Service crearCarrito] PASO 2: Verificando carrito existente...');
     const paso2StartTime = Date.now();
 
-    // Buscar carrito activo (pendiente o en preparación) para este tipo_pedido
+    // Buscar CUALQUIER carrito para este tipo_pedido (sin importar el estado)
+    // porque tipo_pedido_id es UNIQUE en la tabla carrito
     const { data: carritoExistente, error: errorBuscarCarrito } = await supabase
       .from('carrito')
       .select('id, restaurante_id, tipo_pedido_id, estado')
       .eq('tipo_pedido_id', tipoPedidoCreado.id)
-      .in('estado', ['pendiente', 'en preparación'])
       .maybeSingle();
 
     if (errorBuscarCarrito) {
@@ -183,15 +184,47 @@ export async function crearCarrito(
     }
 
     let carritoCreado;
+    let carritoReabierto = false;
 
     if (carritoExistente) {
-      // Reutilizar carrito existente
-      carritoCreado = carritoExistente;
-      console.warn('✅ [Service crearCarrito] Carrito activo existente encontrado, reutilizando:', {
-        carritoId: carritoCreado.id,
-        estado: carritoCreado.estado,
-        accion: 'Agregando productos al carrito existente',
-      });
+      // Existe un carrito para este tipo_pedido
+      const esCarritoActivo = ['pendiente', 'en preparación'].includes(carritoExistente.estado);
+
+      if (esCarritoActivo) {
+        // Reutilizar carrito activo
+        carritoCreado = carritoExistente;
+        console.warn('✅ [Service crearCarrito] Carrito activo existente encontrado, reutilizando:', {
+          carritoId: carritoCreado.id,
+          estado: carritoCreado.estado,
+          accion: 'Agregando productos al carrito existente',
+        });
+      } else {
+        // Carrito existe pero está cerrado/servido - reabrirlo
+        console.warn('🔄 [Service crearCarrito] Carrito existente está cerrado, reabriendo...', {
+          carritoId: carritoExistente.id,
+          estadoAnterior: carritoExistente.estado,
+        });
+
+        const { data: carritoReabiertoData, error: errorReabrir } = await supabase
+          .from('carrito')
+          .update({ estado: 'pendiente' })
+          .eq('id', carritoExistente.id)
+          .select()
+          .single();
+
+        if (errorReabrir || !carritoReabiertoData) {
+          console.error('❌ [Service crearCarrito] Error reabriendo carrito:', errorReabrir);
+          throw new Error('Failed to reopen carrito');
+        }
+
+        carritoCreado = carritoReabiertoData;
+        carritoReabierto = true;
+        console.warn('✅ [Service crearCarrito] Carrito reabierto exitosamente:', {
+          carritoId: carritoCreado.id,
+          estadoNuevo: carritoCreado.estado,
+          accion: 'Carrito reabierto y listo para agregar productos',
+        });
+      }
     } else {
       // Crear nuevo carrito
       console.warn('📝 [Service crearCarrito] No existe carrito activo, creando uno nuevo...');
@@ -283,11 +316,12 @@ export async function crearCarrito(
 
     console.warn(`✅ [Service crearCarrito] ${productosUpserted?.length || 0} productos agregados/actualizados en ${paso3Duration}ms`);
 
-    // Paso 4: Si es mesa, actualizar estado a 'ocupada' (solo si es carrito nuevo)
+    // Paso 4: Si es mesa, actualizar estado a 'ocupada' (si es carrito nuevo o reabierto)
     if (tipoPedido.tipo === 'mesa' && tipoPedido.mesaId) {
-      // Solo actualizar si es un carrito nuevo, no si es uno existente
-      if (!carritoExistente) {
-        console.warn('📝 [Service crearCarrito] PASO 4: Actualizando mesa a OCUPADA (carrito nuevo)...');
+      // Actualizar si es un carrito nuevo O si fue reabierto
+      if (!carritoExistente || carritoReabierto) {
+        const razon = !carritoExistente ? 'carrito nuevo' : 'carrito reabierto';
+        console.warn(`📝 [Service crearCarrito] PASO 4: Actualizando mesa a OCUPADA (${razon})...`);
         console.warn(`  ↳ UPDATE mesa SET estado='ocupada' WHERE id=${tipoPedido.mesaId}`);
 
         const paso4StartTime = Date.now();
@@ -316,7 +350,7 @@ export async function crearCarrito(
           });
         }
       } else {
-        console.warn('⏭️ [Service crearCarrito] PASO 4: Omitido (carrito existente, mesa ya debería estar ocupada)');
+        console.warn('⏭️ [Service crearCarrito] PASO 4: Omitido (carrito activo existente, mesa ya debería estar ocupada)');
       }
     } else {
       console.warn('⏭️ [Service crearCarrito] PASO 4: Omitido (no es mesa o no tiene mesaId)');
@@ -324,17 +358,26 @@ export async function crearCarrito(
 
     const totalServiceDuration = Date.now() - serviceStartTime;
     console.warn(`🎉 [Service crearCarrito] PROCESO COMPLETADO EXITOSAMENTE en ${totalServiceDuration}ms`);
+
+    let estadoCarrito = 'NO (carrito nuevo)';
+    if (carritoExistente) {
+      estadoCarrito = carritoReabierto
+        ? 'SÍ (carrito reabierto desde cerrado)'
+        : 'SÍ (carrito activo existente)';
+    }
+
     console.warn('🎉 [Service crearCarrito] Resumen:', {
       carritoId: carritoCreado.id,
       tipoPedidoId: tipoPedidoCreado.id,
       restauranteId: carritoCreado.restaurante_id,
+      estadoCarrito: carritoCreado.estado,
       productosAgregados: productosParaUpsert.length,
-      carritoReutilizado: carritoExistente ? 'SÍ (carrito activo existente)' : 'NO (carrito nuevo)',
+      carritoReutilizado: estadoCarrito,
       tipoPedidoReutilizado: tipoPedidoExiste ? 'SÍ (tipo_pedido existente)' : 'NO (tipo_pedido nuevo)',
-      mesaActualizada: tipoPedido.tipo === 'mesa' && !carritoExistente
+      mesaActualizada: tipoPedido.tipo === 'mesa' && (!carritoExistente || carritoReabierto)
         ? `SÍ - Mesa ${tipoPedido.mesaId} → OCUPADA`
         : tipoPedido.tipo === 'mesa'
-          ? `NO (carrito existente, mesa ya ocupada)`
+          ? `NO (carrito activo existente, mesa ya ocupada)`
           : 'N/A (domicilio)',
       tiempoTotal: `${totalServiceDuration}ms`,
       siguientePaso: 'API debe revalidar dashboard para que refleje el cambio',
