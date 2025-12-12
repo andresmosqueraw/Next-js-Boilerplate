@@ -76,76 +76,164 @@ export async function crearCarrito(
       };
     }
 
-    // Paso 1: Crear tipo_pedido
-    console.warn('📝 [Service crearCarrito] PASO 1: Creando tipo_pedido en Supabase...');
-    const tipoPedidoData = {
-      mesa_id: tipoPedido.mesaId || null,
-      domicilio_id: tipoPedido.domicilioId || null,
-    };
-    console.warn('  ↳ INSERT INTO tipo_pedido:', tipoPedidoData);
-
+    // Paso 1: Verificar si ya existe un tipo_pedido para esta mesa/domicilio
+    console.warn('📝 [Service crearCarrito] PASO 1: Verificando tipo_pedido existente...');
     const paso1StartTime = Date.now();
-    const { data: tipoPedidoCreado, error: errorTipoPedido } = await supabase
-      .from('tipo_pedido')
-      .insert(tipoPedidoData)
-      .select()
-      .single();
+
+    let tipoPedidoCreado;
+    let tipoPedidoExiste = false;
+
+    if (tipoPedido.mesaId) {
+      // Buscar tipo_pedido existente para esta mesa
+      const { data: tipoPedidoExistente, error: errorBuscar } = await supabase
+        .from('tipo_pedido')
+        .select('id')
+        .eq('mesa_id', tipoPedido.mesaId)
+        .maybeSingle();
+
+      if (errorBuscar) {
+        console.error('❌ [Service crearCarrito] Error buscando tipo_pedido:', errorBuscar);
+        throw new Error('Failed to check tipo_pedido');
+      }
+
+      if (tipoPedidoExistente) {
+        tipoPedidoExiste = true;
+        tipoPedidoCreado = tipoPedidoExistente;
+        console.warn('✅ [Service crearCarrito] tipo_pedido existente encontrado:', {
+          tipoPedidoId: tipoPedidoCreado.id,
+          mesa_id: tipoPedido.mesaId,
+          accion: 'Reutilizando tipo_pedido existente',
+        });
+      }
+    } else if (tipoPedido.domicilioId) {
+      // Buscar tipo_pedido existente para este domicilio
+      const { data: tipoPedidoExistente, error: errorBuscar } = await supabase
+        .from('tipo_pedido')
+        .select('id')
+        .eq('domicilio_id', tipoPedido.domicilioId)
+        .maybeSingle();
+
+      if (errorBuscar) {
+        console.error('❌ [Service crearCarrito] Error buscando tipo_pedido:', errorBuscar);
+        throw new Error('Failed to check tipo_pedido');
+      }
+
+      if (tipoPedidoExistente) {
+        tipoPedidoExiste = true;
+        tipoPedidoCreado = tipoPedidoExistente;
+        console.warn('✅ [Service crearCarrito] tipo_pedido existente encontrado:', {
+          tipoPedidoId: tipoPedidoCreado.id,
+          domicilio_id: tipoPedido.domicilioId,
+          accion: 'Reutilizando tipo_pedido existente',
+        });
+      }
+    }
+
+    // Si no existe, crear uno nuevo
+    if (!tipoPedidoExiste) {
+      console.warn('📝 [Service crearCarrito] No existe tipo_pedido, creando uno nuevo...');
+      const tipoPedidoData = {
+        mesa_id: tipoPedido.mesaId || null,
+        domicilio_id: tipoPedido.domicilioId || null,
+      };
+      console.warn('  ↳ INSERT INTO tipo_pedido:', tipoPedidoData);
+
+      const { data: nuevoTipoPedido, error: errorTipoPedido } = await supabase
+        .from('tipo_pedido')
+        .insert(tipoPedidoData)
+        .select()
+        .single();
+
+      if (errorTipoPedido || !nuevoTipoPedido) {
+        console.error('❌ [Service crearCarrito] Error creating tipo_pedido:', {
+          error: errorTipoPedido,
+          mensaje: errorTipoPedido?.message,
+          detalles: errorTipoPedido?.details,
+          hint: errorTipoPedido?.hint,
+        });
+        throw new Error('Failed to create tipo_pedido');
+      }
+
+      tipoPedidoCreado = nuevoTipoPedido;
+      console.warn('✅ [Service crearCarrito] tipo_pedido creado:', {
+        tipoPedidoId: tipoPedidoCreado.id,
+        mesa_id: tipoPedidoCreado.mesa_id,
+        domicilio_id: tipoPedidoCreado.domicilio_id,
+      });
+    }
+
     const paso1Duration = Date.now() - paso1StartTime;
+    console.warn(`✅ [Service crearCarrito] PASO 1 completado en ${paso1Duration}ms`);
 
-    if (errorTipoPedido || !tipoPedidoCreado) {
-      console.error('❌ [Service crearCarrito] Error creating tipo_pedido:', {
-        error: errorTipoPedido,
-        mensaje: errorTipoPedido?.message,
-        detalles: errorTipoPedido?.details,
-        hint: errorTipoPedido?.hint,
-      });
-      throw new Error('Failed to create tipo_pedido');
-    }
-
-    console.warn(`✅ [Service crearCarrito] tipo_pedido creado en ${paso1Duration}ms:`, {
-      tipoPedidoId: tipoPedidoCreado.id,
-      mesa_id: tipoPedidoCreado.mesa_id,
-      domicilio_id: tipoPedidoCreado.domicilio_id,
-    });
-
-    // Paso 2: Crear carrito
-    console.warn('📝 [Service crearCarrito] PASO 2: Creando carrito en Supabase...');
-    const carritoDataInsert = {
-      restaurante_id: carritoData.restauranteId,
-      tipo_pedido_id: tipoPedidoCreado.id,
-      cliente_id: carritoData.clienteId || null,
-      estado: 'pendiente',
-    };
-    console.warn('  ↳ INSERT INTO carrito:', carritoDataInsert);
-
+    // Paso 2: Verificar si ya existe un carrito activo para este tipo_pedido
+    console.warn('📝 [Service crearCarrito] PASO 2: Verificando carrito existente...');
     const paso2StartTime = Date.now();
-    const { data: carritoCreado, error: errorCarrito } = await supabase
-      .from('carrito')
-      .insert(carritoDataInsert)
-      .select()
-      .single();
-    const paso2Duration = Date.now() - paso2StartTime;
 
-    if (errorCarrito || !carritoCreado) {
-      console.error('❌ [Service crearCarrito] Error creating carrito:', {
-        error: errorCarrito,
-        mensaje: errorCarrito?.message,
-        detalles: errorCarrito?.details,
-        hint: errorCarrito?.hint,
-      });
-      throw new Error('Failed to create carrito');
+    // Buscar carrito activo (pendiente o en preparación) para este tipo_pedido
+    const { data: carritoExistente, error: errorBuscarCarrito } = await supabase
+      .from('carrito')
+      .select('id, restaurante_id, tipo_pedido_id, estado')
+      .eq('tipo_pedido_id', tipoPedidoCreado.id)
+      .in('estado', ['pendiente', 'en preparación'])
+      .maybeSingle();
+
+    if (errorBuscarCarrito) {
+      console.error('❌ [Service crearCarrito] Error buscando carrito:', errorBuscarCarrito);
+      throw new Error('Failed to check carrito');
     }
 
-    console.warn(`✅ [Service crearCarrito] Carrito creado en ${paso2Duration}ms:`, {
-      carritoId: carritoCreado.id,
-      restauranteId: carritoCreado.restaurante_id,
-      tipoPedidoId: carritoCreado.tipo_pedido_id,
-      estado: carritoCreado.estado,
-    });
+    let carritoCreado;
 
-    // Paso 3: Crear carrito_producto para cada producto usando el mapa
-    console.warn('📝 [Service crearCarrito] PASO 3: Creando carrito_producto...');
-    const productosParaInsertar = carritoData.productos.map((prod) => {
+    if (carritoExistente) {
+      // Reutilizar carrito existente
+      carritoCreado = carritoExistente;
+      console.warn('✅ [Service crearCarrito] Carrito activo existente encontrado, reutilizando:', {
+        carritoId: carritoCreado.id,
+        estado: carritoCreado.estado,
+        accion: 'Agregando productos al carrito existente',
+      });
+    } else {
+      // Crear nuevo carrito
+      console.warn('📝 [Service crearCarrito] No existe carrito activo, creando uno nuevo...');
+      const carritoDataInsert = {
+        restaurante_id: carritoData.restauranteId,
+        tipo_pedido_id: tipoPedidoCreado.id,
+        cliente_id: carritoData.clienteId || null,
+        estado: 'pendiente',
+      };
+      console.warn('  ↳ INSERT INTO carrito:', carritoDataInsert);
+
+      const { data: nuevoCarrito, error: errorCarrito } = await supabase
+        .from('carrito')
+        .insert(carritoDataInsert)
+        .select()
+        .single();
+
+      if (errorCarrito || !nuevoCarrito) {
+        console.error('❌ [Service crearCarrito] Error creating carrito:', {
+          error: errorCarrito,
+          mensaje: errorCarrito?.message,
+          detalles: errorCarrito?.details,
+          hint: errorCarrito?.hint,
+        });
+        throw new Error('Failed to create carrito');
+      }
+
+      carritoCreado = nuevoCarrito;
+      console.warn('✅ [Service crearCarrito] Carrito creado:', {
+        carritoId: carritoCreado.id,
+        restauranteId: carritoCreado.restaurante_id,
+        tipoPedidoId: carritoCreado.tipo_pedido_id,
+        estado: carritoCreado.estado,
+      });
+    }
+
+    const paso2Duration = Date.now() - paso2StartTime;
+    console.warn(`✅ [Service crearCarrito] PASO 2 completado en ${paso2Duration}ms`);
+
+    // Paso 3: Agregar productos al carrito (usar upsert para manejar productos existentes)
+    console.warn('📝 [Service crearCarrito] PASO 3: Agregando productos al carrito...');
+    const productosParaUpsert = carritoData.productos.map((prod) => {
       const productoRestauranteId = mapaProductos.get(prod.productoId);
       return {
         carrito_id: carritoCreado.id,
@@ -156,66 +244,79 @@ export async function crearCarrito(
       };
     });
 
-    console.warn('📦 [Service crearCarrito] Preparando INSERT de productos:', {
+    console.warn('📦 [Service crearCarrito] Preparando UPSERT de productos:', {
       carritoId: carritoCreado.id,
-      productosCount: productosParaInsertar.length,
-      productos: productosParaInsertar.map((p, idx) => ({
+      productosCount: productosParaUpsert.length,
+      productos: productosParaUpsert.map((p, idx) => ({
         indice: idx + 1,
         productoRestauranteId: p.producto_restaurante_id,
         cantidad: p.cantidad,
         precioUnitario: p.precio_unitario,
         subtotal: p.subtotal,
       })),
+      accion: 'Si el producto ya existe, se actualizará la cantidad',
     });
 
     const paso3StartTime = Date.now();
-    const { data: productosInsertados, error: errorProductos } = await supabase
+
+    // Usar upsert para insertar o actualizar productos
+    // Si el producto ya existe (mismo carrito_id + producto_restaurante_id), actualiza cantidad y subtotal
+    const { data: productosUpserted, error: errorProductos } = await supabase
       .from('carrito_producto')
-      .insert(productosParaInsertar)
+      .upsert(productosParaUpsert, {
+        onConflict: 'carrito_id,producto_restaurante_id',
+        ignoreDuplicates: false,
+      })
       .select();
+
     const paso3Duration = Date.now() - paso3StartTime;
 
     if (errorProductos) {
-      console.error('❌ [Service crearCarrito] Error creating carrito_producto:', {
+      console.error('❌ [Service crearCarrito] Error upserting carrito_producto:', {
         error: errorProductos,
         mensaje: errorProductos?.message,
         detalles: errorProductos?.details,
         hint: errorProductos?.hint,
       });
-      throw new Error('Failed to create carrito_producto');
+      throw new Error('Failed to upsert carrito_producto');
     }
 
-    console.warn(`✅ [Service crearCarrito] ${productosInsertados?.length || 0} productos insertados en ${paso3Duration}ms`);
+    console.warn(`✅ [Service crearCarrito] ${productosUpserted?.length || 0} productos agregados/actualizados en ${paso3Duration}ms`);
 
-    // Paso 4: Si es mesa, actualizar estado a 'ocupada'
+    // Paso 4: Si es mesa, actualizar estado a 'ocupada' (solo si es carrito nuevo)
     if (tipoPedido.tipo === 'mesa' && tipoPedido.mesaId) {
-      console.warn('📝 [Service crearCarrito] PASO 4: Actualizando mesa a OCUPADA...');
-      console.warn(`  ↳ UPDATE mesa SET estado='ocupada' WHERE id=${tipoPedido.mesaId}`);
+      // Solo actualizar si es un carrito nuevo, no si es uno existente
+      if (!carritoExistente) {
+        console.warn('📝 [Service crearCarrito] PASO 4: Actualizando mesa a OCUPADA (carrito nuevo)...');
+        console.warn(`  ↳ UPDATE mesa SET estado='ocupada' WHERE id=${tipoPedido.mesaId}`);
 
-      const paso4StartTime = Date.now();
-      const { data: mesaActualizada, error: errorMesa } = await supabase
-        .from('mesa')
-        .update({ estado: 'ocupada' })
-        .eq('id', tipoPedido.mesaId)
-        .select();
-      const paso4Duration = Date.now() - paso4StartTime;
+        const paso4StartTime = Date.now();
+        const { data: mesaActualizada, error: errorMesa } = await supabase
+          .from('mesa')
+          .update({ estado: 'ocupada' })
+          .eq('id', tipoPedido.mesaId)
+          .select();
+        const paso4Duration = Date.now() - paso4StartTime;
 
-      if (errorMesa) {
-        console.error(`❌ [Service crearCarrito] Error updating mesa estado después de ${paso4Duration}ms:`, {
-          error: errorMesa,
-          mensaje: errorMesa?.message,
-          detalles: errorMesa?.details,
-          hint: errorMesa?.hint,
-          mesaId: tipoPedido.mesaId,
-        });
-        // No lanzar error, el carrito ya está creado
+        if (errorMesa) {
+          console.error(`❌ [Service crearCarrito] Error updating mesa estado después de ${paso4Duration}ms:`, {
+            error: errorMesa,
+            mensaje: errorMesa?.message,
+            detalles: errorMesa?.details,
+            hint: errorMesa?.hint,
+            mesaId: tipoPedido.mesaId,
+          });
+          // No lanzar error, el carrito ya está creado
+        } else {
+          console.warn(`✅ [Service crearCarrito] Mesa actualizada a OCUPADA en ${paso4Duration}ms:`, {
+            mesaId: tipoPedido.mesaId,
+            estadoAnterior: mesaActualizada?.[0]?.estado || 'desconocido',
+            estadoNuevo: 'ocupada',
+            mesaActualizada: mesaActualizada?.[0],
+          });
+        }
       } else {
-        console.warn(`✅ [Service crearCarrito] Mesa actualizada a OCUPADA en ${paso4Duration}ms:`, {
-          mesaId: tipoPedido.mesaId,
-          estadoAnterior: mesaActualizada?.[0]?.estado || 'desconocido',
-          estadoNuevo: 'ocupada',
-          mesaActualizada: mesaActualizada?.[0],
-        });
+        console.warn('⏭️ [Service crearCarrito] PASO 4: Omitido (carrito existente, mesa ya debería estar ocupada)');
       }
     } else {
       console.warn('⏭️ [Service crearCarrito] PASO 4: Omitido (no es mesa o no tiene mesaId)');
@@ -227,8 +328,14 @@ export async function crearCarrito(
       carritoId: carritoCreado.id,
       tipoPedidoId: tipoPedidoCreado.id,
       restauranteId: carritoCreado.restaurante_id,
-      productosInsertados: productosParaInsertar.length,
-      mesaActualizada: tipoPedido.tipo === 'mesa' ? `SÍ - Mesa ${tipoPedido.mesaId} → OCUPADA` : 'N/A (domicilio)',
+      productosAgregados: productosParaUpsert.length,
+      carritoReutilizado: carritoExistente ? 'SÍ (carrito activo existente)' : 'NO (carrito nuevo)',
+      tipoPedidoReutilizado: tipoPedidoExiste ? 'SÍ (tipo_pedido existente)' : 'NO (tipo_pedido nuevo)',
+      mesaActualizada: tipoPedido.tipo === 'mesa' && !carritoExistente
+        ? `SÍ - Mesa ${tipoPedido.mesaId} → OCUPADA`
+        : tipoPedido.tipo === 'mesa'
+          ? `NO (carrito existente, mesa ya ocupada)`
+          : 'N/A (domicilio)',
       tiempoTotal: `${totalServiceDuration}ms`,
       siguientePaso: 'API debe revalidar dashboard para que refleje el cambio',
     });
