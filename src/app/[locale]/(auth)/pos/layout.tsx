@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import type React from 'react';
-import { CartSyncProvider } from '@/components/CartSyncProvider';
-import { CartProvider } from './context/cart-context';
+import { CartProviderWrapper } from './components/CartProviderWrapper';
 
 export const metadata: Metadata = {
   title: 'POS System',
@@ -13,9 +12,5 @@ export default function POSLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <CartProvider>
-      <CartSyncProvider>{children}</CartSyncProvider>
-    </CartProvider>
-  );
+  return <CartProviderWrapper>{children}</CartProviderWrapper>;
 }

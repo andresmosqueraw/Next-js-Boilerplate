@@ -1,3 +1,4 @@
+import type { Product } from '@/app/[locale]/(auth)/pos/context/cart-context';
 import { createClient } from '@/libs/supabase/server';
 import { mapearProductosARestaurante } from './producto.service';
 
@@ -567,6 +568,151 @@ export async function obtenerCarritoActivo(
   }
 
   return { success: true, carrito };
+}
+
+/**
+ * Obtiene el carrito activo con productos en formato para el frontend
+ * Retorna los productos como CartItem[] (con id, name, price, image, category, quantity)
+ */
+export async function obtenerCarritoCompleto(
+  tipo: 'mesa' | 'domicilio',
+  id: number,
+  restauranteId: number,
+): Promise<{ success: boolean; carritoId: number | null; productos: Array<Product & { quantity: number }> }> {
+  const supabase = await createClient();
+
+  console.warn('🛒 [Service obtenerCarritoCompleto] Obteniendo carrito completo:', {
+    tipo,
+    id,
+    restauranteId,
+  });
+
+  try {
+    // Obtener el carrito activo
+    const resultado = await obtenerCarritoActivo(tipo, id);
+
+    if (!resultado.success || !resultado.carrito) {
+      console.warn('🛒 [Service obtenerCarritoCompleto] No hay carrito activo');
+      return { success: true, carritoId: null, productos: [] };
+    }
+
+    const carrito = resultado.carrito;
+    const carritoProductos = carrito.carrito_producto as Array<{
+      id: number;
+      carrito_id: number;
+      producto_restaurante_id: number;
+      cantidad: number;
+      precio_unitario: number;
+      subtotal: number;
+    }>;
+
+    if (!carritoProductos || carritoProductos.length === 0) {
+      console.warn('🛒 [Service obtenerCarritoCompleto] Carrito sin productos');
+      return { success: true, carritoId: carrito.id, productos: [] };
+    }
+
+    // Obtener todos los producto_restaurante_id
+    const productoRestauranteIds = carritoProductos.map(cp => cp.producto_restaurante_id);
+
+    // Obtener producto_restaurante con producto y categoria
+    const { data: productosRestaurante, error: errorProductos } = await supabase
+      .from('producto_restaurante')
+      .select(`
+        id,
+        producto_id,
+        producto:producto_id (
+          id,
+          nombre,
+          precio,
+          categoria_id,
+          categoria:categoria_id (
+            id,
+            nombre
+          )
+        )
+      `)
+      .in('id', productoRestauranteIds)
+      .eq('restaurante_id', restauranteId);
+
+    if (errorProductos || !productosRestaurante) {
+      console.error('❌ [Service obtenerCarritoCompleto] Error obteniendo productos:', errorProductos);
+      return { success: false, carritoId: carrito.id, productos: [] };
+    }
+
+    // Convertir a formato Product[] con quantity
+    const productos: Array<Product & { quantity: number }> = carritoProductos.map((cp) => {
+      const prodRest = productosRestaurante.find(
+        pr => pr.id === cp.producto_restaurante_id,
+      );
+
+      if (!prodRest) {
+        console.error('❌ [Service obtenerCarritoCompleto] Producto restaurante no encontrado:', cp.producto_restaurante_id);
+        return null;
+      }
+
+      // Supabase retorna los datos anidados como objetos
+      const producto = (prodRest as any).producto;
+      if (!producto) {
+        console.error('❌ [Service obtenerCarritoCompleto] Producto no encontrado para producto_restaurante:', cp.producto_restaurante_id);
+        return null;
+      }
+
+      const categoria = producto.categoria as { id: number; nombre: string } | null | undefined;
+
+      // Asignar imagen basada en el ID del producto
+      const imagenIndex = producto.id % 15;
+      const imagenes = [
+        '/classic-beef-burger.png',
+        '/delicious-pizza.png',
+        '/vibrant-mixed-salad.png',
+        '/crispy-chicken-wings.png',
+        '/crispy-french-fries.png',
+        '/refreshing-cola.png',
+        '/iced-tea.png',
+        '/glass-of-orange-juice.png',
+        '/latte-coffee.png',
+        '/bottled-water.png',
+        '/chocolate-cake-slice.png',
+        '/cheesecake-slice.png',
+        '/ice-cream-sundae.png',
+        '/apple-pie-slice.png',
+        '/chocolate-brownie.png',
+      ];
+      const imagen = imagenes[imagenIndex] || '/placeholder.svg';
+
+      // Mapear categoría a slug
+      let categoriaSlug = 'all';
+      if (categoria) {
+        const nombreLower = categoria.nombre.toLowerCase();
+        if (nombreLower === 'comida' || nombreLower === 'food' || nombreLower === 'platos') {
+          categoriaSlug = 'food';
+        } else if (nombreLower === 'bebidas' || nombreLower === 'drinks' || nombreLower === 'refrescos') {
+          categoriaSlug = 'drinks';
+        } else if (nombreLower === 'postres' || nombreLower === 'desserts' || nombreLower === 'dulces') {
+          categoriaSlug = 'desserts';
+        }
+      }
+
+      return {
+        id: producto.id,
+        name: producto.nombre,
+        price: Number(cp.precio_unitario),
+        image: imagen,
+        category: categoriaSlug,
+        quantity: cp.cantidad,
+      };
+    }).filter((p): p is Product & { quantity: number } => p !== null);
+
+    console.warn('✅ [Service obtenerCarritoCompleto] Carrito obtenido:', {
+      carritoId: carrito.id,
+      productosCount: productos.length,
+    });
+
+    return { success: true, carritoId: carrito.id, productos };
+  } catch (error) {
+    console.error('❌ [Service obtenerCarritoCompleto] Error inesperado:', error);
+    return { success: false, carritoId: null, productos: [] };
+  }
 }
 
 /**
