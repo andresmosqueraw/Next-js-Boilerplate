@@ -2,8 +2,6 @@
 
 import type { Restaurante } from '@/types/database';
 import { Check, ChevronsUpDown, Store } from 'lucide-react';
-
-import * as React from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,17 +13,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useRestaurant } from '@/contexts/RestaurantContext';
 
 export function RestaurantSwitcher({
   restaurantes,
-  defaultRestaurant,
 }: {
   restaurantes: Restaurante[];
-  defaultRestaurant?: Restaurante;
 }) {
-  // Seleccionar el restaurante por defecto o el primero de la lista
-  const restauranteInicial = defaultRestaurant || (restaurantes.length > 0 ? restaurantes[0] : undefined);
-  const [selectedRestaurant, setSelectedRestaurant] = React.useState<Restaurante | undefined>(restauranteInicial);
+  const { selectedRestaurant, setSelectedRestaurant } = useRestaurant();
 
   return (
     <SidebarMenu>
