@@ -2,6 +2,7 @@
 
 import type { Mesa } from '@/types/database';
 import Link from 'next/link';
+import * as React from 'react';
 
 type EstadoVisual = 'disponible' | 'ocupada';
 
@@ -14,6 +15,21 @@ export function MesasCard({
   mesas: Mesa[];
   mesasConCarrito?: number[];
 }) {
+  // Log para debugging
+  React.useEffect(() => {
+    console.warn('📊 [MesasCard] Estado de mesas:', {
+      totalMesas: mesas.length,
+      mesasConCarrito: mesasConCarrito.length,
+      mesasConCarritoIds: mesasConCarrito,
+      mesasDetalle: mesas.map(m => ({
+        id: m.id,
+        numero: m.numero_mesa,
+        tieneCarrito: mesasConCarrito.includes(m.id),
+        estadoVisual: mesasConCarrito.includes(m.id) ? 'OCUPADA' : 'DISPONIBLE',
+      })),
+    });
+  }, [mesas, mesasConCarrito]);
+
   // Función para determinar el estado visual de una mesa
   const getEstadoVisual = (mesa: Mesa): EstadoVisual => {
     // Si tiene carrito activo con productos → Ocupada
