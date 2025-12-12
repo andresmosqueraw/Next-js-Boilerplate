@@ -42,6 +42,69 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
       productosSincronizados: productosSincronizados.current.length,
     });
 
+    // CASO ESPECIAL: Si el carrito está vacío PERO tenemos un carritoId, limpiar el carrito en Supabase
+    if (cart.length === 0 && carritoId && tipo && id && restauranteId) {
+      console.warn('🧹 [CartSync] Carrito vacío detectado, limpiando carrito en Supabase...');
+
+      const limpiarCarrito = async () => {
+        try {
+          isCreating.current = true;
+
+          const tipoPedido = {
+            tipo,
+            mesaId: tipo === 'mesa' ? Number.parseInt(id) : undefined,
+            domicilioId: tipo === 'domicilio' ? Number.parseInt(id) : undefined,
+          };
+
+          console.warn('🧹 [CartSync] Llamando a /api/carrito/limpiar-vacio:', {
+            carritoId,
+            tipoPedido,
+          });
+
+          const response = await fetch('/api/carrito/limpiar-vacio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ carritoId, tipoPedido }),
+          });
+
+          console.warn(`📡 [CartSync] Respuesta limpiar-vacio: ${response.status}`);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [CartSync] Error HTTP al limpiar carrito:', {
+              status: response.status,
+              errorText,
+            });
+            isCreating.current = false;
+            return;
+          }
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Limpiar el carritoId y productos sincronizados
+            setCarritoId(null);
+            productosSincronizados.current = [];
+            console.warn('✅ [CartSync] Carrito limpiado exitosamente:', {
+              carritoId,
+              mesaActualizada: tipo === 'mesa' ? 'DEBERÍA ESTAR DISPONIBLE AHORA' : 'N/A',
+              siguientePaso: 'Dashboard debe recargar y mostrar mesa como DISPONIBLE',
+            });
+          } else {
+            console.error('❌ [CartSync] Error en respuesta al limpiar carrito:', data.error);
+          }
+
+          isCreating.current = false;
+        } catch (error) {
+          console.error('❌ [CartSync] Error limpiando carrito:', error);
+          isCreating.current = false;
+        }
+      };
+
+      limpiarCarrito();
+      return;
+    }
+
     // Solo sincronizar si hay productos en el carrito y tenemos tipo/id/restauranteId
     if (cart.length === 0 || !tipo || !id || !restauranteId) {
       console.warn('⏸️ [CartSync] Sincronización pausada - faltan datos o carrito vacío');
@@ -159,8 +222,13 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
           isCreating.current = false;
         } else {
           // ========================================
-          // CASO 2: Agregar/actualizar productos en carrito existente
+          // CASO 2: Agregar/actualizar/eliminar productos en carrito existente
           // ========================================
+
+          // Detectar productos eliminados (estaban sincronizados pero ya no están en cart)
+          const productosEliminados = productosSincronizados.current.filter(
+            sincronizado => !cart.some(item => item.id === sincronizado.id),
+          );
 
           // Detectar productos nuevos o con cantidad diferente
           const productosNuevos = cart.filter((cartItem) => {
@@ -171,81 +239,146 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
             return !sincronizado || sincronizado.quantity !== cartItem.quantity;
           });
 
-          if (productosNuevos.length === 0) {
+          // Si no hay cambios, no hacer nada
+          if (productosNuevos.length === 0 && productosEliminados.length === 0) {
             return; // No hay cambios que sincronizar
           }
 
           isCreating.current = true;
 
-          console.warn('➕ [CartSync] CASO 2: Agregando productos nuevos al carrito existente:', {
-            carritoId,
-            productosEnCarritoTotal: cart.length,
-            productosNuevosAgregar: productosNuevos.length,
-            detalleNuevos: productosNuevos.map(p => ({
-              id: p.id,
-              nombre: p.name,
-              cantidad: p.quantity,
-            })),
-          });
-
-          // Agregar cada producto nuevo
-          for (const producto of productosNuevos) {
-            console.warn(`➕ [CartSync] Agregando producto individual:`, {
+          // Primero, eliminar productos que ya no están en el carrito
+          if (productosEliminados.length > 0) {
+            console.warn('🗑️ [CartSync] CASO 2a: Eliminando productos del carrito:', {
               carritoId,
-              productoId: producto.id,
-              nombre: producto.name,
-              cantidad: producto.quantity,
+              productosEliminar: productosEliminados.length,
+              detalleEliminar: productosEliminados,
             });
 
-            const response = await fetch('/api/carrito/agregar-producto', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
+            for (const producto of productosEliminados) {
+              console.warn(`🗑️ [CartSync] Eliminando producto individual:`, {
                 carritoId,
-                restauranteId,
                 productoId: producto.id,
-                cantidad: producto.quantity,
-                precioUnitario: producto.price,
-              }),
+              });
+
+              const response = await fetch('/api/carrito/eliminar-producto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  carritoId,
+                  restauranteId,
+                  productoId: producto.id,
+                }),
+              });
+
+              console.warn(`📡 [CartSync] Respuesta eliminar-producto: ${response.status}`);
+
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ [CartSync] Error HTTP al eliminar producto:', {
+                  status: response.status,
+                  productoId: producto.id,
+                  errorText,
+                });
+                continue;
+              }
+
+              const data = await response.json();
+
+              if (data.success) {
+                // Remover el producto de la lista de sincronizados
+                productosSincronizados.current = productosSincronizados.current.filter(
+                  p => p.id !== producto.id,
+                );
+                console.warn('✅ [CartSync] Producto eliminado exitosamente:', {
+                  productoId: producto.id,
+                  productosSincronizadosRestantes: productosSincronizados.current.length,
+                });
+              } else {
+                console.error('❌ [CartSync] Error en respuesta al eliminar producto:', data.error);
+              }
+            }
+          }
+
+          // Después de eliminar, verificar si el carrito quedó vacío
+          if (cart.length === 0 && productosEliminados.length > 0) {
+            console.warn('🧹 [CartSync] Carrito quedó vacío después de eliminar productos, limpiando...');
+            // El siguiente useEffect detectará que cart.length === 0 y llamará a limpiar-vacio
+            isCreating.current = false;
+            return;
+          }
+
+          // Agregar cada producto nuevo (solo si hay productos nuevos)
+          if (productosNuevos.length > 0) {
+            console.warn('➕ [CartSync] CASO 2b: Agregando productos nuevos al carrito existente:', {
+              carritoId,
+              productosEnCarritoTotal: cart.length,
+              productosNuevosAgregar: productosNuevos.length,
+              detalleNuevos: productosNuevos.map(p => ({
+                id: p.id,
+                nombre: p.name,
+                cantidad: p.quantity,
+              })),
             });
 
-            console.warn(`📡 [CartSync] Respuesta agregar-producto: ${response.status}`);
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error('❌ [CartSync] Error HTTP al agregar producto:', {
-                status: response.status,
-                productoId: producto.id,
-                errorText,
-              });
-              continue;
-            }
-
-            const data = await response.json();
-
-            if (data.success) {
-              // Actualizar el producto en la lista de sincronizados
-              const index = productosSincronizados.current.findIndex(
-                p => p.id === producto.id,
-              );
-              if (index >= 0 && productosSincronizados.current[index]) {
-                productosSincronizados.current[index]!.quantity = producto.quantity;
-              } else {
-                productosSincronizados.current.push({
-                  id: producto.id,
-                  quantity: producto.quantity,
-                });
-              }
-              console.warn('✅ [CartSync] Producto agregado exitosamente:', {
+            // Agregar cada producto nuevo
+            for (const producto of productosNuevos) {
+              console.warn(`➕ [CartSync] Agregando producto individual:`, {
+                carritoId,
                 productoId: producto.id,
                 nombre: producto.name,
                 cantidad: producto.quantity,
-                productosSincronizadosTotal: productosSincronizados.current.length,
               });
-            } else {
-              console.error('❌ [CartSync] Error en respuesta al agregar producto:', data.error);
+
+              const response = await fetch('/api/carrito/agregar-producto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  carritoId,
+                  restauranteId,
+                  productoId: producto.id,
+                  cantidad: producto.quantity,
+                  precioUnitario: producto.price,
+                }),
+              });
+
+              console.warn(`📡 [CartSync] Respuesta agregar-producto: ${response.status}`);
+
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ [CartSync] Error HTTP al agregar producto:', {
+                  status: response.status,
+                  productoId: producto.id,
+                  errorText,
+                });
+                continue;
+              }
+
+              const data = await response.json();
+
+              if (data.success) {
+              // Actualizar el producto en la lista de sincronizados
+                const index = productosSincronizados.current.findIndex(
+                  p => p.id === producto.id,
+                );
+                if (index >= 0 && productosSincronizados.current[index]) {
+                  productosSincronizados.current[index]!.quantity = producto.quantity;
+                } else {
+                  productosSincronizados.current.push({
+                    id: producto.id,
+                    quantity: producto.quantity,
+                  });
+                }
+                console.warn('✅ [CartSync] Producto agregado exitosamente:', {
+                  productoId: producto.id,
+                  nombre: producto.name,
+                  cantidad: producto.quantity,
+                  productosSincronizadosTotal: productosSincronizados.current.length,
+                });
+              } else {
+                console.error('❌ [CartSync] Error en respuesta al agregar producto:', data.error);
+              }
             }
-          }
+          } // Cierre del if (productosNuevos.length > 0)
 
           console.warn('✅ [CartSync] Finalizada actualización del carrito:', {
             carritoId,

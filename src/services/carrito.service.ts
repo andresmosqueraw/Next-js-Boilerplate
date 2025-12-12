@@ -568,3 +568,129 @@ export async function obtenerCarritoActivo(
 
   return { success: true, carrito };
 }
+
+/**
+ * Limpia un carrito cuando queda vacío:
+ * - Elimina todos los productos de carrito_producto
+ * - Actualiza mesa a 'disponible' si es mesa
+ * - Opcionalmente elimina el carrito
+ */
+export async function limpiarCarritoVacio(
+  carritoId: number,
+  tipoPedido: TipoPedidoData,
+) {
+  const supabase = await createClient();
+  const serviceStartTime = Date.now();
+
+  console.warn('🧹 [Service limpiarCarritoVacio] INICIO - Limpiando carrito vacío:', {
+    carritoId,
+    tipo: tipoPedido.tipo,
+    mesaId: tipoPedido.mesaId,
+    domicilioId: tipoPedido.domicilioId,
+  });
+
+  try {
+    // Paso 1: Eliminar todos los productos del carrito
+    console.warn('📝 [Service limpiarCarritoVacio] PASO 1: Eliminando todos los productos...');
+    const paso1StartTime = Date.now();
+
+    const { error: errorEliminarProductos } = await supabase
+      .from('carrito_producto')
+      .delete()
+      .eq('carrito_id', carritoId);
+
+    const paso1Duration = Date.now() - paso1StartTime;
+
+    if (errorEliminarProductos) {
+      console.error('❌ [Service limpiarCarritoVacio] Error eliminando productos:', {
+        error: errorEliminarProductos,
+        mensaje: errorEliminarProductos?.message,
+      });
+      throw new Error('Failed to delete carrito_producto');
+    }
+
+    console.warn(`✅ [Service limpiarCarritoVacio] Productos eliminados en ${paso1Duration}ms`);
+
+    // Paso 2: Si es mesa, actualizar estado a 'disponible'
+    if (tipoPedido.tipo === 'mesa' && tipoPedido.mesaId) {
+      console.warn('📝 [Service limpiarCarritoVacio] PASO 2: Actualizando mesa a DISPONIBLE...');
+      console.warn(`  ↳ UPDATE mesa SET estado='disponible' WHERE id=${tipoPedido.mesaId}`);
+
+      const paso2StartTime = Date.now();
+      const { data: mesaActualizada, error: errorMesa } = await supabase
+        .from('mesa')
+        .update({ estado: 'disponible' })
+        .eq('id', tipoPedido.mesaId)
+        .select();
+
+      const paso2Duration = Date.now() - paso2StartTime;
+
+      if (errorMesa) {
+        console.error(`❌ [Service limpiarCarritoVacio] Error actualizando mesa después de ${paso2Duration}ms:`, {
+          error: errorMesa,
+          mensaje: errorMesa?.message,
+          detalles: errorMesa?.details,
+          hint: errorMesa?.hint,
+          mesaId: tipoPedido.mesaId,
+        });
+        // No lanzar error, los productos ya fueron eliminados
+      } else {
+        console.warn(`✅ [Service limpiarCarritoVacio] Mesa actualizada a DISPONIBLE en ${paso2Duration}ms:`, {
+          mesaId: tipoPedido.mesaId,
+          estadoAnterior: mesaActualizada?.[0]?.estado || 'desconocido',
+          estadoNuevo: 'disponible',
+          mesaActualizada: mesaActualizada?.[0],
+        });
+      }
+    } else {
+      console.warn('⏭️ [Service limpiarCarritoVacio] PASO 2: Omitido (no es mesa o no tiene mesaId)');
+    }
+
+    // Paso 3: Opcionalmente, eliminar el carrito (o marcarlo como cerrado)
+    // Por ahora, dejamos el carrito en la BD pero sin productos
+    // Si quieres eliminarlo completamente, descomenta esto:
+    /*
+    console.warn('📝 [Service limpiarCarritoVacio] PASO 3: Eliminando carrito...');
+    const { error: errorEliminarCarrito } = await supabase
+      .from('carrito')
+      .delete()
+      .eq('id', carritoId);
+
+    if (errorEliminarCarrito) {
+      console.error('❌ [Service limpiarCarritoVacio] Error eliminando carrito:', errorEliminarCarrito);
+      // No lanzar error, los productos ya fueron eliminados
+    } else {
+      console.warn('✅ [Service limpiarCarritoVacio] Carrito eliminado');
+    }
+    */
+
+    const totalServiceDuration = Date.now() - serviceStartTime;
+    console.warn(`🎉 [Service limpiarCarritoVacio] PROCESO COMPLETADO EXITOSAMENTE en ${totalServiceDuration}ms`);
+    console.warn('🎉 [Service limpiarCarritoVacio] Resumen:', {
+      carritoId,
+      productosEliminados: 'TODOS',
+      mesaActualizada: tipoPedido.tipo === 'mesa' && tipoPedido.mesaId
+        ? `SÍ - Mesa ${tipoPedido.mesaId} → DISPONIBLE`
+        : 'N/A (domicilio)',
+      tiempoTotal: `${totalServiceDuration}ms`,
+      siguientePaso: 'API debe revalidar dashboard para que refleje el cambio',
+    });
+    console.warn('🧹 [Service limpiarCarritoVacio] ═══════════════════════════════════\n');
+
+    return {
+      success: true,
+      carritoId,
+    };
+  } catch (error) {
+    const totalServiceDuration = Date.now() - serviceStartTime;
+    console.error(`❌ [Service limpiarCarritoVacio] Error inesperado después de ${totalServiceDuration}ms:`, {
+      error,
+      mensaje: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'N/A',
+    });
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
