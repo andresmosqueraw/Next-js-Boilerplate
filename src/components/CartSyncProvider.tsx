@@ -79,6 +79,8 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
             })),
           };
 
+          const requestBody = { tipoPedido, carritoData };
+
           console.warn('🛒 [CartSync] PASO 1: Creando carrito nuevo en Supabase:', {
             tipo,
             mesaDomicilioId: id,
@@ -92,11 +94,35 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
             })),
           });
 
+          console.warn('📤 [CartSync] Body de la petición a /api/carrito/crear:', {
+            tipoPedido: {
+              tipo: requestBody.tipoPedido.tipo,
+              mesaId: requestBody.tipoPedido.mesaId,
+              domicilioId: requestBody.tipoPedido.domicilioId,
+            },
+            carritoData: {
+              restauranteId: requestBody.carritoData.restauranteId,
+              clienteId: requestBody.carritoData.clienteId,
+              productos: requestBody.carritoData.productos.map(p => ({
+                productoId: p.productoId,
+                cantidad: p.cantidad,
+                precioUnitario: p.precioUnitario,
+                subtotal: p.subtotal,
+              })),
+            },
+          });
+
+          console.warn('⏱️ [CartSync] Iniciando fetch a /api/carrito/crear...');
+          const fetchStartTime = Date.now();
+
           const response = await fetch('/api/carrito/crear', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tipoPedido, carritoData }),
+            body: JSON.stringify(requestBody),
           });
+
+          const fetchDuration = Date.now() - fetchStartTime;
+          console.warn(`⏱️ [CartSync] Fetch completado en ${fetchDuration}ms`);
 
           console.warn(`📡 [CartSync] Respuesta del servidor: ${response.status} ${response.statusText}`);
 
