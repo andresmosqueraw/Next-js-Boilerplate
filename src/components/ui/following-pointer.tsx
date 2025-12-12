@@ -4,83 +4,6 @@ import { AnimatePresence, motion, useMotionValue } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-export const FollowerPointerCard = ({
-  children,
-  className,
-  title,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  title?: string | React.ReactNode;
-}) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const ref = React.useRef<HTMLDivElement>(null);
-  const [rect, setRect] = useState<DOMRect | null>(null);
-  const [isInside, setIsInside] = useState<boolean>(false);
-
-  useEffect(() => {
-    console.log('[v0] FollowerPointerCard mounted');
-    return () => {
-      console.log('[v0] FollowerPointerCard unmounted');
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log('[v0] isInside changed:', isInside);
-  }, [isInside]);
-
-  useEffect(() => {
-    const updateRect = () => {
-      if (ref.current) {
-        setRect(ref.current.getBoundingClientRect());
-      }
-    };
-
-    updateRect();
-
-    const handleResize = () => updateRect();
-    const handleScroll = () => updateRect();
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    x.set(e.clientX);
-    y.set(e.clientY);
-  };
-
-  const handleMouseLeave = () => {
-    setIsInside(false);
-  };
-
-  const handleMouseEnter = () => {
-    setIsInside(true);
-  };
-
-  return (
-    <div
-      onMouseLeave={handleMouseLeave}
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseMove}
-      style={{
-        cursor: 'none',
-      }}
-      ref={ref}
-      className={cn('relative', className)}
-    >
-      <AnimatePresence>{isInside && <FollowPointer x={x} y={y} title={title} />}</AnimatePresence>
-      {children}
-    </div>
-  );
-};
-
 export const FollowPointer = ({
   x,
   y,
@@ -153,5 +76,82 @@ export const FollowPointer = ({
         </motion.div>
       </div>
     </motion.div>
+  );
+};
+
+export const FollowerPointerCard = ({
+  children,
+  className,
+  title,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  title?: string | React.ReactNode;
+}) => {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [_rect, setRect] = useState<DOMRect | null>(null);
+  const [isInside, setIsInside] = useState<boolean>(false);
+
+  useEffect(() => {
+    // FollowerPointerCard mounted
+    return () => {
+      // FollowerPointerCard unmounted
+    };
+  }, []);
+
+  useEffect(() => {
+    // isInside changed
+  }, [isInside]);
+
+  useEffect(() => {
+    const updateRect = () => {
+      if (ref.current) {
+        setRect(ref.current.getBoundingClientRect());
+      }
+    };
+
+    updateRect();
+
+    const handleResize = () => updateRect();
+    const handleScroll = () => updateRect();
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    x.set(e.clientX);
+    y.set(e.clientY);
+  };
+
+  const handleMouseLeave = () => {
+    setIsInside(false);
+  };
+
+  const handleMouseEnter = () => {
+    setIsInside(true);
+  };
+
+  return (
+    <div
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
+      style={{
+        cursor: 'none',
+      }}
+      ref={ref}
+      className={cn('relative', className)}
+    >
+      <AnimatePresence>{isInside && <FollowPointer x={x} y={y} title={title} />}</AnimatePresence>
+      {children}
+    </div>
   );
 };

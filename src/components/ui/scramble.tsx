@@ -37,23 +37,31 @@ const ScrambleHover: React.FC<ScrambleHoverProps> = ({
 }) => {
   const [displayText, setDisplayText] = useState(text);
   const [isScrambling, setIsScrambling] = useState(false);
-  const [revealedIndices, setRevealedIndices] = useState(new Set<number>());
+  const [revealedIndices, _setRevealedIndices] = useState(new Set<number>());
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
     let currentIteration = 0;
 
+    const availableChars = useOriginalCharsOnly
+      ? Array.from(new Set(text.split(''))).filter(char => char !== ' ')
+      : characters.split('');
+
     const getNextIndex = () => {
       const textLength = text.length;
+      let middle: number;
+      let offset: number;
+      let nextIndex: number;
+
       switch (revealDirection) {
         case 'start':
           return revealedIndices.size;
         case 'end':
           return textLength - 1 - revealedIndices.size;
         case 'center':
-          const middle = Math.floor(textLength / 2);
-          const offset = Math.floor(revealedIndices.size / 2);
-          const nextIndex = revealedIndices.size % 2 === 0 ? middle + offset : middle - offset - 1;
+          middle = Math.floor(textLength / 2);
+          offset = Math.floor(revealedIndices.size / 2);
+          nextIndex = revealedIndices.size % 2 === 0 ? middle + offset : middle - offset - 1;
 
           if (nextIndex >= 0 && nextIndex < textLength && !revealedIndices.has(nextIndex)) {
             return nextIndex;
@@ -83,8 +91,10 @@ const ScrambleHover: React.FC<ScrambleHoverProps> = ({
 
         // Shuffle remaining non-revealed, non-space characters
         for (let i = nonSpaceChars.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1))
-          ;[nonSpaceChars[i], nonSpaceChars[j]] = [nonSpaceChars[j], nonSpaceChars[i]];
+          const j = Math.floor(Math.random() * (i + 1));
+          const temp = nonSpaceChars[i];
+          nonSpaceChars[i] = nonSpaceChars[j]!;
+          nonSpaceChars[j] = temp!;
         }
 
         let charIndex = 0;
@@ -114,10 +124,6 @@ const ScrambleHover: React.FC<ScrambleHoverProps> = ({
           .join('');
       }
     };
-
-    const availableChars = useOriginalCharsOnly
-      ? Array.from(new Set(text.split(''))).filter(char => char !== ' ')
-      : characters.split('');
 
     if (isHovering) {
       setIsScrambling(true);

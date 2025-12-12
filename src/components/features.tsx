@@ -4,7 +4,7 @@ import type React from 'react';
 
 import { motion, useInView } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useRef, useState } from 'react';
 import { geist } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 import { FollowerPointerCard } from './ui/following-pointer';
@@ -17,20 +17,15 @@ export default function Features() {
   const { theme } = useTheme();
   const [isHovering, setIsHovering] = useState(false);
   const [isCliHovering, setIsCliHovering] = useState(false);
-  const [isFeature3Hovering, setIsFeature3Hovering] = useState(false);
-  const [isFeature4Hovering, setIsFeature4Hovering] = useState(false);
+  const [_isFeature3Hovering, setIsFeature3Hovering] = useState(false);
+  const [_isFeature4Hovering, setIsFeature4Hovering] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
-  const [baseColor, setBaseColor] = useState<[number, number, number]>([0.906, 0.541, 0.325]); // #e78a53 in RGB normalized
-  const [glowColor, setGlowColor] = useState<[number, number, number]>([0.906, 0.541, 0.325]); // #e78a53 in RGB normalized
+  const [baseColor] = useState<[number, number, number]>([0.906, 0.541, 0.325]); // #e78a53 in RGB normalized
+  const [glowColor] = useState<[number, number, number]>([0.906, 0.541, 0.325]); // #e78a53 in RGB normalized
 
-  const [dark, setDark] = useState<number>(theme === 'dark' ? 1 : 0);
-
-  useEffect(() => {
-    setBaseColor([0.906, 0.541, 0.325]); // #e78a53
-    setGlowColor([0.906, 0.541, 0.325]); // #e78a53
-    setDark(theme === 'dark' ? 1 : 0);
-  }, [theme]);
+  // Derive dark value from theme
+  const dark = theme === 'dark' ? 1 : 0;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {

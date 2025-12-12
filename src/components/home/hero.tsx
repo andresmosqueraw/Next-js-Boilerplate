@@ -9,7 +9,9 @@ export default function Hero() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    // Delayed mount to avoid hydration issues
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   if (!mounted) {
@@ -90,7 +92,15 @@ export default function Hero() {
 
               {/* Get started button */}
               <div className="flex items-center justify-center">
-                <a href="/docs/components/theme-toggle-animations">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const element = document.getElementById('features');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                >
                   <div className="group flex h-[60px] cursor-pointer items-center gap-2 rounded-full border border-border bg-card p-[10px]">
                     <div className="flex h-[40px] items-center justify-center rounded-full border border-border bg-primary text-primary-foreground">
                       <p className="mr-3 ml-3 flex items-center justify-center gap-2 text-base font-medium tracking-tight">
@@ -131,7 +141,7 @@ export default function Hero() {
                       </svg>
                     </div>
                   </div>
-                </a>
+                </button>
               </div>
             </motion.div>
           </div>
