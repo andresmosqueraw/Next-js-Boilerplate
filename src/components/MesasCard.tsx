@@ -175,11 +175,17 @@ export function MesasCard({
               </div>
             </div>
           )
-        : (
-            <div className="space-y-4">
-              {gruposDeMesas.map((grupo, indice) => renderTablaMesas(grupo, indice))}
-            </div>
-          )}
+        : gruposDeMesas.length > 1
+          ? (
+              // Si hay más de 10 mesas, mostrar 2 tablas lado a lado
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {gruposDeMesas.map((grupo, indice) => renderTablaMesas(grupo, indice))}
+              </div>
+            )
+          : (
+              // Si hay 10 o menos, mostrar una sola tabla
+              renderTablaMesas(gruposDeMesas[0] || [], 0)
+            )}
     </div>
   );
 }
