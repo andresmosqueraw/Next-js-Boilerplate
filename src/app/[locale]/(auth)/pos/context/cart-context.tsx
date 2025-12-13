@@ -90,6 +90,27 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
     }
 
     try {
+      // OPTIMISTIC UPDATE: Actualizar el estado local inmediatamente
+      const existingItemIndex = cart.findIndex(item => item.id === product.id);
+      if (existingItemIndex >= 0) {
+        // Producto ya existe: incrementar cantidad
+        setCart(prev => prev.map((item, index) =>
+          index === existingItemIndex
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        ));
+      } else {
+        // Producto nuevo: agregar al carrito
+        setCart(prev => [...prev, {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          category: product.category,
+          quantity: 1,
+        }]);
+      }
+
       // Si no hay carrito, crear uno nuevo
       if (!carritoId) {
         const response = await fetch('/api/carrito/crear', {
@@ -114,6 +135,8 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
         });
 
         if (!response.ok) {
+          // Revertir cambio optimista
+          setCart(prev => prev.filter(item => item.id !== product.id));
           console.error('Error al crear carrito:', response.statusText);
           return;
         }
@@ -121,9 +144,11 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
         const data = await response.json();
         if (data.success) {
           setCarritoId(data.carritoId);
-          // Recargar carrito
-          await cargarCarrito();
-      }
+          // Sincronizar en segundo plano (no bloquea la UI)
+          cargarCarrito().catch(err => {
+            console.error('Error al sincronizar carrito:', err);
+          });
+        }
       } else {
         // Agregar producto al carrito existente
         const response = await fetch('/api/carrito/agregar-producto', {
@@ -139,17 +164,40 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
         });
 
         if (!response.ok) {
+          // Revertir cambio optimista
+          if (existingItemIndex >= 0) {
+            setCart(prev => prev.map((item, index) =>
+              index === existingItemIndex
+                ? { ...item, quantity: item.quantity - 1 }
+                : item
+            ));
+          } else {
+            setCart(prev => prev.filter(item => item.id !== product.id));
+          }
           console.error('Error al agregar producto:', response.statusText);
           return;
         }
 
-        // Recargar carrito
-        await cargarCarrito();
+        // Sincronizar en segundo plano (no bloquea la UI)
+        cargarCarrito().catch(err => {
+          console.error('Error al sincronizar carrito:', err);
+        });
       }
     } catch (error) {
+      // Revertir cambio optimista en caso de error
+      const existingItemIndex = cart.findIndex(item => item.id === product.id);
+      if (existingItemIndex >= 0) {
+        setCart(prev => prev.map((item, index) =>
+          index === existingItemIndex && item.quantity > 1
+            ? { ...item, quantity: item.quantity - 1 }
+            : item
+        ).filter(item => item.quantity > 0));
+      } else {
+        setCart(prev => prev.filter(item => item.id !== product.id));
+      }
       console.error('Error al agregar al carrito:', error);
     }
-  }, [tipo, id, restauranteId, carritoId, cargarCarrito]);
+  }, [tipo, id, restauranteId, carritoId, cart, cargarCarrito]);
 
   const removeFromCart = useCallback(async (productId: number) => {
     if (!carritoId || !restauranteId) {

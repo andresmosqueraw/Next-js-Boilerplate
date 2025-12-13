@@ -676,7 +676,7 @@ export async function obtenerCarritoCompleto(
       .in('id', productoRestauranteIds)
       .eq('restaurante_id', restauranteId);
 
-    // Paso 2: Obtener las categorías visibles para este restaurante (en paralelo)
+    // Paso 2: Obtener las categorías visibles para este restaurante
     const categoriasRestaurantePromise = supabase
       .from('categoria_restaurante')
       .select('categoria_id, categoria:categoria_id (id, nombre)')
@@ -702,7 +702,14 @@ export async function obtenerCarritoCompleto(
     );
 
     // Paso 3: Obtener las relaciones producto_categoria para todos los productos
+    // Usar los producto_id que ya tenemos de la primera consulta
     const productoIds = productosRestaurante.map(pr => pr.producto_id);
+    
+    // Si no hay productos, retornar vacío
+    if (productoIds.length === 0) {
+      return { success: true, carritoId: carrito.id, productos: [] };
+    }
+
     const { data: productoCategorias } = await supabase
       .from('producto_categoria')
       .select('producto_id, categoria_id, categoria:categoria_id (id, nombre)')
