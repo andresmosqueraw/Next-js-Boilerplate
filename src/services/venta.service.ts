@@ -49,53 +49,85 @@ export async function crearVenta(data: CrearVentaData) {
       tipoPedidoId: carrito.tipo_pedido_id,
     });
 
-    // Paso 2: Crear el registro de venta
-    const ventaData = {
-      carrito_id: data.carritoId,
-      restaurante_id: data.restauranteId,
-      cliente_id: data.clienteId || null,
-      total: data.total,
-      dinero_recibido: data.dineroRecibido,
-      cambio_dado: data.cambioDado,
-      tipo_de_pedido: data.tipoDePedido,
-      metodo_pago: data.metodoPago,
-      fecha: new Date().toISOString(),
-    };
-
-    console.warn('📝 [Service crearVenta] Insertando venta:', ventaData);
-
-    const { data: ventaCreada, error: errorVenta } = await supabase
+    // Paso 2: Verificar si ya existe una venta para este carrito
+    const { data: ventaExistente, error: errorVentaExistente } = await supabase
       .from('venta')
-      .insert(ventaData)
-      .select()
-      .single();
+      .select('*')
+      .eq('carrito_id', data.carritoId)
+      .maybeSingle();
 
-    if (errorVenta || !ventaCreada) {
-      console.error('❌ [Service crearVenta] Error creando venta:', errorVenta);
-      throw new Error('Error al crear la venta');
+    if (errorVentaExistente && errorVentaExistente.code !== 'PGRST116') {
+      // PGRST116 es "no rows returned", que es esperado si no existe
+      console.error('❌ [Service crearVenta] Error verificando venta existente:', errorVentaExistente);
+      throw new Error('Error al verificar venta existente');
     }
 
-    console.warn('✅ [Service crearVenta] Venta creada exitosamente:', {
+    let ventaCreada;
+
+    if (ventaExistente) {
+      // Ya existe una venta para este carrito, retornar la existente
+      console.warn('⚠️ [Service crearVenta] Ya existe una venta para este carrito:', {
+        ventaId: ventaExistente.id,
+        carritoId: ventaExistente.carrito_id,
+        total: ventaExistente.total,
+      });
+      ventaCreada = ventaExistente;
+    } else {
+      // Paso 3: Crear el registro de venta
+      const ventaData = {
+        carrito_id: data.carritoId,
+        restaurante_id: data.restauranteId,
+        cliente_id: data.clienteId || null,
+        total: data.total,
+        dinero_recibido: data.dineroRecibido,
+        cambio_dado: data.cambioDado,
+        tipo_de_pedido: data.tipoDePedido,
+        metodo_pago: data.metodoPago,
+        fecha: new Date().toISOString(),
+      };
+
+      console.warn('📝 [Service crearVenta] Insertando venta:', ventaData);
+
+      const { data: ventaNueva, error: errorVenta } = await supabase
+        .from('venta')
+        .insert(ventaData)
+        .select()
+        .single();
+
+      if (errorVenta || !ventaNueva) {
+        console.error('❌ [Service crearVenta] Error creando venta:', errorVenta);
+        throw new Error('Error al crear la venta');
+      }
+
+      ventaCreada = ventaNueva;
+    }
+
+    console.warn('✅ [Service crearVenta] Venta procesada exitosamente:', {
       ventaId: ventaCreada.id,
       total: ventaCreada.total,
       tipoDePedido: ventaCreada.tipo_de_pedido,
+      esVentaExistente: !!ventaExistente,
     });
 
-    // Paso 3: Actualizar el estado del carrito a 'completado' o 'servido'
-    const { error: errorUpdateCarrito } = await supabase
-      .from('carrito')
-      .update({ estado: 'completado' })
-      .eq('id', data.carritoId);
+    // Paso 4: Actualizar el estado del carrito a 'completado' o 'servido' (solo si es nueva venta)
+    if (!ventaExistente) {
+      const { error: errorUpdateCarrito } = await supabase
+        .from('carrito')
+        .update({ estado: 'completado' })
+        .eq('id', data.carritoId);
 
-    if (errorUpdateCarrito) {
-      console.error('⚠️ [Service crearVenta] Error actualizando estado del carrito:', errorUpdateCarrito);
-      // No lanzar error, la venta ya se creó
+      if (errorUpdateCarrito) {
+        console.error('⚠️ [Service crearVenta] Error actualizando estado del carrito:', errorUpdateCarrito);
+        // No lanzar error, la venta ya se creó
+      } else {
+        console.warn('✅ [Service crearVenta] Estado del carrito actualizado a "completado"');
+      }
     } else {
-      console.warn('✅ [Service crearVenta] Estado del carrito actualizado a "completado"');
+      console.warn('ℹ️ [Service crearVenta] Venta existente, omitiendo actualización de carrito');
     }
 
-    // Paso 4: Si es una mesa, actualizar su estado a 'disponible'
-    if (data.tipoDePedido === 'MESA' && carrito.tipo_pedido?.mesa_id) {
+    // Paso 5: Si es una mesa, actualizar su estado a 'disponible' (solo si es nueva venta)
+    if (!ventaExistente && data.tipoDePedido === 'MESA' && carrito.tipo_pedido?.mesa_id) {
       const { error: errorUpdateMesa } = await supabase
         .from('mesa')
         .update({ estado: 'disponible' })
@@ -107,6 +139,8 @@ export async function crearVenta(data: CrearVentaData) {
       } else {
         console.warn('✅ [Service crearVenta] Estado de la mesa actualizado a "disponible"');
       }
+    } else if (ventaExistente && data.tipoDePedido === 'MESA') {
+      console.warn('ℹ️ [Service crearVenta] Venta existente, omitiendo actualización de mesa');
     }
 
     console.warn('✅ [Service crearVenta] ═══════════════════════════════════');

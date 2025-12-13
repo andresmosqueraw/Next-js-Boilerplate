@@ -27,19 +27,36 @@ export default function CheckoutPage() {
   const restauranteId = searchParams.get('restauranteId');
 
   const total = cartTotal;
-  const change = paymentMethod === 'cash' && cashReceived
-    ? Math.max(0, Number.parseFloat(cashReceived) - total)
+
+  // Validar y calcular cambio solo si el valor es un número válido
+  const cashReceivedNumber = cashReceived ? Number.parseFloat(cashReceived) : Number.NaN;
+  const isValidCashAmount = !Number.isNaN(cashReceivedNumber) && Number.isFinite(cashReceivedNumber);
+  const change = paymentMethod === 'cash' && isValidCashAmount
+    ? Math.max(0, cashReceivedNumber - total)
     : 0;
 
   const handlePayment = async () => {
     if (!carritoId || !restauranteId) {
-      alert('Error: Faltan datos necesarios para procesar el pago');
+      console.error('Error: Faltan datos necesarios para procesar el pago');
       return;
     }
 
-    if (paymentMethod === 'cash' && (!cashReceived || Number.parseFloat(cashReceived) < total)) {
-      alert('El dinero recibido debe ser mayor o igual al total');
-      return;
+    if (paymentMethod === 'cash') {
+      if (!cashReceived || cashReceived.trim() === '') {
+        console.error('Por favor ingrese el monto recibido');
+        return;
+      }
+
+      const cashValue = Number.parseFloat(cashReceived);
+      if (Number.isNaN(cashValue) || !Number.isFinite(cashValue)) {
+        console.error('Por favor ingrese un número válido');
+        return;
+      }
+
+      if (cashValue < total) {
+        console.error('El dinero recibido debe ser mayor o igual al total');
+        return;
+      }
     }
 
     setIsProcessing(true);
@@ -99,7 +116,7 @@ export default function CheckoutPage() {
       router.push(`/pos/success?${successParams.toString()}`);
     } catch (error) {
       console.error('Error al procesar el pago:', error);
-      alert(`Error al procesar el pago: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      console.error(`Error al procesar el pago: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setIsProcessing(false);
     }
@@ -256,17 +273,20 @@ export default function CheckoutPage() {
                 <Label htmlFor="cashReceived">Dinero Recibido</Label>
                 <Input
                   id="cashReceived"
-                  type="number"
-                  step="0.01"
-                  min={total}
+                  type="text"
                   value={cashReceived}
                   onChange={e => setCashReceived(e.target.value)}
                   placeholder={`Mínimo: $${total.toFixed(2)}`}
                 />
-                {cashReceived && Number.parseFloat(cashReceived) >= total && (
+                {cashReceived && isValidCashAmount && cashReceivedNumber >= total && (
                   <p className="text-sm text-muted-foreground">
                     Cambio: $
                     {change.toFixed(2)}
+                  </p>
+                )}
+                {cashReceived && !isValidCashAmount && (
+                  <p className="text-sm text-red-500">
+                    Por favor ingrese un número válido
                   </p>
                 )}
               </div>
@@ -276,7 +296,7 @@ export default function CheckoutPage() {
               className="mt-6 w-full"
               size="lg"
               onClick={handlePayment}
-              disabled={isProcessing || (paymentMethod === 'cash' && (!cashReceived || Number.parseFloat(cashReceived) < total))}
+              disabled={isProcessing || (paymentMethod === 'cash' && (!cashReceived || !isValidCashAmount || cashReceivedNumber < total))}
             >
               {isProcessing ? 'Procesando...' : 'Completar Pago'}
             </Button>

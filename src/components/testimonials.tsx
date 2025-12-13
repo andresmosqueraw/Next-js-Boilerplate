@@ -116,24 +116,24 @@ export function TestimonialsSection() {
         <div className="my-16 flex max-h-[738px] justify-center gap-6 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)]">
           <div>
             <Marquee pauseOnHover vertical className="[--duration:20s]">
-              {firstColumn.map(testimonial => (
-                <TestimonialCard key={testimonial.username} {...testimonial} />
+              {firstColumn.map((testimonial, index) => (
+                <TestimonialCard key={`first-${index}-${testimonial.name}`} {...testimonial} />
               ))}
             </Marquee>
           </div>
 
           <div className="hidden md:block">
             <Marquee reverse pauseOnHover vertical className="[--duration:25s]">
-              {secondColumn.map(testimonial => (
-                <TestimonialCard key={testimonial.username} {...testimonial} />
+              {secondColumn.map((testimonial, index) => (
+                <TestimonialCard key={`second-${index}-${testimonial.name}`} {...testimonial} />
               ))}
             </Marquee>
           </div>
 
           <div className="hidden lg:block">
             <Marquee pauseOnHover vertical className="[--duration:30s]">
-              {thirdColumn.map(testimonial => (
-                <TestimonialCard key={testimonial.username} {...testimonial} />
+              {thirdColumn.map((testimonial, index) => (
+                <TestimonialCard key={`third-${index}-${testimonial.name}`} {...testimonial} />
               ))}
             </Marquee>
           </div>

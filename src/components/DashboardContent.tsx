@@ -169,7 +169,16 @@ export function DashboardContent({
       )}
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Mesas y Domicilios</h1>
+        <h1 className="text-2xl font-bold">
+          Mesas y Domicilios
+          {selectedRestaurant && (
+            <span className="ml-2 text-2xl font-bold">
+              -
+              {' '}
+              {selectedRestaurant.nombre}
+            </span>
+          )}
+        </h1>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
