@@ -58,7 +58,67 @@ export async function getDomicilios(): Promise<Domicilio[]> {
 export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaurantes[]> {
   const supabase = await createClient();
 
-  // Paso 1: Obtener todos los domicilios con información del cliente
+  // Optimización: Obtener tipo_pedido y carritos en paralelo
+  const [tiposPedidoResult, carritosResult] = await Promise.all([
+    supabase
+      .from('tipo_pedido')
+      .select('id, domicilio_id')
+      .not('domicilio_id', 'is', null),
+    supabase
+      .from('carrito')
+      .select('tipo_pedido_id, restaurante_id'),
+  ]);
+
+  const { data: tiposPedido, error: tiposError } = tiposPedidoResult;
+  const { data: carritos, error: carritosError } = carritosResult;
+
+  if (tiposError || carritosError) {
+    console.error('Error fetching datos:', { tiposError, carritosError });
+    return [];
+  }
+
+  if (!tiposPedido || tiposPedido.length === 0) {
+    return [];
+  }
+
+  // Crear mapa de tipo_pedido_id -> restaurante_ids
+  const tipoPedidoRestaurantesMap = new Map<number, Set<number>>();
+  carritos?.forEach((carrito) => {
+    if (!tipoPedidoRestaurantesMap.has(carrito.tipo_pedido_id)) {
+      tipoPedidoRestaurantesMap.set(carrito.tipo_pedido_id, new Set());
+    }
+    if (carrito.restaurante_id) {
+      tipoPedidoRestaurantesMap.get(carrito.tipo_pedido_id)!.add(carrito.restaurante_id);
+    }
+  });
+
+  // Crear mapa de domicilio_id -> restaurante_ids
+  const domicilioRestaurantesMap = new Map<number, Set<number>>();
+  const domicilioIds = new Set<number>();
+
+  tiposPedido.forEach((tp) => {
+    if (tp.domicilio_id) {
+      domicilioIds.add(tp.domicilio_id);
+      
+      if (!domicilioRestaurantesMap.has(tp.domicilio_id)) {
+        domicilioRestaurantesMap.set(tp.domicilio_id, new Set());
+      }
+
+      // Obtener restaurantes de este tipo_pedido
+      const restaurantes = tipoPedidoRestaurantesMap.get(tp.id);
+      if (restaurantes) {
+        restaurantes.forEach(restId => {
+          domicilioRestaurantesMap.get(tp.domicilio_id)!.add(restId);
+        });
+      }
+    }
+  });
+
+  // Obtener solo los domicilios que tienen pedidos (optimización)
+  if (domicilioIds.size === 0) {
+    return [];
+  }
+
   const { data: domicilios, error: domiciliosError } = await supabase
     .from('domicilio')
     .select(`
@@ -68,6 +128,7 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
         nombre
       )
     `)
+    .in('id', Array.from(domicilioIds))
     .order('creado_en', { ascending: false });
 
   if (domiciliosError) {
@@ -79,61 +140,12 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
     return [];
   }
 
-  // Paso 2: Obtener todos los tipo_pedido que tienen domicilio_id
-  const { data: tiposPedido, error: tiposError } = await supabase
-    .from('tipo_pedido')
-    .select('id, domicilio_id')
-    .not('domicilio_id', 'is', null);
-
-  if (tiposError) {
-    console.error('Error fetching tipos_pedido:', tiposError);
-    // Continuar sin relaciones
-    return domicilios.map(d => ({ ...d, restaurantes_ids: [] }));
-  }
-
-  if (!tiposPedido || tiposPedido.length === 0) {
-    return domicilios.map(d => ({ ...d, restaurantes_ids: [] }));
-  }
-
-  // Paso 3: Obtener todos los carritos relacionados
-  const tipoPedidoIds = tiposPedido.map(tp => tp.id);
-  const { data: carritos, error: carritosError } = await supabase
-    .from('carrito')
-    .select('tipo_pedido_id, restaurante_id')
-    .in('tipo_pedido_id', tipoPedidoIds);
-
-  if (carritosError) {
-    console.error('Error fetching carritos:', carritosError);
-    return domicilios.map(d => ({ ...d, restaurantes_ids: [] }));
-  }
-
-  // Paso 4: Crear un mapa de domicilio_id -> restaurante_ids
-  const domicilioRestaurantesMap = new Map<number, Set<number>>();
-
-  tiposPedido.forEach((tp) => {
-    if (tp.domicilio_id) {
-      if (!domicilioRestaurantesMap.has(tp.domicilio_id)) {
-        domicilioRestaurantesMap.set(tp.domicilio_id, new Set());
-      }
-
-      // Buscar carritos con este tipo_pedido_id
-      const carritosRelacionados = carritos?.filter(c => c.tipo_pedido_id === tp.id);
-      carritosRelacionados?.forEach((carrito) => {
-        if (carrito.restaurante_id) {
-          domicilioRestaurantesMap.get(tp.domicilio_id)!.add(carrito.restaurante_id);
-        }
-      });
-    }
-  });
-
-  // Paso 5: Combinar la información
+  // Combinar la información
   const domiciliosConRestaurantes = domicilios.map((domicilio) => {
     const restaurantesIds = domicilioRestaurantesMap.get(domicilio.id) || new Set();
-    // Extraer el nombre del cliente (Supabase retorna el objeto cliente anidado)
     const cliente = (domicilio as any).cliente;
     const clienteNombre = cliente?.nombre || undefined;
     
-    // Remover el objeto cliente del domicilio antes de retornar
     const { cliente: _, ...domicilioSinCliente } = domicilio as any;
     
     return {
