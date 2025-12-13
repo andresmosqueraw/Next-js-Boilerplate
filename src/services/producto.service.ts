@@ -57,43 +57,94 @@ function mapearNombreCategoriaASlug(nombreCategoria: string): string {
 
 /**
  * Obtiene todos los productos disponibles de un restaurante
+ * La relación es: producto_restaurante → producto → producto_categoria → categoria → categoria_restaurante → restaurante
  */
 export async function getProductosByRestaurante(
   restauranteId: number,
 ): Promise<Product[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  // Paso 1: Obtener productos_restaurante disponibles
+  console.log(`🔍 [getProductosByRestaurante] Buscando productos para restaurante ${restauranteId}`);
+  const { data: productosRestaurante, error: errorProductosRestaurante } = await supabase
     .from('producto_restaurante')
     .select(`
       id,
+      producto_id,
+      precio_venta,
       disponible,
       producto:producto_id (
         id,
         nombre,
         descripcion,
-        precio,
-        categoria_id,
-        categoria:categoria_id (
-          nombre
-        )
+        precio
       )
     `)
     .eq('restaurante_id', restauranteId)
     .eq('disponible', true);
 
-  if (error) {
-    console.error('Error fetching productos by restaurante:', error);
+  if (errorProductosRestaurante) {
+    console.error('❌ [getProductosByRestaurante] Error fetching producto_restaurante:', errorProductosRestaurante);
     return [];
   }
 
-  if (!data || data.length === 0) {
-    console.warn(`No hay productos disponibles para restaurante ${restauranteId}`);
+  if (!productosRestaurante || productosRestaurante.length === 0) {
+    console.warn(`⚠️ [getProductosByRestaurante] No hay productos disponibles para restaurante ${restauranteId}`);
     return [];
   }
 
-  // Transformar los datos al formato Product
-  const productos: Product[] = data
+  console.log(`✅ [getProductosByRestaurante] Encontrados ${productosRestaurante.length} productos_restaurante`);
+
+  // Paso 2: Obtener las categorías visibles para este restaurante
+  const { data: categoriasRestaurante, error: errorCategoriasRestaurante } = await supabase
+    .from('categoria_restaurante')
+    .select('categoria_id, categoria:categoria_id (id, nombre)')
+    .eq('restaurante_id', restauranteId)
+    .eq('visible', true);
+
+  if (errorCategoriasRestaurante) {
+    console.error('❌ [getProductosByRestaurante] Error fetching categorias_restaurante:', errorCategoriasRestaurante);
+  } else {
+    console.log(`✅ [getProductosByRestaurante] Encontradas ${categoriasRestaurante?.length || 0} categorías visibles para el restaurante`);
+  }
+
+  const categoriasVisiblesIds = new Set(
+    categoriasRestaurante?.map(cr => cr.categoria_id) || []
+  );
+
+  // Paso 3: Obtener las relaciones producto_categoria para todos los productos
+  const productoIds = productosRestaurante.map(pr => pr.producto_id);
+  console.log(`🔍 [getProductosByRestaurante] Buscando categorías para ${productoIds.length} productos`);
+  const { data: productoCategorias, error: errorProductoCategorias } = await supabase
+    .from('producto_categoria')
+    .select('producto_id, categoria_id, categoria:categoria_id (id, nombre)')
+    .in('producto_id', productoIds);
+
+  if (errorProductoCategorias) {
+    console.error('❌ [getProductosByRestaurante] Error fetching producto_categoria:', errorProductoCategorias);
+  } else {
+    console.log(`✅ [getProductosByRestaurante] Encontradas ${productoCategorias?.length || 0} relaciones producto_categoria`);
+  }
+
+  // Paso 4: Crear un mapa de producto_id -> categoría (solo categorías visibles para el restaurante)
+  const productoCategoriaMap = new Map<number, string>();
+  productoCategorias?.forEach((pc) => {
+    const categoriaId = pc.categoria_id;
+    // Solo incluir si la categoría está visible para este restaurante
+    if (categoriasVisiblesIds.has(categoriaId)) {
+      const categoria = Array.isArray(pc.categoria) ? pc.categoria[0] : pc.categoria;
+      if (categoria && typeof categoria === 'object' && 'nombre' in categoria) {
+        const nombreCategoria = String(categoria.nombre);
+        // Usar la primera categoría encontrada (o podemos usar todas si el modelo lo requiere)
+        if (!productoCategoriaMap.has(pc.producto_id)) {
+          productoCategoriaMap.set(pc.producto_id, nombreCategoria);
+        }
+      }
+    }
+  });
+
+  // Paso 5: Transformar los datos al formato Product
+  const productos: Product[] = productosRestaurante
     .filter(item => item.producto) // Filtrar items sin producto
     .map((item) => {
       const producto = Array.isArray(item.producto) ? item.producto[0] : item.producto;
@@ -103,28 +154,31 @@ export async function getProductosByRestaurante(
         throw new Error('Producto no encontrado después del filtro');
       }
 
-      // Obtener nombre de categoría (puede ser objeto o string)
-      const categoria = producto.categoria;
-      let nombreCategoria = 'food'; // default
+      // Obtener nombre de categoría del mapa (o usar default)
+      const nombreCategoria = productoCategoriaMap.get(producto.id) || 'food';
+      const categoriaSlug = mapearNombreCategoriaASlug(nombreCategoria);
 
-      if (categoria) {
-        if (Array.isArray(categoria) && categoria[0] && typeof categoria[0] === 'object' && 'nombre' in categoria[0]) {
-          nombreCategoria = String(categoria[0].nombre);
-        } else if (typeof categoria === 'object' && 'nombre' in categoria && typeof categoria.nombre === 'string') {
-          nombreCategoria = categoria.nombre;
-        }
-      }
+      // Usar precio_venta del producto_restaurante si está disponible, sino el precio base del producto
+      const precio = item.precio_venta ? Number(item.precio_venta) : Number(producto.precio);
 
       return {
         id: producto.id,
         name: producto.nombre,
-        price: Number(producto.precio),
+        price: precio,
         image: asignarImagenAProducto(producto.id),
-        category: mapearNombreCategoriaASlug(nombreCategoria),
+        category: categoriaSlug,
       };
     });
 
-  console.warn(`✅ Cargados ${productos.length} productos para restaurante ${restauranteId}`);
+  console.log(`✅ [getProductosByRestaurante] Cargados ${productos.length} productos para restaurante ${restauranteId}`);
+  if (productos.length > 0) {
+    console.log(`📦 [getProductosByRestaurante] Primer producto:`, {
+      id: productos[0].id,
+      name: productos[0].name,
+      price: productos[0].price,
+      category: productos[0].category,
+    });
+  }
 
   return productos;
 }
