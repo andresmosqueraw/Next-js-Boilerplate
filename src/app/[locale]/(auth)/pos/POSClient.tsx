@@ -4,7 +4,7 @@ import type { Product } from './context/cart-context';
 import type { CategoriaConSlug } from '@/services/producto.service';
 import { MapPin, Search, Table } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import CartSidebar from '@/components/cart-sidebar';
 import CategorySidebar from '@/components/category-sidebar';
 import ProductGrid from '@/components/product-grid';
@@ -32,19 +32,6 @@ export function POSClient({
   const clienteId = searchParams.get('clienteId');
   const restauranteId = searchParams.get('restauranteId');
 
-  // Función para navegar al dashboard (misma lógica que el botón "Back to Dashboard")
-  const handleBackToDashboard = useCallback(() => {
-    console.warn('🔄 [POSClient] Navegando a dashboard y refrescando datos...');
-    // Construir URL del dashboard con restauranteId si existe
-    const dashboardUrl = restauranteId
-      ? `/dashboard?restauranteId=${restauranteId}`
-      : '/dashboard';
-    
-    // Navegar al dashboard y refrescar (igual que el botón "Back to Dashboard")
-    router.push(dashboardUrl);
-    router.refresh();
-  }, [restauranteId, router]);
-
   // Interceptar el botón "atrás" del navegador
   useEffect(() => {
     let isHandling = false;
@@ -60,12 +47,18 @@ export function POSClient({
       const currentPath = window.location.pathname;
       if (currentPath.includes('/pos')) {
         isHandling = true;
-        console.warn('🔄 [POSClient] Botón atrás detectado, navegando al dashboard...');
+        console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
+        console.warn('🔄 [POSClient] 🔙 BOTÓN ATRÁS DEL NAVEGADOR DETECTADO');
+        console.warn('🔄 [POSClient] Paso 1: Navegando rápidamente al dashboard...');
         
         // Construir URL del dashboard con restauranteId
         const dashboardUrl = restauranteId
           ? `/dashboard?restauranteId=${restauranteId}`
           : '/dashboard';
+        
+        // Marcar en sessionStorage que viene del botón atrás (para mostrar indicador)
+        sessionStorage.setItem('dashboard_reload_from_back', 'true');
+        sessionStorage.setItem('dashboard_reload_timestamp', Date.now().toString());
         
         // Primero navegar rápidamente al dashboard (sin recargar)
         router.push(dashboardUrl);
@@ -73,7 +66,9 @@ export function POSClient({
         // Como último paso, después de un pequeño delay, recargar la página
         // para asegurar que los datos se actualicen correctamente
         setTimeout(() => {
-          console.warn('🔄 [POSClient] Recargando dashboard como último paso para actualizar datos...');
+          console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
+          console.warn('🔄 [POSClient] 🔄 PASO FINAL: Recargando dashboard para actualizar datos...');
+          console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
           window.location.reload();
         }, 100);
       }

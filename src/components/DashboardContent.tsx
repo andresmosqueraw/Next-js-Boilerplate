@@ -21,6 +21,40 @@ export function DashboardContent({
 }) {
   const { selectedRestaurant } = useRestaurant();
   const router = useRouter();
+  const [showReloadIndicator, setShowReloadIndicator] = React.useState(false);
+
+  // Verificar si la página se recargó desde el botón "atrás" del navegador
+  React.useEffect(() => {
+    const reloadFromBack = sessionStorage.getItem('dashboard_reload_from_back');
+    const reloadTimestamp = sessionStorage.getItem('dashboard_reload_timestamp');
+    
+    if (reloadFromBack === 'true' && reloadTimestamp) {
+      const timestamp = Number.parseInt(reloadTimestamp, 10);
+      const now = Date.now();
+      // Mostrar indicador si la recarga fue hace menos de 3 segundos
+      if (now - timestamp < 3000) {
+        console.warn('✅ [DashboardContent] ════════════════════════════════════════════════════');
+        console.warn('✅ [DashboardContent] ✅ DASHBOARD RECARGADO DESDE BOTÓN ATRÁS');
+        console.warn('✅ [DashboardContent] ✅ Los datos se han actualizado correctamente');
+        console.warn('✅ [DashboardContent] ════════════════════════════════════════════════════');
+        
+        setShowReloadIndicator(true);
+        
+        // Limpiar el flag después de mostrar el indicador
+        sessionStorage.removeItem('dashboard_reload_from_back');
+        sessionStorage.removeItem('dashboard_reload_timestamp');
+        
+        // Ocultar el indicador después de 3 segundos
+        setTimeout(() => {
+          setShowReloadIndicator(false);
+        }, 3000);
+      } else {
+        // Limpiar flags antiguos
+        sessionStorage.removeItem('dashboard_reload_from_back');
+        sessionStorage.removeItem('dashboard_reload_timestamp');
+      }
+    }
+  }, []);
 
   // Auto-refresh cuando la página se vuelve visible (usuario regresa del POS o cambia de pestaña)
   React.useEffect(() => {
@@ -86,6 +120,15 @@ export function DashboardContent({
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
+      {/* Indicador visual cuando se recarga desde el botón "atrás" */}
+      {showReloadIndicator && (
+        <div className="rounded-lg border border-emerald-500/50 bg-emerald-500/10 p-3 text-center">
+          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+            ✅ Dashboard recargado - Datos actualizados correctamente
+          </p>
+        </div>
+      )}
+      
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mesas y Domicilios</h1>
       </div>
