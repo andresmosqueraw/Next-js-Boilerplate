@@ -27,7 +27,7 @@ type CategoryItem = {
 const categoriasEstaticas: CategoryItem[] = [
   {
     id: 'all',
-    name: 'All Products',
+    name: 'Todos',
     icon: LayoutGrid,
   },
   {
@@ -119,7 +119,7 @@ export default function CategorySidebar({
         onClick={handleBackToDashboard}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Dashboard
+        Volver al Dashboard
       </Button>
       <h2 className="mb-4 text-lg font-semibold">Categorías</h2>
       <div className="grid gap-3">

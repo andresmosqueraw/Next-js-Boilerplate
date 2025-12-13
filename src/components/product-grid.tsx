@@ -58,7 +58,7 @@ export default function ProductGrid({
 
       {filteredProducts.length === 0 && (
         <div className="col-span-full py-12 text-center">
-          <p className="text-muted-foreground">No products found</p>
+          <p className="text-muted-foreground">No se encontraron productos</p>
         </div>
       )}
     </div>

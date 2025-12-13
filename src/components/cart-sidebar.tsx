@@ -35,12 +35,12 @@ export default function CartSidebar() {
       <div className="flex items-center justify-between border-b p-4">
         <h2 className="flex items-center text-lg font-semibold">
           <ShoppingCart className="mr-2 h-5 w-5" />
-          Cart
+          Carrito
         </h2>
         <span className="rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
           {itemCount}
           {' '}
-          items
+          {itemCount === 1 ? 'artículo' : 'artículos'}
         </span>
       </div>
 
@@ -49,8 +49,8 @@ export default function CartSidebar() {
           ? (
               <div className="flex h-full flex-col items-center justify-center text-center">
                 <ShoppingCart className="mb-2 h-12 w-12 text-muted-foreground" />
-                <h3 className="font-medium">Your cart is empty</h3>
-                <p className="text-sm text-muted-foreground">Add items to get started</p>
+                <h3 className="font-medium">Tu carrito está vacío</h3>
+                <p className="text-sm text-muted-foreground">Agrega productos para comenzar</p>
               </div>
             )
           : (
@@ -72,7 +72,7 @@ export default function CartSidebar() {
                         $
                         {item.price.toFixed(2)}
                         {' '}
-                        each
+                        cada uno
                       </p>
                       <div className="mt-auto flex items-center justify-between">
                         <div className="flex items-center">
@@ -128,7 +128,7 @@ export default function CartSidebar() {
           </div>
         </div>
         <Button className="w-full" size="lg" disabled={cart.length === 0} onClick={handleCheckout}>
-          Checkout
+          Pagar
         </Button>
       </div>
     </div>

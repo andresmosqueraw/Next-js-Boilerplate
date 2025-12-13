@@ -153,11 +153,11 @@ export function POSClient({
           )}
 
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Point of Sale</h1>
+            <h1 className="text-2xl font-bold">Punto de Venta</h1>
             <div className="relative w-64">
               <Search className="absolute top-2.5 left-2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search products..."
+                placeholder="Buscar productos..."
                 className="pl-8"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
