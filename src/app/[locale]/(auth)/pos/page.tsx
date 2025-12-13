@@ -13,7 +13,7 @@ export default async function POSPage({
   const [productos, categorias] = restauranteId
     ? await Promise.all([
         getProductosByRestaurante(Number(restauranteId)),
-        getCategoriasConSlug(),
+        getCategoriasConSlug(Number(restauranteId)),
       ])
     : [[], []];
 

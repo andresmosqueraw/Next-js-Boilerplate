@@ -257,6 +257,62 @@ export async function getCategorias(): Promise<Categoria[]> {
 }
 
 /**
+ * Obtiene las categorías visibles para un restaurante específico
+ * La relación es: categoria_restaurante → categoria
+ */
+export async function getCategoriasByRestaurante(
+  restauranteId: number,
+): Promise<Categoria[]> {
+  const supabase = await createClient();
+
+  console.log(`🔍 [getCategoriasByRestaurante] Buscando categorías para restaurante ${restauranteId}`);
+  
+  const { data, error } = await supabase
+    .from('categoria_restaurante')
+    .select(`
+      orden,
+      categoria:categoria_id (
+        id,
+        nombre,
+        descripcion
+      )
+    `)
+    .eq('restaurante_id', restauranteId)
+    .eq('visible', true)
+    .order('orden', { ascending: true });
+
+  if (error) {
+    console.error('❌ [getCategoriasByRestaurante] Error fetching categorias_restaurante:', error);
+    return [];
+  }
+
+  if (!data || data.length === 0) {
+    console.warn(`⚠️ [getCategoriasByRestaurante] No hay categorías visibles para restaurante ${restauranteId}`);
+    return [];
+  }
+
+  // Extraer las categorías del resultado anidado
+  const categorias: Categoria[] = data
+    .map((item) => {
+      const categoria = Array.isArray(item.categoria) ? item.categoria[0] : item.categoria;
+      if (!categoria || typeof categoria !== 'object') {
+        return null;
+      }
+      return {
+        id: categoria.id,
+        nombre: categoria.nombre,
+        descripcion: categoria.descripcion || null,
+        orden: item.orden || 0,
+      } as Categoria;
+    })
+    .filter((cat): cat is Categoria => cat !== null);
+
+  console.log(`✅ [getCategoriasByRestaurante] Encontradas ${categorias.length} categorías visibles para el restaurante`);
+
+  return categorias;
+}
+
+/**
  * Tipo para categorías con slug para el frontend
  */
 export type CategoriaConSlug = Categoria & {
@@ -265,9 +321,14 @@ export type CategoriaConSlug = Categoria & {
 
 /**
  * Obtiene categorías y agrega slug para el frontend
+ * Si se proporciona restauranteId, solo retorna las categorías visibles para ese restaurante
  */
-export async function getCategoriasConSlug(): Promise<CategoriaConSlug[]> {
-  const categorias = await getCategorias();
+export async function getCategoriasConSlug(
+  restauranteId?: number,
+): Promise<CategoriaConSlug[]> {
+  const categorias = restauranteId
+    ? await getCategoriasByRestaurante(restauranteId)
+    : await getCategorias();
 
   return categorias.map(cat => ({
     ...cat,
