@@ -2,31 +2,75 @@ import type { Product } from '@/app/[locale]/(auth)/pos/context/cart-context';
 import type { Categoria } from '@/types/database';
 import { createClient } from '@/libs/supabase/server';
 
-// Imágenes disponibles para asignar aleatoriamente
-const IMAGENES_DISPONIBLES = [
-  '/classic-beef-burger.png',
-  '/delicious-pizza.png',
-  '/vibrant-mixed-salad.png',
-  '/crispy-chicken-wings.png',
-  '/crispy-french-fries.png',
-  '/refreshing-cola.png',
-  '/iced-tea.png',
-  '/glass-of-orange-juice.png',
-  '/latte-coffee.png',
-  '/bottled-water.png',
-  '/chocolate-cake-slice.png',
-  '/cheesecake-slice.png',
-  '/ice-cream-sundae.png',
-  '/apple-pie-slice.png',
-  '/chocolate-brownie.png',
-];
+// Imágenes disponibles para asignar según heurísticas
+const IMAGENES_DISPONIBLES = {
+  // Platos principales
+  plato: '/classic-beef-burger.png',
+  // Sopas
+  sopa: '/vibrant-mixed-salad.png',
+  // Bebidas
+  jugo: '/glass-of-orange-juice.png',
+  agua: '/bottled-water.png',
+  cola: '/refreshing-cola.png',
+  limonada: '/iced-tea.png',
+  // Café y bebidas calientes
+  cafe: '/latte-coffee.png',
+  chocolate: '/chocolate-cake-slice.png',
+  tinto: '/latte-coffee.png',
+  aromatica: '/iced-tea.png',
+  // Desayunos
+  desayuno: '/delicious-pizza.png',
+  huevo: '/crispy-chicken-wings.png',
+  pan: '/apple-pie-slice.png',
+  // Proteínas y especiales
+  sobrebarriga: '/classic-beef-burger.png',
+  mojarra: '/crispy-chicken-wings.png',
+  lomo: '/classic-beef-burger.png',
+  churrasco: '/classic-beef-burger.png',
+  costillas: '/classic-beef-burger.png',
+  churrasquito: '/classic-beef-burger.png',
+  pechuga: '/crispy-chicken-wings.png',
+  // Acompañamientos
+  proteina: '/crispy-chicken-wings.png',
+  papa: '/crispy-french-fries.png',
+  patacon: '/crispy-french-fries.png',
+  arroz: '/vibrant-mixed-salad.png',
+  // Postres y dulces
+  fruta: '/apple-pie-slice.png',
+  banano: '/apple-pie-slice.png',
+  torta: '/chocolate-cake-slice.png',
+  gelatina: '/ice-cream-sundae.png',
+  leche: '/cheesecake-slice.png',
+  // Otros
+  caldo: '/vibrant-mixed-salad.png',
+  icopor: '/bottled-water.png',
+  calentada: '/delicious-pizza.png',
+  moñona: '/delicious-pizza.png',
+  rancheros: '/crispy-chicken-wings.png',
+  // Por defecto
+  default: '/classic-beef-burger.png',
+};
 
 /**
- * Asigna una imagen aleatoria basada en el ID del producto (determinista)
+ * Asigna una imagen basada en heurísticas del nombre del producto
  */
-function asignarImagenAProducto(productoId: number): string {
-  const index = productoId % IMAGENES_DISPONIBLES.length;
-  return IMAGENES_DISPONIBLES[index] || '/placeholder.svg';
+function asignarImagenAProducto(nombreProducto: string, productoId: number): string {
+  const nombreLower = nombreProducto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Normalizar y quitar acentos
+  
+  // Buscar palabras clave en el nombre del producto
+  const palabrasClave = Object.keys(IMAGENES_DISPONIBLES).filter(key => key !== 'default');
+  
+  // Buscar coincidencias (ordenadas por especificidad: palabras más largas primero)
+  const palabrasOrdenadas = palabrasClave.sort((a, b) => b.length - a.length);
+  
+  for (const palabra of palabrasOrdenadas) {
+    if (nombreLower.includes(palabra)) {
+      return IMAGENES_DISPONIBLES[palabra as keyof typeof IMAGENES_DISPONIBLES] || IMAGENES_DISPONIBLES.default;
+    }
+  }
+  
+  // Si no hay coincidencia, usar imagen por defecto
+  return IMAGENES_DISPONIBLES.default;
 }
 
 /**
@@ -165,7 +209,7 @@ export async function getProductosByRestaurante(
         id: producto.id,
         name: producto.nombre,
         price: precio,
-        image: asignarImagenAProducto(producto.id),
+        image: asignarImagenAProducto(producto.nombre, producto.id),
         category: categoriaSlug,
       };
     });
