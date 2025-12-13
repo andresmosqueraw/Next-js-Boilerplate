@@ -1,7 +1,7 @@
 'use client';
 
 import type { Product } from '../app/[locale]/(auth)/pos/context/cart-context';
-import { PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle } from 'lucide-react';
 import Image from 'next/image';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,7 +19,7 @@ export default function ProductGrid({
   searchQuery,
   productos,
 }: ProductGridProps) {
-  const { addToCart } = useCart();
+  const { addToCart, updatingItems } = useCart();
 
   // Usar productos dinámicos si están disponibles, o los estáticos como fallback
   const todosLosProductos = productos || productosEstaticos;
@@ -32,29 +32,42 @@ export default function ProductGrid({
 
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-      {filteredProducts.map(product => (
-        <Card
-          key={product.id}
-          className="group cursor-pointer overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-md"
-          onClick={() => addToCart(product)}
-        >
-          <div className="relative aspect-square">
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-              <PlusCircle className="h-10 w-10 text-white" />
+      {filteredProducts.map(product => {
+        const isAdding = updatingItems.has(product.id);
+        return (
+          <Card
+            key={product.id}
+            className={`group relative overflow-hidden transition-all duration-200 ${
+              isAdding 
+                ? 'opacity-60 cursor-wait' 
+                : 'cursor-pointer hover:scale-105 hover:shadow-md'
+            }`}
+            onClick={() => !isAdding && addToCart(product)}
+          >
+            <div className="relative aspect-square">
+              {isAdding ? (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+                  <Loader2 className="h-10 w-10 animate-spin text-white" />
+                </div>
+              ) : (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                  <PlusCircle className="h-10 w-10 text-white" />
+                </div>
+              )}
+              <Image src={product.image || '/placeholder.svg'} alt={product.name} fill className="object-cover" />
             </div>
-            <Image src={product.image || '/placeholder.svg'} alt={product.name} fill className="object-cover" />
-          </div>
-          <CardContent className="p-3">
-            <div>
-              <h3 className="break-words font-medium leading-tight">{product.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                $
-                {product.price.toFixed(2)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            <CardContent className="p-3">
+              <div>
+                <h3 className="break-words font-medium leading-tight">{product.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  $
+                  {product.price.toFixed(2)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
 
       {filteredProducts.length === 0 && (
         <div className="col-span-full py-12 text-center">

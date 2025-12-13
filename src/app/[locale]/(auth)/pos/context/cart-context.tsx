@@ -91,28 +91,10 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
       return;
     }
 
-    try {
-      // OPTIMISTIC UPDATE: Actualizar el estado local inmediatamente
-      const existingItemIndex = cart.findIndex(item => item.id === product.id);
-      if (existingItemIndex >= 0) {
-        // Producto ya existe: incrementar cantidad
-        setCart(prev => prev.map((item, index) =>
-          index === existingItemIndex
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        ));
-      } else {
-        // Producto nuevo: agregar al carrito
-        setCart(prev => [...prev, {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          category: product.category,
-          quantity: 1,
-        }]);
-      }
+    // Marcar como actualizando
+    setUpdatingItems(prev => new Set(prev).add(product.id));
 
+    try {
       // Si no hay carrito, crear uno nuevo
       if (!carritoId) {
         const response = await fetch('/api/carrito/crear', {
@@ -137,19 +119,16 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
         });
 
         if (!response.ok) {
-          // Revertir cambio optimista
-          setCart(prev => prev.filter(item => item.id !== product.id));
           console.error('Error al crear carrito:', response.statusText);
+          alert('Error al agregar el producto. Por favor, intenta de nuevo.');
           return;
         }
 
         const data = await response.json();
         if (data.success) {
           setCarritoId(data.carritoId);
-          // Sincronizar en segundo plano (no bloquea la UI)
-          cargarCarrito().catch(err => {
-            console.error('Error al sincronizar carrito:', err);
-          });
+          // Solo actualizar la UI cuando la petición sea exitosa
+          await cargarCarrito();
         }
       } else {
         // Agregar producto al carrito existente
@@ -166,40 +145,26 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
         });
 
         if (!response.ok) {
-          // Revertir cambio optimista
-          if (existingItemIndex >= 0) {
-            setCart(prev => prev.map((item, index) =>
-              index === existingItemIndex
-                ? { ...item, quantity: item.quantity - 1 }
-                : item
-            ));
-          } else {
-            setCart(prev => prev.filter(item => item.id !== product.id));
-          }
           console.error('Error al agregar producto:', response.statusText);
+          alert('Error al agregar el producto. Por favor, intenta de nuevo.');
           return;
         }
 
-        // Sincronizar en segundo plano (no bloquea la UI)
-        cargarCarrito().catch(err => {
-          console.error('Error al sincronizar carrito:', err);
-        });
+        // Solo actualizar la UI cuando la petición sea exitosa
+        await cargarCarrito();
       }
     } catch (error) {
-      // Revertir cambio optimista en caso de error
-      const existingItemIndex = cart.findIndex(item => item.id === product.id);
-      if (existingItemIndex >= 0) {
-        setCart(prev => prev.map((item, index) =>
-          index === existingItemIndex && item.quantity > 1
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        ).filter(item => item.quantity > 0));
-      } else {
-        setCart(prev => prev.filter(item => item.id !== product.id));
-      }
       console.error('Error al agregar al carrito:', error);
+      alert('Error al agregar el producto. Por favor, intenta de nuevo.');
+    } finally {
+      // Quitar el loading
+      setUpdatingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(product.id);
+        return newSet;
+      });
     }
-  }, [tipo, id, restauranteId, carritoId, cart, cargarCarrito]);
+  }, [tipo, id, restauranteId, carritoId, cargarCarrito]);
 
   const removeFromCart = useCallback(async (productId: number) => {
     if (!carritoId || !restauranteId) {
