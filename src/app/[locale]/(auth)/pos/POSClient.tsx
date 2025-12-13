@@ -35,11 +35,21 @@ export function POSClient({
   // Interceptar el botón "atrás" del navegador
   useEffect(() => {
     let isHandling = false;
+    
+    // Agregar una entrada al historial cuando se carga el POS
+    // Esto nos permite detectar cuando el usuario intenta salir
+    const currentState = window.history.state;
+    if (!currentState || !currentState.posEntry) {
+      console.warn('🔍 [POSClient] Agregando entrada al historial para detectar botón atrás...');
+      window.history.pushState({ posEntry: true, fromPOS: true }, '', window.location.href);
+    }
 
     // Función que se ejecuta cuando el usuario presiona "atrás"
-    const handlePopState = () => {
+    const handlePopState = (event: PopStateEvent) => {
+      console.warn('🔍 [POSClient] ════════════════════════════════════════════════════');
       console.warn('🔍 [POSClient] popstate event detectado');
       console.warn('🔍 [POSClient] pathname:', window.location.pathname);
+      console.warn('🔍 [POSClient] event.state:', event.state);
       console.warn('🔍 [POSClient] isHandling:', isHandling);
       
       // Prevenir múltiples ejecuciones
@@ -48,9 +58,16 @@ export function POSClient({
         return;
       }
 
-      // Verificar si todavía estamos en el POS
+      // Si el estado anterior no tiene posEntry, significa que el usuario
+      // está intentando salir del POS (viene de una página anterior)
+      const isTryingToLeavePOS = !event.state?.posEntry;
       const currentPath = window.location.pathname;
-      if (currentPath.includes('/pos')) {
+      const stillInPOS = currentPath.includes('/pos');
+      
+      console.warn('🔍 [POSClient] isTryingToLeavePOS:', isTryingToLeavePOS);
+      console.warn('🔍 [POSClient] stillInPOS:', stillInPOS);
+
+      if (isTryingToLeavePOS || stillInPOS) {
         isHandling = true;
         console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
         console.warn('🔄 [POSClient] 🔙 BOTÓN ATRÁS DEL NAVEGADOR DETECTADO');
@@ -67,6 +84,9 @@ export function POSClient({
         sessionStorage.setItem('dashboard_reload_timestamp', timestamp.toString());
         console.warn('🔄 [POSClient] Flag guardado en sessionStorage, timestamp:', timestamp);
         
+        // Volver a agregar la entrada del POS para mantener la posición
+        window.history.pushState({ posEntry: true, fromPOS: true }, '', window.location.href);
+        
         // Primero navegar rápidamente al dashboard (sin recargar)
         router.push(dashboardUrl);
         console.warn('🔄 [POSClient] router.push() ejecutado');
@@ -79,17 +99,19 @@ export function POSClient({
           console.warn('🔄 [POSClient] Timestamp antes de recargar:', Date.now());
           console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
           window.location.reload();
-        }, 100);
+        }, 1);
       } else {
-        console.warn('🔍 [POSClient] No estamos en POS, ignorando popstate');
+        console.warn('🔍 [POSClient] No es necesario interceptar, continuando navegación normal');
       }
     };
 
     // Escuchar el evento popstate (se dispara cuando el usuario presiona "atrás")
     window.addEventListener('popstate', handlePopState);
+    console.warn('✅ [POSClient] Listener de popstate registrado');
 
     // Limpiar el listener cuando el componente se desmonte
     return () => {
+      console.warn('🧹 [POSClient] Limpiando listener de popstate');
       window.removeEventListener('popstate', handlePopState);
     };
   }, [restauranteId, router]);
