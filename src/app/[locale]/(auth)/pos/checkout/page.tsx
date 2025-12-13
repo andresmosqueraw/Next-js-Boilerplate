@@ -8,13 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 import { useCart } from '../context/cart-context';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { cart, cartTotal } = useCart();
+  const { cart, cartTotal, carritoId } = useCart();
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [cashReceived, setCashReceived] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Obtener información del tipo de pedido
   const tipo = searchParams.get('tipo');
@@ -25,33 +28,82 @@ export default function CheckoutPage() {
 
   const tax = cartTotal * 0.1;
   const grandTotal = cartTotal + tax;
+  const change = paymentMethod === 'cash' && cashReceived 
+    ? Math.max(0, Number.parseFloat(cashReceived) - grandTotal)
+    : 0;
 
-  const handlePayment = () => {
-    // In a real app, you would process payment here
-    // Aquí se guardaría en la base de datos el pedido con:
-    // - tipo_pedido (mesa_id o domicilio_id)
-    // - carrito con productos
-    // - venta final
+  const handlePayment = async () => {
+    if (!carritoId || !restauranteId) {
+      alert('Error: Faltan datos necesarios para procesar el pago');
+      return;
+    }
 
-    const successParams = new URLSearchParams();
-    if (tipo) {
-      successParams.set('tipo', tipo);
+    if (paymentMethod === 'cash' && (!cashReceived || Number.parseFloat(cashReceived) < grandTotal)) {
+      alert('El dinero recibido debe ser mayor o igual al total');
+      return;
     }
-    if (id) {
-      successParams.set('id', id);
-    }
-    if (numero) {
-      successParams.set('numero', numero);
-    }
-    if (clienteId) {
-      successParams.set('clienteId', clienteId);
-    }
-    if (restauranteId) {
-      successParams.set('restauranteId', restauranteId);
-    }
-    successParams.set('metodo', paymentMethod);
 
-    router.push(`/pos/success?${successParams.toString()}`);
+    setIsProcessing(true);
+
+    try {
+      const dineroRecibido = paymentMethod === 'cash' 
+        ? Number.parseFloat(cashReceived)
+        : grandTotal;
+      
+      const tipoDePedido = tipo === 'mesa' ? 'MESA' : 'DOMICILIO';
+
+      const response = await fetch('/api/venta/crear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          carritoId,
+          restauranteId: Number(restauranteId),
+          clienteId: clienteId ? Number(clienteId) : null,
+          total: grandTotal,
+          dineroRecibido: dineroRecibido,
+          cambioDado: change,
+          tipoDePedido,
+          metodoPago: paymentMethod === 'card' ? 'tarjeta' : 'efectivo',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error al procesar el pago');
+      }
+
+      // Limpiar el carrito después de la venta exitosa
+      // El carrito se limpiará automáticamente cuando se navegue
+
+      const successParams = new URLSearchParams();
+      if (tipo) {
+        successParams.set('tipo', tipo);
+      }
+      if (id) {
+        successParams.set('id', id);
+      }
+      if (numero) {
+        successParams.set('numero', numero);
+      }
+      if (clienteId) {
+        successParams.set('clienteId', clienteId);
+      }
+      if (restauranteId) {
+        successParams.set('restauranteId', restauranteId);
+      }
+      successParams.set('metodo', paymentMethod);
+      successParams.set('ventaId', result.venta.id);
+
+      router.push(`/pos/success?${successParams.toString()}`);
+    } catch (error) {
+      console.error('Error al procesar el pago:', error);
+      alert(`Error al procesar el pago: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Construir URL de regreso al POS con parámetros
@@ -212,8 +264,34 @@ export default function CheckoutPage() {
               </div>
             </RadioGroup>
 
-            <Button className="mt-6 w-full" size="lg" onClick={handlePayment}>
-              Complete Payment
+            {paymentMethod === 'cash' && (
+              <div className="mt-4 space-y-2">
+                <Label htmlFor="cashReceived">Dinero Recibido</Label>
+                <Input
+                  id="cashReceived"
+                  type="number"
+                  step="0.01"
+                  min={grandTotal}
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                  placeholder={`Mínimo: $${grandTotal.toFixed(2)}`}
+                />
+                {cashReceived && Number.parseFloat(cashReceived) >= grandTotal && (
+                  <p className="text-sm text-muted-foreground">
+                    Cambio: $
+                    {change.toFixed(2)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <Button 
+              className="mt-6 w-full" 
+              size="lg" 
+              onClick={handlePayment}
+              disabled={isProcessing || (paymentMethod === 'cash' && (!cashReceived || Number.parseFloat(cashReceived) < grandTotal))}
+            >
+              {isProcessing ? 'Procesando...' : 'Complete Payment'}
             </Button>
           </div>
         </div>
