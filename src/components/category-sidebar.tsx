@@ -3,9 +3,9 @@
 import type React from 'react';
 
 import type { CategoriaConSlug } from '@/services/producto.service';
-import { ArrowLeft, Coffee, IceCream, LayoutGrid, ShoppingBag, Utensils } from 'lucide-react';
+import { ArrowLeft, Coffee, IceCream, LayoutGrid, Loader2, ShoppingBag, Utensils } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -66,6 +66,7 @@ export default function CategorySidebar({
 }: CategorySidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Construir lista de categorías dinámicamente
   const categoriasMostradas = useMemo(() => {
@@ -95,20 +96,27 @@ export default function CategorySidebar({
     return todasLasCategorias;
   }, [categorias]);
 
-  const handleBackToDashboard = () => {
+  const handleBackToDashboard = async () => {
+    setIsNavigating(true);
     console.warn('🔄 [CategorySidebar] Navegando a dashboard y refrescando datos...');
-    // Obtener restauranteId de la URL del POS para mantener el restaurante seleccionado
-    const restauranteId = searchParams.get('restauranteId');
     
-    // Construir URL del dashboard con restauranteId si existe
-    const dashboardUrl = restauranteId
-      ? `/dashboard?restauranteId=${restauranteId}`
-      : '/dashboard';
-    
-    // Navegar al dashboard - el revalidatePath del API ya invalidó el cache
-    // pero hacemos refresh explícito para asegurar datos frescos
-    router.push(dashboardUrl);
-    router.refresh();
+    try {
+      // Obtener restauranteId de la URL del POS para mantener el restaurante seleccionado
+      const restauranteId = searchParams.get('restauranteId');
+      
+      // Construir URL del dashboard con restauranteId si existe
+      const dashboardUrl = restauranteId
+        ? `/dashboard?restauranteId=${restauranteId}`
+        : '/dashboard';
+      
+      // Navegar al dashboard - el revalidatePath del API ya invalidó el cache
+      // pero hacemos refresh explícito para asegurar datos frescos
+      router.push(dashboardUrl);
+      router.refresh();
+    } catch (error) {
+      console.error('Error al navegar al dashboard:', error);
+      setIsNavigating(false);
+    }
   };
 
   return (
@@ -117,9 +125,14 @@ export default function CategorySidebar({
         variant="outline"
         className="mb-4 w-full justify-start"
         onClick={handleBackToDashboard}
+        disabled={isNavigating}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver al Dashboard
+        {isNavigating ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <ArrowLeft className="mr-2 h-4 w-4" />
+        )}
+        {isNavigating ? 'Cargando...' : 'Volver al Dashboard'}
       </Button>
       <h2 className="mb-4 text-lg font-semibold">Categorías</h2>
       <div className="grid gap-3">
