@@ -9,6 +9,7 @@ import CartSidebar from '@/components/cart-sidebar';
 import CategorySidebar from '@/components/category-sidebar';
 import ProductGrid from '@/components/product-grid';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 const EMPTY_CATEGORIAS: CategoriaConSlug[] = [];
 
@@ -41,45 +42,67 @@ export function POSClient({
         <div className="sticky top-0 z-10 border-b bg-background p-4">
           {/* Banner de tipo de pedido */}
           {tipo && (
-            <div
-              className={`mb-3 rounded-lg border p-3 ${
-                tipo === 'mesa'
-                  ? 'border-green-200 bg-green-50'
-                  : 'border-blue-200 bg-blue-50'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                {tipo === 'mesa'
-                  ? (
-                      <>
-                        <Table className="h-5 w-5 text-green-700" />
-                        <span className="font-semibold text-green-900">
-                          Mesa
-                          {' '}
-                          {numero}
-                        </span>
-                        <span className="text-xs text-green-700">
-                          (ID:
-                          {' '}
-                          {id}
-                          )
-                        </span>
-                      </>
-                    )
-                  : (
-                      <>
-                        <MapPin className="h-5 w-5 text-blue-700" />
-                        <span className="font-semibold text-blue-900">
-                          Pedido a Domicilio
-                        </span>
-                        <span className="text-xs text-blue-700">
-                          (Cliente ID:
-                          {' '}
-                          {clienteId}
-                          )
-                        </span>
-                      </>
-                    )}
+            <div className="group relative mb-3 rounded-lg bg-border p-[1px] transition-transform duration-500 ease-in-out hover:scale-105">
+              {/* Gradiente de fondo */}
+              <div
+                className={cn(
+                  'absolute inset-0 rounded-lg bg-gradient-to-bl opacity-80 transition-all duration-500 ease-in-out',
+                  tipo === 'mesa'
+                    ? 'from-emerald-500 via-emerald-500/20 to-transparent'
+                    : 'from-blue-500 via-blue-500/20 to-transparent',
+                )}
+                style={{
+                  maskImage: 'linear-gradient(135deg, black 0%, transparent 50%)',
+                  WebkitMaskImage: 'linear-gradient(135deg, black 0%, transparent 50%)',
+                }}
+              />
+              <div
+                className={cn(
+                  'absolute inset-0 rounded-lg bg-gradient-to-bl opacity-0 group-hover:opacity-80 transition-opacity duration-500 ease-in-out',
+                  tipo === 'mesa'
+                    ? 'from-emerald-500 via-emerald-500/20 to-transparent'
+                    : 'from-blue-500 via-blue-500/20 to-transparent',
+                )}
+                style={{
+                  maskImage: 'linear-gradient(135deg, black 0%, transparent 70%)',
+                  WebkitMaskImage: 'linear-gradient(135deg, black 0%, transparent 70%)',
+                }}
+              />
+              {/* Contenido */}
+              <div className="relative rounded-lg bg-card p-3">
+                <div className="flex items-center gap-2">
+                  {tipo === 'mesa'
+                    ? (
+                        <>
+                          <Table className="h-4 w-4 text-emerald-500" />
+                          <span className="text-sm font-medium text-foreground">
+                            Mesa
+                            {' '}
+                            {numero}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            (ID:
+                            {' '}
+                            {id}
+                            )
+                          </span>
+                        </>
+                      )
+                    : (
+                        <>
+                          <MapPin className="h-4 w-4 text-blue-500" />
+                          <span className="text-sm font-medium text-foreground">
+                            Pedido a Domicilio
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            (Cliente ID:
+                            {' '}
+                            {clienteId}
+                            )
+                          </span>
+                        </>
+                      )}
+                </div>
               </div>
             </div>
           )}
