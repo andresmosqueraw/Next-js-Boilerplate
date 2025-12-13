@@ -48,4 +48,3 @@ ON producto_restaurante (restaurante_id, producto_id);
 -- Acelera la búsqueda de categorías por producto
 CREATE INDEX IF NOT EXISTS idx_prodcat_producto_categoria 
 ON producto_categoria (producto_id, categoria_id);
-

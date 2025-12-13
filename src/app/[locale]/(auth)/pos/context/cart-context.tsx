@@ -205,6 +205,10 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
       return;
     }
 
+    // OPTIMISTIC UPDATE: Eliminar del estado local inmediatamente
+    const itemToRemove = cart.find(item => item.id === productId);
+    setCart(prev => prev.filter(item => item.id !== productId));
+
     try {
       const response = await fetch('/api/carrito/eliminar-producto', {
         method: 'POST',
@@ -217,16 +221,30 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
       });
 
       if (!response.ok) {
+        // Revertir cambio optimista
+        if (itemToRemove) {
+          setCart(prev => [...prev, itemToRemove]);
+        }
         console.error('Error al eliminar producto:', response.statusText);
         return;
       }
 
-      // Recargar carrito
-      await cargarCarrito();
+      // Sincronizar en segundo plano (no bloquea la UI)
+      cargarCarrito().catch(err => {
+        console.error('Error al sincronizar carrito:', err);
+        // Revertir cambio optimista si falla
+        if (itemToRemove) {
+          setCart(prev => [...prev, itemToRemove]);
+        }
+      });
     } catch (error) {
+      // Revertir cambio optimista en caso de error
+      if (itemToRemove) {
+        setCart(prev => [...prev, itemToRemove]);
+      }
       console.error('Error al eliminar del carrito:', error);
     }
-  }, [carritoId, restauranteId, cargarCarrito]);
+  }, [carritoId, restauranteId, cart, cargarCarrito]);
 
   const updateQuantity = useCallback(async (productId: number, quantity: number) => {
     if (!carritoId || !restauranteId) {
@@ -240,10 +258,24 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
       return;
     }
 
+    // OPTIMISTIC UPDATE: Actualizar cantidad en el estado local inmediatamente
+    const item = cart.find(item => item.id === productId);
+    if (!item) {
+      console.error('Producto no encontrado en el carrito');
+      return;
+    }
+
+    const previousQuantity = item.quantity;
+    const precioUnitario = item.price;
+
+    setCart(prev => prev.map(cartItem =>
+      cartItem.id === productId
+        ? { ...cartItem, quantity }
+        : cartItem
+    ));
+
     try {
-      // Primero eliminar el producto y luego agregarlo con la nueva cantidad
-      // (o podríamos crear una API de actualizar cantidad)
-      const response = await fetch('/api/carrito/agregar-producto', {
+      const response = await fetch('/api/carrito/actualizar-cantidad', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -251,18 +283,38 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
           restauranteId: Number.parseInt(restauranteId),
           productoId: productId,
           cantidad: quantity,
-          precioUnitario: cart.find(item => item.id === productId)?.price || 0,
+          precioUnitario,
         }),
       });
 
       if (!response.ok) {
+        // Revertir cambio optimista
+        setCart(prev => prev.map(cartItem =>
+          cartItem.id === productId
+            ? { ...cartItem, quantity: previousQuantity }
+            : cartItem
+        ));
         console.error('Error al actualizar cantidad:', response.statusText);
         return;
       }
 
-      // Recargar carrito
-      await cargarCarrito();
+      // Sincronizar en segundo plano (no bloquea la UI)
+      cargarCarrito().catch(err => {
+        console.error('Error al sincronizar carrito:', err);
+        // Revertir cambio optimista si falla
+        setCart(prev => prev.map(cartItem =>
+          cartItem.id === productId
+            ? { ...cartItem, quantity: previousQuantity }
+            : cartItem
+        ));
+      });
     } catch (error) {
+      // Revertir cambio optimista en caso de error
+      setCart(prev => prev.map(cartItem =>
+        cartItem.id === productId
+          ? { ...cartItem, quantity: previousQuantity }
+          : cartItem
+      ));
       console.error('Error al actualizar cantidad:', error);
     }
   }, [carritoId, restauranteId, cart, removeFromCart, cargarCarrito]);
