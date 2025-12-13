@@ -34,14 +34,15 @@ export function POSClient({
 
   // Función para navegar al dashboard (misma lógica que el botón "Back to Dashboard")
   const handleBackToDashboard = useCallback(() => {
-    console.warn('🔄 [POSClient] Navegando a dashboard...');
+    console.warn('🔄 [POSClient] Navegando a dashboard y refrescando datos...');
     // Construir URL del dashboard con restauranteId si existe
     const dashboardUrl = restauranteId
       ? `/dashboard?restauranteId=${restauranteId}`
       : '/dashboard';
     
-    // Navegar al dashboard (sin refresh para evitar delays)
+    // Navegar al dashboard y refrescar (igual que el botón "Back to Dashboard")
     router.push(dashboardUrl);
+    router.refresh();
   }, [restauranteId, router]);
 
   // Interceptar el botón "atrás" del navegador
@@ -59,19 +60,16 @@ export function POSClient({
       const currentPath = window.location.pathname;
       if (currentPath.includes('/pos')) {
         isHandling = true;
-        console.warn('🔄 [POSClient] Botón atrás detectado, navegando al dashboard...');
+        console.warn('🔄 [POSClient] Botón atrás detectado, navegando al dashboard y refrescando datos...');
         
-        // Usar replace en lugar de push para reemplazar la entrada actual del historial
-        const dashboardUrl = restauranteId
-          ? `/dashboard?restauranteId=${restauranteId}`
-          : '/dashboard';
-        
-        router.replace(dashboardUrl);
+        // Usar la misma lógica que el botón "Back to Dashboard"
+        // para asegurar que los datos se actualicen correctamente
+        handleBackToDashboard();
         
         // Resetear el flag después de un breve delay
         setTimeout(() => {
           isHandling = false;
-        }, 500);
+        }, 1000);
       }
     };
 
