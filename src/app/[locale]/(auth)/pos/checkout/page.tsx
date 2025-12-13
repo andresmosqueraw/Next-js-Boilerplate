@@ -26,10 +26,9 @@ export default function CheckoutPage() {
   const clienteId = searchParams.get('clienteId');
   const restauranteId = searchParams.get('restauranteId');
 
-  const tax = cartTotal * 0.1;
-  const grandTotal = cartTotal + tax;
+  const total = cartTotal;
   const change = paymentMethod === 'cash' && cashReceived 
-    ? Math.max(0, Number.parseFloat(cashReceived) - grandTotal)
+    ? Math.max(0, Number.parseFloat(cashReceived) - total)
     : 0;
 
   const handlePayment = async () => {
@@ -38,7 +37,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (paymentMethod === 'cash' && (!cashReceived || Number.parseFloat(cashReceived) < grandTotal)) {
+    if (paymentMethod === 'cash' && (!cashReceived || Number.parseFloat(cashReceived) < total)) {
       alert('El dinero recibido debe ser mayor o igual al total');
       return;
     }
@@ -48,7 +47,7 @@ export default function CheckoutPage() {
     try {
       const dineroRecibido = paymentMethod === 'cash' 
         ? Number.parseFloat(cashReceived)
-        : grandTotal;
+        : total;
       
       const tipoDePedido = tipo === 'mesa' ? 'MESA' : 'DOMICILIO';
 
@@ -61,7 +60,7 @@ export default function CheckoutPage() {
           carritoId,
           restauranteId: Number(restauranteId),
           clienteId: clienteId ? Number(clienteId) : null,
-          total: grandTotal,
+          total: total,
           dineroRecibido: dineroRecibido,
           cambioDado: change,
           tipoDePedido,
@@ -131,10 +130,10 @@ export default function CheckoutPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Your cart is empty</h1>
-          <p className="mt-2 text-muted-foreground">Add some items to your cart before checkout</p>
+          <h1 className="text-2xl font-bold">Tu carrito está vacío</h1>
+          <p className="mt-2 text-muted-foreground">Agrega algunos productos antes de pagar</p>
           <Button className="mt-4" onClick={() => router.push(getPosUrl())}>
-            Return to POS
+            Volver al POS
           </Button>
         </div>
       </div>
@@ -145,7 +144,7 @@ export default function CheckoutPage() {
     <div className="container mx-auto max-w-4xl py-8">
       <Button variant="ghost" className="mb-6" onClick={() => router.push(getPosUrl())}>
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to POS
+        Volver al POS
       </Button>
 
       {/* Banner de tipo de pedido */}
@@ -191,11 +190,11 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      <h1 className="mb-6 text-3xl font-bold">Checkout</h1>
+      <h1 className="mb-6 text-3xl font-bold">Pago</h1>
 
       <div className="grid gap-8 md:grid-cols-2">
         <div>
-          <h2 className="mb-4 text-xl font-semibold">Order Summary</h2>
+          <h2 className="mb-4 text-xl font-semibold">Resumen del Pedido</h2>
           <div className="rounded-lg border bg-card p-4">
             {cart.map(item => (
               <div key={item.id} className="mb-3 flex justify-between">
@@ -220,25 +219,11 @@ export default function CheckoutPage() {
             <Separator className="my-4" />
 
             <div className="space-y-2">
-              <div className="flex justify-between">
-                <p>Subtotal</p>
-                <p>
-                  $
-                  {cartTotal.toFixed(2)}
-                </p>
-              </div>
-              <div className="flex justify-between">
-                <p>Tax (10%)</p>
-                <p>
-                  $
-                  {tax.toFixed(2)}
-                </p>
-              </div>
               <div className="flex justify-between font-bold">
                 <p>Total</p>
                 <p>
                   $
-                  {grandTotal.toFixed(2)}
+                  {total.toFixed(2)}
                 </p>
               </div>
             </div>
@@ -246,14 +231,14 @@ export default function CheckoutPage() {
         </div>
 
         <div>
-          <h2 className="mb-4 text-xl font-semibold">Payment Method</h2>
+          <h2 className="mb-4 text-xl font-semibold">Método de Pago</h2>
           <div className="rounded-lg border bg-card p-4">
             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
               <div className="flex items-center space-x-2 rounded-md border p-3">
                 <RadioGroupItem value="card" id="card" />
                 <Label htmlFor="card" className="flex items-center">
                   <CreditCard className="mr-2 h-4 w-4" />
-                  Credit/Debit Card
+                  Tarjeta de Crédito/Débito
                 </Label>
               </div>
 
@@ -261,7 +246,7 @@ export default function CheckoutPage() {
                 <RadioGroupItem value="cash" id="cash" />
                 <Label htmlFor="cash" className="flex items-center">
                   <Wallet className="mr-2 h-4 w-4" />
-                  Cash
+                  Efectivo
                 </Label>
               </div>
             </RadioGroup>
@@ -273,12 +258,12 @@ export default function CheckoutPage() {
                   id="cashReceived"
                   type="number"
                   step="0.01"
-                  min={grandTotal}
+                  min={total}
                   value={cashReceived}
                   onChange={(e) => setCashReceived(e.target.value)}
-                  placeholder={`Mínimo: $${grandTotal.toFixed(2)}`}
+                  placeholder={`Mínimo: $${total.toFixed(2)}`}
                 />
-                {cashReceived && Number.parseFloat(cashReceived) >= grandTotal && (
+                {cashReceived && Number.parseFloat(cashReceived) >= total && (
                   <p className="text-sm text-muted-foreground">
                     Cambio: $
                     {change.toFixed(2)}
@@ -291,9 +276,9 @@ export default function CheckoutPage() {
               className="mt-6 w-full" 
               size="lg" 
               onClick={handlePayment}
-              disabled={isProcessing || (paymentMethod === 'cash' && (!cashReceived || Number.parseFloat(cashReceived) < grandTotal))}
+              disabled={isProcessing || (paymentMethod === 'cash' && (!cashReceived || Number.parseFloat(cashReceived) < total))}
             >
-              {isProcessing ? 'Procesando...' : 'Complete Payment'}
+              {isProcessing ? 'Procesando...' : 'Completar Pago'}
             </Button>
           </div>
         </div>
