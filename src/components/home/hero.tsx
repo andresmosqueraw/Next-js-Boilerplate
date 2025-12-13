@@ -32,7 +32,7 @@ export default function Hero() {
             >
               <Badge variant="secondary" className="inline-flex items-center gap-2 px-4 py-2 text-sm">
                 <Sparkles className="h-4 w-4" />
-                Último componente
+                Sistema POS Profesional
               </Badge>
             </motion.div>
 
@@ -44,16 +44,14 @@ export default function Hero() {
               className="mb-8"
             >
               <h1 id="main-title" className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-                Alcanza
+                Recomienda un POS
                 {' '}
-                <strong>desarrolladores</strong>
-                {' '}
-                <span>&</span>
+                <strong>que cumpla</strong>
                 {' '}
                 <br />
-                <strong>creadores</strong>
+                <strong>con la ley</strong>
                 {' '}
-                <em className="italic">sin esfuerzo</em>
+                <em className="italic">a tus clientes</em>
               </h1>
             </motion.div>
 
@@ -64,8 +62,7 @@ export default function Hero() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="mx-auto mb-12 max-w-2xl text-lg text-muted-foreground"
             >
-              Componentes hermosos y accesibles construidos con Tailwind CSS y Framer Motion. Copia, pega y personaliza para
-              construir tu próximo proyecto más rápido.
+              Como contador, ayuda a tus clientes a cumplir con todas las obligaciones fiscales y legales. Sistema POS profesional con facturación electrónica, reportes contables y control total de ventas.
             </motion.p>
 
             <motion.div
@@ -154,7 +151,7 @@ export default function Hero() {
             className="mt-auto pb-8"
           >
             <div className="text-center">
-              <p className="mb-6 text-sm text-muted-foreground">Confiado por desarrolladores en</p>
+              <p className="mb-6 text-sm text-muted-foreground">Recomendado por contadores en</p>
               <div className="flex items-center justify-center gap-8">
                 {/* Vercel Logo */}
                 <div className="opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] hover:grayscale-0">

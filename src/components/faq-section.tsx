@@ -13,29 +13,29 @@ export function FAQSection() {
 
   const faqs = [
     {
-      question: '¿Qué es exactamente?',
+      question: '¿El sistema cumple con todas las normativas fiscales?',
       answer:
-        'Es un sistema de interfaz de usuario generativo impulsado por IA que te ayuda a construir componentes React usando simples indicaciones de texto. Genera código limpio y listo para producción que puedes copiar y personalizar para tus proyectos.',
+        'Sí, nuestro sistema POS está diseñado para cumplir con todas las normativas fiscales vigentes. Incluye facturación electrónica válida, registro de ventas, control de inventario y todos los reportes requeridos por la ley. Las facturas generadas son válidas ante la DIAN y otros organismos de control.',
     },
     {
-      question: '¿Necesito saber Tailwind para usarlo?',
+      question: '¿Puedo gestionar múltiples negocios de mis clientes desde un solo lugar?',
       answer:
-        'Aunque el conocimiento básico de Tailwind CSS es útil, no es requerido. Genera componentes con clases de Tailwind, y puedes aprender sobre la marcha. El código generado es limpio y bien estructurado, lo que facilita entenderlo y modificarlo.',
+        'Absolutamente. El plan Profesional y Empresarial te permite gestionar múltiples negocios desde un panel centralizado. Como contador, puedes acceder a todos los negocios de tus clientes, generar reportes consolidados y tener control total de la información contable.',
     },
     {
-      question: '¿Puedo usar estos componentes comercialmente?',
+      question: '¿Los reportes son compatibles con sistemas contables?',
       answer:
-        '¡Sí! Todos los componentes generados pueden ser usados en proyectos comerciales. Eres dueño del código generado, y no hay restricciones de licencia para usarlo en tus aplicaciones.',
+        'Sí, todos los reportes pueden exportarse a formatos estándar como Excel, PDF y CSV. Además, ofrecemos integraciones con los principales sistemas contables del mercado. Los datos están estructurados para facilitar la importación a cualquier software contable.',
     },
     {
-      question: '¿Los componentes son responsivos y accesibles?',
+      question: '¿Qué pasa si mi cliente necesita ayuda con el sistema?',
       answer:
-        'Absolutamente. Genera componentes que son responsivos por defecto y siguen las mejores prácticas de accesibilidad. Todos los componentes incluyen atributos ARIA apropiados, navegación por teclado y estructura HTML semántica.',
+        'Ofrecemos soporte técnico completo. En el plan Profesional incluye soporte prioritario, y en el plan Empresarial incluye soporte 24/7 y capacitación. También puedes acceder a documentación completa y videos tutoriales para ayudar a tus clientes.',
     },
     {
-      question: '¿Cómo integro un componente en mi proyecto?',
+      question: '¿Cómo puedo recomendar este sistema a mis clientes?',
       answer:
-        'Simplemente copia el código generado y pégalo en tu proyecto React. Proporciona instrucciones de instalación para cualquier dependencia requerida, y los componentes están diseñados para funcionar perfectamente con frameworks modernos de React como Next.js.',
+        'Como contador, puedes crear cuentas para tus clientes y gestionarlas desde tu panel. Ofrecemos planes especiales para contadores con descuentos y herramientas adicionales. También puedes contactar a nuestro equipo de ventas para planes personalizados según tus necesidades.',
     },
   ];
 

@@ -6,41 +6,41 @@ import { useState } from 'react';
 
 const pricingPlans = [
   {
-    name: 'Inicial',
+    name: 'Básico',
     price: 'Gratis',
-    description: 'Perfecto para comenzar',
-    features: ['5 componentes por mes', 'Plantillas básicas', 'Soporte de la comunidad', 'Componentes estándar'],
+    description: 'Perfecto para pequeños negocios',
+    features: ['Facturación electrónica', 'Control de ventas básico', 'Reportes simples', 'Soporte por email'],
     popular: false,
     cta: 'Comenzar',
   },
   {
-    name: 'Pro',
-    monthlyPrice: 29,
-    annualPrice: 24,
-    description: 'Para profesionales que construyen proyectos serios',
+    name: 'Profesional',
+    monthlyPrice: 49,
+    annualPrice: 39,
+    description: 'Para contadores que gestionan múltiples clientes',
     features: [
-      'Componentes ilimitados',
-      'Plantillas premium',
+      'Facturación electrónica ilimitada',
+      'Reportes contables completos',
+      'Múltiples negocios',
+      'Exportación a sistemas contables',
       'Soporte prioritario',
-      'Animaciones avanzadas',
-      'Temas personalizados',
-      'Exportar a GitHub',
+      'Acceso para contadores',
     ],
     popular: true,
     cta: 'Iniciar Prueba Gratuita',
   },
   {
-    name: 'Equipo',
-    monthlyPrice: 99,
-    annualPrice: 79,
-    description: 'Para equipos que colaboran en proyectos',
+    name: 'Empresarial',
+    monthlyPrice: 149,
+    annualPrice: 119,
+    description: 'Para firmas contables y grandes empresas',
     features: [
-      'Todo en Pro',
-      'Colaboración en equipo',
-      'Biblioteca de componentes compartida',
-      'Analíticas avanzadas',
-      'Integraciones personalizadas',
-      'Soporte dedicado',
+      'Todo en Profesional',
+      'Gestión ilimitada de negocios',
+      'Reportes consolidados',
+      'API para integraciones',
+      'Soporte dedicado 24/7',
+      'Capacitación incluida',
     ],
     popular: false,
     cta: 'Contactar Ventas',
@@ -73,11 +73,11 @@ export function PricingSection() {
           </motion.div>
 
           <h2 className="mb-4 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
-            Elige tu plan
+            Elige el plan para tus clientes
           </h2>
 
           <p className="mx-auto mb-8 max-w-2xl text-lg text-white/60">
-            Comienza a construir componentes hermosos hoy. Actualiza en cualquier momento según crezcan tus necesidades.
+            Recomienda el sistema POS que mejor se adapte a cada negocio. Planes diseñados para cumplir con la ley y facilitar tu trabajo contable.
           </p>
 
           {/* Monthly/Annual Toggle */}

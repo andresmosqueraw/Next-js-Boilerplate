@@ -57,7 +57,7 @@ export default function Features() {
           title={(
             <div className="flex items-center gap-2">
               <span>✨</span>
-              <span>Interactive Features</span>
+              <span>Características Profesionales</span>
             </div>
           )}
         >
@@ -80,10 +80,10 @@ export default function Features() {
                 style={{ transition: 'all 0s ease-in-out' }}
               >
                 <div className="flex flex-col gap-4">
-                  <h3 className="text-2xl leading-none font-semibold tracking-tight">CLI & Manual Support</h3>
+                  <h3 className="text-2xl leading-none font-semibold tracking-tight">Facturación Electrónica</h3>
                   <div className="text-md flex flex-col gap-2 text-sm text-muted-foreground">
                     <p className="max-w-[460px]">
-                      Integrate your landing page directly in the product while using your favorite tools.
+                      Sistema de facturación electrónica completamente integrado que cumple con todas las normativas fiscales. Genera facturas válidas y reportes contables automáticos.
                     </p>
                   </div>
                 </div>
@@ -268,11 +268,10 @@ export default function Features() {
                 style={{ transition: 'all 0s ease-in-out' }}
               >
                 <div className="flex flex-col gap-4">
-                  <h3 className="text-2xl leading-none font-semibold tracking-tight">Globally Usable</h3>
+                  <h3 className="text-2xl leading-none font-semibold tracking-tight">Reportes Contables</h3>
                   <div className="text-md flex flex-col gap-2 text-sm text-muted-foreground">
                     <p className="max-w-[460px]">
-                      Blocks are available everywhere but ours are the best. Use them in your favorite framework or even
-                      in plain HTML.
+                      Genera reportes contables automáticos, estados financieros y libros contables. Exporta a Excel, PDF y sistemas contables. Todo listo para auditorías.
                     </p>
                   </div>
                 </div>
@@ -325,10 +324,10 @@ export default function Features() {
                 style={{ transition: 'all 0s ease-in-out' }}
               >
                 <div className="flex flex-col gap-4">
-                  <h3 className="text-2xl leading-none font-semibold tracking-tight">Smart Components</h3>
+                  <h3 className="text-2xl leading-none font-semibold tracking-tight">Cumplimiento Legal</h3>
                   <div className="text-md flex flex-col gap-2 text-sm text-muted-foreground">
                     <p className="max-w-[460px]">
-                      Intelligent components that adapt to your needs with built-in animations and interactions.
+                      Cumple con todas las normativas fiscales y legales. Facturación electrónica válida, control de inventario, registro de ventas y respaldo de información según la ley.
                     </p>
                   </div>
                 </div>
@@ -421,10 +420,10 @@ export default function Features() {
                 style={{ transition: 'all 0s ease-in-out' }}
               >
                 <div className="flex flex-col gap-4">
-                  <h3 className="text-2xl leading-none font-semibold tracking-tight">Dynamic Layouts</h3>
+                  <h3 className="text-2xl leading-none font-semibold tracking-tight">Control de Múltiples Negocios</h3>
                   <div className="text-md flex flex-col gap-2 text-sm text-muted-foreground">
                     <p className="max-w-[460px]">
-                      Responsive layouts that transform and adapt seamlessly across all device sizes.
+                      Gestiona múltiples negocios desde un solo panel. Acceso centralizado para contadores, reportes consolidados y control total de todos tus clientes.
                     </p>
                   </div>
                 </div>
