@@ -62,10 +62,10 @@ export default function CartSidebar() {
                       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border">
                         <img src={item.image || '/placeholder.svg'} alt={item.name} className="h-full w-full object-cover" />
                       </div>
-                      <div className="flex flex-1 flex-col">
-                        <div className="flex justify-between">
-                          <h3 className="line-clamp-1 font-medium">{item.name}</h3>
-                          <div className="flex items-center gap-2">
+                      <div className="flex flex-1 flex-col min-w-0">
+                        <div className="flex justify-between gap-2">
+                          <h3 className="break-words font-medium leading-tight flex-1">{item.name}</h3>
+                          <div className="flex items-center gap-2 shrink-0">
                             {isUpdating && (
                               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                             )}
