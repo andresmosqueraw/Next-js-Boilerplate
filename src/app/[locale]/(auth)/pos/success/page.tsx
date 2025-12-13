@@ -48,10 +48,10 @@ export default function SuccessPage() {
 
   return (
     <div className="container mx-auto max-w-md py-8">
-      <div className="rounded-lg border bg-white p-6 print:border-none">
+      <div className="rounded-lg border bg-card p-6 print:border-none">
         <div className="mb-6 flex items-center justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-            <Check className="h-6 w-6 text-green-600" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 dark:bg-emerald-500/10">
+            <Check className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
           </div>
         </div>
 
