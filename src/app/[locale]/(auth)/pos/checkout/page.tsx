@@ -270,22 +270,25 @@ export default function CheckoutPage() {
 
             {paymentMethod === 'cash' && (
               <div className="mt-4 space-y-2">
-                <Label htmlFor="cashReceived">Dinero Recibido</Label>
+                <Label htmlFor="cashReceived" className="text-lg font-semibold">
+                  Cantidad con la que paga el cliente
+                </Label>
                 <Input
                   id="cashReceived"
                   type="text"
                   value={cashReceived}
                   onChange={e => setCashReceived(e.target.value)}
-                  placeholder={`Mínimo: $${total.toFixed(2)}`}
+                  placeholder={`Ingrese la cantidad recibida (mínimo: $${total.toFixed(2)})`}
+                  className="h-12 text-lg"
                 />
                 {cashReceived && isValidCashAmount && cashReceivedNumber >= total && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-lg text-muted-foreground">
                     Cambio: $
                     {change.toFixed(2)}
                   </p>
                 )}
                 {cashReceived && !isValidCashAmount && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-lg text-red-500">
                     Por favor ingrese un número válido
                   </p>
                 )}
