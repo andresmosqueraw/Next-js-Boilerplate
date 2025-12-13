@@ -58,8 +58,8 @@ export default function ProductGrid({
             </div>
             <CardContent className="p-3">
               <div>
-                <h3 className="break-words font-medium leading-tight">{product.name}</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="break-words text-base font-medium leading-tight">{product.name}</h3>
+                <p className="text-base font-semibold text-foreground">
                   $
                   {product.price.toFixed(2)}
                 </p>
