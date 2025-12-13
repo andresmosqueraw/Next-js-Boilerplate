@@ -51,7 +51,7 @@ export default function Features() {
             geist.className,
           )}
         >
-          Features
+          Características
         </h2>
         <FollowerPointerCard
           title={(

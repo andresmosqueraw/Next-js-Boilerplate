@@ -32,7 +32,7 @@ export default function Hero() {
             >
               <Badge variant="secondary" className="inline-flex items-center gap-2 px-4 py-2 text-sm">
                 <Sparkles className="h-4 w-4" />
-                Latest component
+                Último componente
               </Badge>
             </motion.div>
 
@@ -44,16 +44,16 @@ export default function Hero() {
               className="mb-8"
             >
               <h1 id="main-title" className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-                Reach
+                Alcanza
                 {' '}
-                <strong>developers</strong>
+                <strong>desarrolladores</strong>
                 {' '}
                 <span>&</span>
                 {' '}
                 <br />
-                <strong>creators</strong>
+                <strong>creadores</strong>
                 {' '}
-                <em className="italic">effortlessly</em>
+                <em className="italic">sin esfuerzo</em>
               </h1>
             </motion.div>
 
@@ -64,8 +64,8 @@ export default function Hero() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="mx-auto mb-12 max-w-2xl text-lg text-muted-foreground"
             >
-              Beautiful, accessible components built with Tailwind CSS and Framer Motion. Copy, paste, and customize to
-              build your next project faster.
+              Componentes hermosos y accesibles construidos con Tailwind CSS y Framer Motion. Copia, pega y personaliza para
+              construir tu próximo proyecto más rápido.
             </motion.p>
 
             <motion.div
@@ -120,7 +120,7 @@ export default function Hero() {
                           <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
                           <path d="M2 12h20"></path>
                         </svg>
-                        Get started
+                        Comenzar
                       </p>
                     </div>
                     <div className="flex size-[24px] items-center justify-center rounded-full border-2 border-border text-muted-foreground transition-all ease-in-out group-hover:ml-4">
@@ -154,7 +154,7 @@ export default function Hero() {
             className="mt-auto pb-8"
           >
             <div className="text-center">
-              <p className="mb-6 text-sm text-muted-foreground">Trusted by developers at</p>
+              <p className="mb-6 text-sm text-muted-foreground">Confiado por desarrolladores en</p>
               <div className="flex items-center justify-center gap-8">
                 {/* Vercel Logo */}
                 <div className="opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] hover:grayscale-0">

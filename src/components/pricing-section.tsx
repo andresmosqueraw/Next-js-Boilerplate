@@ -6,44 +6,44 @@ import { useState } from 'react';
 
 const pricingPlans = [
   {
-    name: 'Starter',
-    price: 'Free',
-    description: 'Perfect for getting started with v0',
-    features: ['5 components per month', 'Basic templates', 'Community support', 'Standard components'],
+    name: 'Inicial',
+    price: 'Gratis',
+    description: 'Perfecto para comenzar',
+    features: ['5 componentes por mes', 'Plantillas básicas', 'Soporte de la comunidad', 'Componentes estándar'],
     popular: false,
-    cta: 'Get Started',
+    cta: 'Comenzar',
   },
   {
     name: 'Pro',
     monthlyPrice: 29,
     annualPrice: 24,
-    description: 'For professionals building serious projects',
+    description: 'Para profesionales que construyen proyectos serios',
     features: [
-      'Unlimited components',
-      'Premium templates',
-      'Priority support',
-      'Advanced animations',
-      'Custom themes',
-      'Export to GitHub',
+      'Componentes ilimitados',
+      'Plantillas premium',
+      'Soporte prioritario',
+      'Animaciones avanzadas',
+      'Temas personalizados',
+      'Exportar a GitHub',
     ],
     popular: true,
-    cta: 'Start Free Trial',
+    cta: 'Iniciar Prueba Gratuita',
   },
   {
-    name: 'Team',
+    name: 'Equipo',
     monthlyPrice: 99,
     annualPrice: 79,
-    description: 'For teams collaborating on projects',
+    description: 'Para equipos que colaboran en proyectos',
     features: [
-      'Everything in Pro',
-      'Team collaboration',
-      'Shared component library',
-      'Advanced analytics',
-      'Custom integrations',
-      'Dedicated support',
+      'Todo en Pro',
+      'Colaboración en equipo',
+      'Biblioteca de componentes compartida',
+      'Analíticas avanzadas',
+      'Integraciones personalizadas',
+      'Soporte dedicado',
     ],
     popular: false,
-    cta: 'Contact Sales',
+    cta: 'Contactar Ventas',
   },
 ];
 
@@ -69,15 +69,15 @@ export function PricingSection() {
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm"
           >
             <Sparkles className="h-4 w-4 text-[#e78a53]" />
-            <span className="text-sm font-medium text-white/80">Pricing</span>
+            <span className="text-sm font-medium text-white/80">Precios</span>
           </motion.div>
 
           <h2 className="mb-4 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
-            Choose your plan
+            Elige tu plan
           </h2>
 
           <p className="mx-auto mb-8 max-w-2xl text-lg text-white/60">
-            Start building beautiful components today. Upgrade anytime as your needs grow.
+            Comienza a construir componentes hermosos hoy. Actualiza en cualquier momento según crezcan tus necesidades.
           </p>
 
           {/* Monthly/Annual Toggle */}
@@ -94,7 +94,7 @@ export function PricingSection() {
                 !isAnnual ? 'bg-[#e78a53] text-white shadow-lg' : 'text-white/60 hover:text-white/80'
               }`}
             >
-              Monthly
+              Mensual
             </button>
             <button
               onClick={() => setIsAnnual(true)}
@@ -102,9 +102,9 @@ export function PricingSection() {
                 isAnnual ? 'bg-[#e78a53] text-white shadow-lg' : 'text-white/60 hover:text-white/80'
               }`}
             >
-              Annual
+              Anual
               <span className="absolute -top-2 -right-2 rounded-full bg-green-500 px-2 py-0.5 text-xs text-white">
-                Save 20%
+                Ahorra 20%
               </span>
             </button>
           </motion.div>
@@ -129,7 +129,7 @@ export function PricingSection() {
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 transform">
                   <div className="rounded-full bg-gradient-to-r from-[#e78a53] to-[#e78a53]/80 px-4 py-2 text-sm font-medium text-white">
-                    Most Popular
+                    Más Popular
                   </div>
                 </div>
               )}
@@ -147,7 +147,7 @@ export function PricingSection() {
                             $
                             {isAnnual ? plan.annualPrice : plan.monthlyPrice}
                           </span>
-                          <span className="text-lg text-white/60">{isAnnual ? '/year' : '/month'}</span>
+                          <span className="text-lg text-white/60">{isAnnual ? '/año' : '/mes'}</span>
                         </>
                       )}
                 </div>
@@ -186,13 +186,13 @@ export function PricingSection() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-16 text-center"
         >
-          <p className="mb-4 text-white/60">Need a custom solution? We're here to help.</p>
+          <p className="mb-4 text-white/60">¿Necesitas una solución personalizada? Estamos aquí para ayudarte.</p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="font-medium text-[#e78a53] transition-colors hover:text-[#e78a53]/80"
           >
-            Contact our sales team →
+            Contacta a nuestro equipo de ventas →
           </motion.button>
         </motion.div>
       </div>

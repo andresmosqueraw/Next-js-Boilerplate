@@ -101,15 +101,15 @@ export function TestimonialsSection() {
             >
               <div className="absolute inset-x-0 -top-px mx-auto h-0.5 w-1/2 bg-gradient-to-r from-transparent via-[#e78a53] to-transparent shadow-2xl transition-all duration-500 group-hover:w-3/4"></div>
               <div className="absolute inset-x-0 -bottom-px mx-auto h-0.5 w-1/2 bg-gradient-to-r from-transparent via-[#e78a53] to-transparent shadow-2xl transition-all duration-500 group-hover:h-px"></div>
-              <span className="relative text-white">Testimonials</span>
+              <span className="relative text-white">Testimonios</span>
             </button>
           </div>
           <h2 className="__className_bb4e88 relative z-10 mt-5 bg-gradient-to-r from-foreground/60 via-foreground to-foreground/60 bg-clip-text text-center text-4xl font-semibold tracking-tighter text-transparent md:text-[54px] md:leading-[60px] dark:from-muted-foreground/55 dark:via-foreground dark:to-muted-foreground/55">
-            What our users say
+            Lo que dicen nuestros usuarios
           </h2>
 
           <p className="relative z-10 mt-5 text-center text-lg text-zinc-500">
-            From intuitive design to powerful features, our app has become an essential tool for users around the world.
+            Desde el diseño intuitivo hasta características poderosas, nuestra aplicación se ha convertido en una herramienta esencial para usuarios alrededor del mundo.
           </p>
         </div>
 
@@ -146,7 +146,7 @@ export function TestimonialsSection() {
             <svg className="h-4 w-4 text-[#e78a53]" fill="currentColor" viewBox="0 0 24 24">
               <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"></path>
             </svg>
-            Share your experience
+            Comparte tu experiencia
           </button>
         </div>
       </div>

@@ -107,7 +107,7 @@ export default function Home() {
               }
             }}
           >
-            <span className="relative z-20">Features</span>
+            <span className="relative z-20">Características</span>
           </button>
           <button
             type="button"
@@ -127,7 +127,7 @@ export default function Home() {
               }
             }}
           >
-            <span className="relative z-20">Pricing</span>
+            <span className="relative z-20">Precios</span>
           </button>
           <button
             type="button"
@@ -147,7 +147,7 @@ export default function Home() {
               }
             }}
           >
-            <span className="relative z-20">Testimonials</span>
+            <span className="relative z-20">Testimonios</span>
           </button>
           <button
             type="button"
@@ -167,7 +167,7 @@ export default function Home() {
               }
             }}
           >
-            <span className="relative z-20">FAQ</span>
+            <span className="relative z-20">Preguntas Frecuentes</span>
           </button>
         </div>
 
@@ -177,7 +177,7 @@ export default function Home() {
             onClick={() => router.push('/sign-in')}
             className="relative cursor-pointer text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
           >
-            Log In
+            Iniciar Sesión
           </button>
 
           <button
@@ -185,7 +185,7 @@ export default function Home() {
             onClick={() => router.push('/sign-up')}
             className="relative cursor-pointer rounded-md bg-gradient-to-b from-primary to-primary/80 px-4 py-2 text-center text-sm font-bold text-primary-foreground shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] transition duration-200 hover:-translate-y-0.5"
           >
-            Sign Up
+            Registrarse
           </button>
         </div>
       </header>
@@ -214,7 +214,7 @@ export default function Home() {
           type="button"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/50 transition-colors hover:bg-background/80"
-          aria-label="Toggle menu"
+          aria-label="Alternar menú"
         >
           <div className="flex h-5 w-5 flex-col items-center justify-center space-y-1">
             <span
@@ -243,28 +243,28 @@ export default function Home() {
                 onClick={() => handleMobileNavClick('features')}
                 className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
               >
-                Features
+                Características
               </button>
               <button
                 type="button"
                 onClick={() => handleMobileNavClick('pricing')}
                 className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
               >
-                Pricing
+                Precios
               </button>
               <button
                 type="button"
                 onClick={() => handleMobileNavClick('testimonials')}
                 className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
               >
-                Testimonials
+                Testimonios
               </button>
               <button
                 type="button"
                 onClick={() => handleMobileNavClick('faq')}
                 className="rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
               >
-                FAQ
+                Preguntas Frecuentes
               </button>
               <div className="mt-4 flex flex-col space-y-3 border-t border-border/50 pt-4">
                 <button
@@ -275,7 +275,7 @@ export default function Home() {
                   }}
                   className="cursor-pointer rounded-lg px-4 py-3 text-left text-lg font-medium text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground"
                 >
-                  Log In
+                  Iniciar Sesión
                 </button>
                 <button
                   type="button"
@@ -285,7 +285,7 @@ export default function Home() {
                   }}
                   className="rounded-lg bg-gradient-to-b from-primary to-primary/80 px-4 py-3 text-center text-lg font-bold text-primary-foreground shadow-lg transition-all duration-200 hover:-translate-y-0.5"
                 >
-                  Sign Up
+                  Registrarse
                 </button>
               </div>
             </nav>
