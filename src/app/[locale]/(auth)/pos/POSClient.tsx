@@ -38,8 +38,13 @@ export function POSClient({
 
     // Función que se ejecuta cuando el usuario presiona "atrás"
     const handlePopState = () => {
+      console.warn('🔍 [POSClient] popstate event detectado');
+      console.warn('🔍 [POSClient] pathname:', window.location.pathname);
+      console.warn('🔍 [POSClient] isHandling:', isHandling);
+      
       // Prevenir múltiples ejecuciones
       if (isHandling) {
+        console.warn('⚠️ [POSClient] Ya se está manejando, ignorando...');
         return;
       }
 
@@ -57,20 +62,26 @@ export function POSClient({
           : '/dashboard';
         
         // Marcar en sessionStorage que viene del botón atrás (para mostrar indicador)
+        const timestamp = Date.now();
         sessionStorage.setItem('dashboard_reload_from_back', 'true');
-        sessionStorage.setItem('dashboard_reload_timestamp', Date.now().toString());
+        sessionStorage.setItem('dashboard_reload_timestamp', timestamp.toString());
+        console.warn('🔄 [POSClient] Flag guardado en sessionStorage, timestamp:', timestamp);
         
         // Primero navegar rápidamente al dashboard (sin recargar)
         router.push(dashboardUrl);
+        console.warn('🔄 [POSClient] router.push() ejecutado');
         
         // Como último paso, después de un pequeño delay, recargar la página
         // para asegurar que los datos se actualicen correctamente
         setTimeout(() => {
           console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
           console.warn('🔄 [POSClient] 🔄 PASO FINAL: Recargando dashboard para actualizar datos...');
+          console.warn('🔄 [POSClient] Timestamp antes de recargar:', Date.now());
           console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
           window.location.reload();
         }, 100);
+      } else {
+        console.warn('🔍 [POSClient] No estamos en POS, ignorando popstate');
       }
     };
 

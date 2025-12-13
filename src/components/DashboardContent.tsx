@@ -25,16 +25,29 @@ export function DashboardContent({
 
   // Verificar si la página se recargó desde el botón "atrás" del navegador
   React.useEffect(() => {
+    console.warn('🔍 [DashboardContent] Verificando sessionStorage...');
     const reloadFromBack = sessionStorage.getItem('dashboard_reload_from_back');
     const reloadTimestamp = sessionStorage.getItem('dashboard_reload_timestamp');
+    
+    console.warn('🔍 [DashboardContent] Valores encontrados:', { 
+      reloadFromBack, 
+      reloadTimestamp,
+      timestamp: reloadTimestamp ? Number.parseInt(reloadTimestamp, 10) : null,
+      now: Date.now(),
+    });
     
     if (reloadFromBack === 'true' && reloadTimestamp) {
       const timestamp = Number.parseInt(reloadTimestamp, 10);
       const now = Date.now();
-      // Mostrar indicador si la recarga fue hace menos de 3 segundos
-      if (now - timestamp < 3000) {
+      const diff = now - timestamp;
+      
+      console.warn('🔍 [DashboardContent] Diferencia de tiempo:', diff, 'ms');
+      
+      // Mostrar indicador si la recarga fue hace menos de 5 segundos (aumentado para debug)
+      if (diff < 5000) {
         console.warn('✅ [DashboardContent] ════════════════════════════════════════════════════');
         console.warn('✅ [DashboardContent] ✅ DASHBOARD RECARGADO DESDE BOTÓN ATRÁS');
+        console.warn('✅ [DashboardContent] ✅ Timestamp:', timestamp, '| Ahora:', now, '| Diff:', diff, 'ms');
         console.warn('✅ [DashboardContent] ✅ Los datos se han actualizado correctamente');
         console.warn('✅ [DashboardContent] ════════════════════════════════════════════════════');
         
@@ -44,15 +57,18 @@ export function DashboardContent({
         sessionStorage.removeItem('dashboard_reload_from_back');
         sessionStorage.removeItem('dashboard_reload_timestamp');
         
-        // Ocultar el indicador después de 3 segundos
+        // Ocultar el indicador después de 5 segundos
         setTimeout(() => {
           setShowReloadIndicator(false);
-        }, 3000);
+        }, 5000);
       } else {
+        console.warn('⚠️ [DashboardContent] Timestamp muy antiguo, limpiando flags');
         // Limpiar flags antiguos
         sessionStorage.removeItem('dashboard_reload_from_back');
         sessionStorage.removeItem('dashboard_reload_timestamp');
       }
+    } else {
+      console.warn('🔍 [DashboardContent] No se encontraron flags de recarga desde botón atrás');
     }
   }, []);
 
