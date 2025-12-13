@@ -43,6 +43,29 @@ export function DashboardContent({
       
       console.warn('🔍 [DashboardContent] Diferencia de tiempo:', diff, 'ms');
       
+      // Verificar si debe recargar 2 veces
+      const reloadTwice = sessionStorage.getItem('dashboard_reload_twice') === 'true';
+      
+      if (reloadTwice) {
+        console.warn('🔄 [DashboardContent] Recargando página 2 veces...');
+        // Limpiar el flag inmediatamente para evitar loops
+        sessionStorage.removeItem('dashboard_reload_twice');
+        sessionStorage.removeItem('dashboard_reload_from_back');
+        sessionStorage.removeItem('dashboard_reload_timestamp');
+        
+        // Primera recarga
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+        
+        // Segunda recarga (se ejecutará después de la primera)
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
+        
+        return;
+      }
+      
       // Mostrar indicador si la recarga fue hace menos de 5 segundos (aumentado para debug)
       if (diff < 5000) {
         console.warn('✅ [DashboardContent] ════════════════════════════════════════════════════');

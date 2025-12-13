@@ -34,65 +34,43 @@ export function POSClient({
   // Interceptar el botón "atrás" del navegador
   useEffect(() => {
     let isHandling = false;
-    const posPath = window.location.pathname;
-    
-    console.warn('✅ [POSClient] Componente montado, pathname:', posPath);
 
     // Función que se ejecuta cuando el usuario presiona "atrás"
     const handlePopState = () => {
-      console.warn('🔍 [POSClient] ════════════════════════════════════════════════════');
-      console.warn('🔍 [POSClient] popstate event detectado');
-      console.warn('🔍 [POSClient] pathname actual:', window.location.pathname);
-      console.warn('🔍 [POSClient] pathname guardado (POS):', posPath);
-      console.warn('🔍 [POSClient] isHandling:', isHandling);
-      
       // Prevenir múltiples ejecuciones
       if (isHandling) {
-        console.warn('⚠️ [POSClient] Ya se está manejando, ignorando...');
         return;
       }
 
       // Verificar si todavía estamos en el POS después del popstate
-      // Si estamos en el POS, significa que el usuario presionó "atrás" desde el POS
       const currentPath = window.location.pathname;
       const stillInPOS = currentPath.includes('/pos');
-      
-      console.warn('🔍 [POSClient] stillInPOS después de popstate:', stillInPOS);
 
       if (stillInPOS) {
         isHandling = true;
-        console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
-        console.warn('🔄 [POSClient] 🔙 BOTÓN ATRÁS DEL NAVEGADOR DETECTADO DESDE POS');
-        console.warn('🔄 [POSClient] Navegando al dashboard...');
+        console.warn('🔄 [POSClient] Botón atrás detectado, navegando al dashboard y recargando 2 veces...');
         
         // Construir URL del dashboard con restauranteId
         const dashboardUrl = restauranteId
           ? `/dashboard?restauranteId=${restauranteId}`
           : '/dashboard';
         
-        // Marcar en sessionStorage que viene del botón atrás (para mostrar indicador)
+        // Marcar en sessionStorage que viene del botón atrás y que debe recargar 2 veces
         const timestamp = Date.now();
         sessionStorage.setItem('dashboard_reload_from_back', 'true');
         sessionStorage.setItem('dashboard_reload_timestamp', timestamp.toString());
-        console.warn('🔄 [POSClient] Flag guardado en sessionStorage, timestamp:', timestamp);
+        sessionStorage.setItem('dashboard_reload_twice', 'true');
         
-        // NO agregar otra entrada al historial - eso causa el loop
-        // Navegar directamente al dashboard usando window.location.href
-        // Esto fuerza una recarga completa y asegura que los datos se actualicen
-        console.warn('🔄 [POSClient] Navegando a:', dashboardUrl);
+        // Navegar al dashboard - las recargas se harán en el dashboard
         window.location.href = dashboardUrl;
-      } else {
-        console.warn('🔍 [POSClient] No es necesario interceptar, continuando navegación normal');
       }
     };
 
     // Escuchar el evento popstate (se dispara cuando el usuario presiona "atrás")
     window.addEventListener('popstate', handlePopState);
-    console.warn('✅ [POSClient] Listener de popstate registrado para path:', posPath);
 
     // Limpiar el listener cuando el componente se desmonte
     return () => {
-      console.warn('🧹 [POSClient] Limpiando listener de popstate');
       window.removeEventListener('popstate', handlePopState);
     };
   }, [restauranteId]);
