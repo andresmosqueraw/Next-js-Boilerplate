@@ -55,70 +55,39 @@ export async function getDomicilios(): Promise<Domicilio[]> {
   return data || [];
 }
 
+/**
+ * Obtiene todos los domicilios de clientes registrados en restaurantes
+ * La relación es: cliente_restaurante → cliente → domicilio
+ * También mapea qué restaurantes han hecho pedidos a cada domicilio (para el estado "Con pedido")
+ */
 export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaurantes[]> {
   const supabase = await createClient();
 
-  // Optimización: Obtener tipo_pedido y carritos en paralelo
-  const [tiposPedidoResult, carritosResult] = await Promise.all([
-    supabase
-      .from('tipo_pedido')
-      .select('id, domicilio_id')
-      .not('domicilio_id', 'is', null),
-    supabase
-      .from('carrito')
-      .select('tipo_pedido_id, restaurante_id'),
-  ]);
+  // Paso 1: Obtener todos los clientes registrados en restaurantes (cliente_restaurante)
+  const { data: clientesRestaurante, error: clientesRestError } = await supabase
+    .from('cliente_restaurante')
+    .select('cliente_id, restaurante_id');
 
-  const { data: tiposPedido, error: tiposError } = tiposPedidoResult;
-  const { data: carritos, error: carritosError } = carritosResult;
-
-  if (tiposError || carritosError) {
-    console.error('Error fetching datos:', { tiposError, carritosError });
+  if (clientesRestError) {
+    console.error('Error fetching cliente_restaurante:', clientesRestError);
     return [];
   }
 
-  if (!tiposPedido || tiposPedido.length === 0) {
+  if (!clientesRestaurante || clientesRestaurante.length === 0) {
     return [];
   }
 
-  // Crear mapa de tipo_pedido_id -> restaurante_ids
-  const tipoPedidoRestaurantesMap = new Map<number, Set<number>>();
-  carritos?.forEach((carrito) => {
-    if (!tipoPedidoRestaurantesMap.has(carrito.tipo_pedido_id)) {
-      tipoPedidoRestaurantesMap.set(carrito.tipo_pedido_id, new Set());
+  // Crear mapa de cliente_id -> restaurante_ids
+  const clienteRestaurantesMap = new Map<number, Set<number>>();
+  clientesRestaurante.forEach((cr) => {
+    if (!clienteRestaurantesMap.has(cr.cliente_id)) {
+      clienteRestaurantesMap.set(cr.cliente_id, new Set());
     }
-    if (carrito.restaurante_id) {
-      tipoPedidoRestaurantesMap.get(carrito.tipo_pedido_id)!.add(carrito.restaurante_id);
-    }
+    clienteRestaurantesMap.get(cr.cliente_id)!.add(cr.restaurante_id);
   });
 
-  // Crear mapa de domicilio_id -> restaurante_ids
-  const domicilioRestaurantesMap = new Map<number, Set<number>>();
-  const domicilioIds = new Set<number>();
-
-  tiposPedido.forEach((tp) => {
-    if (tp.domicilio_id) {
-      domicilioIds.add(tp.domicilio_id);
-      
-      if (!domicilioRestaurantesMap.has(tp.domicilio_id)) {
-        domicilioRestaurantesMap.set(tp.domicilio_id, new Set());
-      }
-
-      // Obtener restaurantes de este tipo_pedido
-      const restaurantes = tipoPedidoRestaurantesMap.get(tp.id);
-      if (restaurantes) {
-        restaurantes.forEach(restId => {
-          domicilioRestaurantesMap.get(tp.domicilio_id)!.add(restId);
-        });
-      }
-    }
-  });
-
-  // Obtener solo los domicilios que tienen pedidos (optimización)
-  if (domicilioIds.size === 0) {
-    return [];
-  }
-
+  // Paso 2: Obtener todos los domicilios de estos clientes
+  const clienteIds = Array.from(clienteRestaurantesMap.keys());
   const { data: domicilios, error: domiciliosError } = await supabase
     .from('domicilio')
     .select(`
@@ -128,7 +97,7 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
         nombre
       )
     `)
-    .in('id', Array.from(domicilioIds))
+    .in('cliente_id', clienteIds)
     .order('creado_en', { ascending: false });
 
   if (domiciliosError) {
@@ -140,17 +109,75 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
     return [];
   }
 
-  // Combinar la información
+  // Paso 3: Obtener información de pedidos para determinar restaurantes que han hecho pedidos
+  // Esto es para el estado "Con pedido" vs "Disponible"
+  const [tiposPedidoResult, carritosResult] = await Promise.all([
+    supabase
+      .from('tipo_pedido')
+      .select('id, domicilio_id')
+      .not('domicilio_id', 'is', null)
+      .in('domicilio_id', domicilios.map(d => d.id)),
+    supabase
+      .from('carrito')
+      .select('tipo_pedido_id, restaurante_id'),
+  ]);
+
+  const { data: tiposPedido } = tiposPedidoResult;
+  const { data: carritos } = carritosResult;
+
+  // Crear mapa de tipo_pedido_id -> restaurante_ids (para pedidos históricos)
+  const tipoPedidoRestaurantesMap = new Map<number, Set<number>>();
+  carritos?.forEach((carrito) => {
+    if (!tipoPedidoRestaurantesMap.has(carrito.tipo_pedido_id)) {
+      tipoPedidoRestaurantesMap.set(carrito.tipo_pedido_id, new Set());
+    }
+    if (carrito.restaurante_id) {
+      tipoPedidoRestaurantesMap.get(carrito.tipo_pedido_id)!.add(carrito.restaurante_id);
+    }
+  });
+
+  // Crear mapa de domicilio_id -> restaurante_ids (de pedidos históricos)
+  const domicilioPedidosMap = new Map<number, Set<number>>();
+  tiposPedido?.forEach((tp) => {
+    if (tp.domicilio_id) {
+      if (!domicilioPedidosMap.has(tp.domicilio_id)) {
+        domicilioPedidosMap.set(tp.domicilio_id, new Set());
+      }
+      const restaurantes = tipoPedidoRestaurantesMap.get(tp.id);
+      if (restaurantes) {
+        restaurantes.forEach(restId => {
+          domicilioPedidosMap.get(tp.domicilio_id)!.add(restId);
+        });
+      }
+    }
+  });
+
+  // Paso 4: Combinar la información
+  // Para cada domicilio, incluir:
+  // - restaurantes_ids: restaurantes donde el cliente está registrado (de cliente_restaurante)
+  // - También incluir restaurantes que han hecho pedidos (de carritos históricos)
   const domiciliosConRestaurantes = domicilios.map((domicilio) => {
-    const restaurantesIds = domicilioRestaurantesMap.get(domicilio.id) || new Set();
     const cliente = (domicilio as any).cliente;
     const clienteNombre = cliente?.nombre || undefined;
+    const clienteId = domicilio.cliente_id;
+
+    // Restaurantes donde el cliente está registrado
+    const restaurantesRegistrados = clienteRestaurantesMap.get(clienteId) || new Set();
+    
+    // Restaurantes que han hecho pedidos a este domicilio
+    const restaurantesConPedidos = domicilioPedidosMap.get(domicilio.id) || new Set();
+    
+    // Combinar ambos sets (restaurantes registrados + restaurantes con pedidos)
+    const todosLosRestaurantes = new Set([
+      ...Array.from(restaurantesRegistrados),
+      ...Array.from(restaurantesConPedidos),
+    ]);
     
     const { cliente: _, ...domicilioSinCliente } = domicilio as any;
     
     return {
       ...domicilioSinCliente,
-      restaurantes_ids: Array.from(restaurantesIds),
+      restaurantes_ids: Array.from(todosLosRestaurantes),
       cliente_nombre: clienteNombre,
     } as DomicilioConRestaurantes;
   });
