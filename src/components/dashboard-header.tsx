@@ -16,7 +16,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export function DashboardHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [theme, setTheme] = useState<'dark' | 'light'>('light');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -26,9 +26,29 @@ export function DashboardHeader() {
   }, []);
 
   useEffect(() => {
-    // Detectar el tema actual del sistema
-    const isDark = document.documentElement.classList.contains('dark');
-    setTheme(isDark ? 'dark' : 'light');
+    // Leer el tema guardado en localStorage o detectar el tema actual
+    const savedTheme = localStorage.getItem('kuenta-theme') as 'dark' | 'light' | null;
+    const htmlElement = document.documentElement;
+    const bodyElement = document.body;
+    
+    if (savedTheme) {
+      // Aplicar el tema guardado
+      if (savedTheme === 'dark') {
+        htmlElement.classList.add('dark');
+        bodyElement.classList.add('dark');
+      } else {
+        htmlElement.classList.remove('dark');
+        bodyElement.classList.remove('dark');
+      }
+      setTheme(savedTheme);
+    } else {
+      // Detectar el tema actual del HTML/body
+      const isDark = htmlElement.classList.contains('dark') || bodyElement.classList.contains('dark');
+      const initialTheme = isDark ? 'dark' : 'light';
+      setTheme(initialTheme);
+      // Guardar el tema inicial
+      localStorage.setItem('kuenta-theme', initialTheme);
+    }
   }, []);
 
   const formatDate = (date: Date) => {
@@ -52,12 +72,20 @@ export function DashboardHeader() {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     
-    // Aplicar el tema al documento
+    // Aplicar el tema al documento HTML y body
+    const htmlElement = document.documentElement;
+    const bodyElement = document.body;
+    
     if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
+      htmlElement.classList.add('dark');
+      bodyElement.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      htmlElement.classList.remove('dark');
+      bodyElement.classList.remove('dark');
     }
+    
+    // Guardar la preferencia en localStorage
+    localStorage.setItem('kuenta-theme', newTheme);
   };
 
   return (
