@@ -37,22 +37,13 @@ export function POSClient({
     const posPath = window.location.pathname;
     
     console.warn('✅ [POSClient] Componente montado, pathname:', posPath);
-    
-    // Agregar una entrada al historial cuando se carga el POS
-    // Esto nos permite detectar cuando el usuario intenta salir
-    const currentState = window.history.state;
-    if (!currentState || !currentState.posEntry) {
-      console.warn('🔍 [POSClient] Agregando entrada al historial para detectar botón atrás...');
-      window.history.pushState({ posEntry: true, fromPOS: true }, '', window.location.href);
-    }
 
     // Función que se ejecuta cuando el usuario presiona "atrás"
-    const handlePopState = (event: PopStateEvent) => {
+    const handlePopState = () => {
       console.warn('🔍 [POSClient] ════════════════════════════════════════════════════');
       console.warn('🔍 [POSClient] popstate event detectado');
       console.warn('🔍 [POSClient] pathname actual:', window.location.pathname);
       console.warn('🔍 [POSClient] pathname guardado (POS):', posPath);
-      console.warn('🔍 [POSClient] event.state:', event.state);
       console.warn('🔍 [POSClient] isHandling:', isHandling);
       
       // Prevenir múltiples ejecuciones
@@ -61,16 +52,14 @@ export function POSClient({
         return;
       }
 
-      // Si el estado anterior no tiene posEntry, significa que el usuario
-      // está intentando salir del POS (viene de una página anterior)
-      const isTryingToLeavePOS = !event.state?.posEntry;
+      // Verificar si todavía estamos en el POS después del popstate
+      // Si estamos en el POS, significa que el usuario presionó "atrás" desde el POS
       const currentPath = window.location.pathname;
       const stillInPOS = currentPath.includes('/pos');
       
-      console.warn('🔍 [POSClient] isTryingToLeavePOS:', isTryingToLeavePOS);
-      console.warn('🔍 [POSClient] stillInPOS:', stillInPOS);
+      console.warn('🔍 [POSClient] stillInPOS después de popstate:', stillInPOS);
 
-      if (isTryingToLeavePOS || stillInPOS) {
+      if (stillInPOS) {
         isHandling = true;
         console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
         console.warn('🔄 [POSClient] 🔙 BOTÓN ATRÁS DEL NAVEGADOR DETECTADO DESDE POS');
