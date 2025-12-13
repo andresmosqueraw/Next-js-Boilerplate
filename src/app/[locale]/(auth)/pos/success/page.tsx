@@ -13,10 +13,9 @@ export default function SuccessPage() {
   const searchParams = useSearchParams();
   const { cart, cartTotal, clearCart } = useCart();
 
-  const tax = cartTotal * 0.1;
-  const grandTotal = cartTotal + tax;
+  const total = cartTotal;
   const receiptNumber = Math.floor(100000 + Math.random() * 900000);
-  const date = new Date().toLocaleString();
+  const date = new Date().toLocaleString('es-ES');
 
   useEffect(() => {
     // If there's no cart data, redirect to dashboard
@@ -55,12 +54,12 @@ export default function SuccessPage() {
           </div>
         </div>
 
-        <h1 className="mb-2 text-center text-2xl font-bold">Payment Successful</h1>
-        <p className="mb-6 text-center text-muted-foreground">Thank you for your purchase!</p>
+        <h1 className="mb-2 text-center text-2xl font-bold">Pago Exitoso</h1>
+        <p className="mb-6 text-center text-muted-foreground">¡Gracias por tu compra!</p>
 
         <div className="mb-6 text-center">
           <p className="font-medium">
-            Receipt #
+            Recibo #
             {receiptNumber}
           </p>
           <p className="text-sm text-muted-foreground">{date}</p>
@@ -90,25 +89,11 @@ export default function SuccessPage() {
         <Separator className="my-4" />
 
         <div className="space-y-2">
-          <div className="flex justify-between">
-            <p>Subtotal</p>
-            <p>
-              $
-              {cartTotal.toFixed(2)}
-            </p>
-          </div>
-          <div className="flex justify-between">
-            <p>Tax (10%)</p>
-            <p>
-              $
-              {tax.toFixed(2)}
-            </p>
-          </div>
           <div className="flex justify-between font-bold">
             <p>Total</p>
             <p>
               $
-              {grandTotal.toFixed(2)}
+              {total.toFixed(2)}
             </p>
           </div>
         </div>
@@ -116,10 +101,10 @@ export default function SuccessPage() {
         <div className="mt-6 flex flex-col gap-3 print:hidden">
           <Button onClick={handlePrint} variant="outline" className="w-full">
             <Printer className="mr-2 h-4 w-4" />
-            Print Receipt
+            Imprimir Recibo
           </Button>
           <Button onClick={handleBackToDashboard} className="w-full">
-            Return to Dashboard
+            Volver al Dashboard
           </Button>
         </div>
       </div>
