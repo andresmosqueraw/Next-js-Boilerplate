@@ -3,7 +3,7 @@
 import type { Product } from './context/cart-context';
 import type { CategoriaConSlug } from '@/services/producto.service';
 import { MapPin, Search, Table } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import CartSidebar from '@/components/cart-sidebar';
 import CategorySidebar from '@/components/category-sidebar';
@@ -23,7 +23,6 @@ export function POSClient({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   // Obtener información del tipo de pedido
   const tipo = searchParams.get('tipo');
@@ -35,21 +34,14 @@ export function POSClient({
   // Interceptar el botón "atrás" del navegador
   useEffect(() => {
     let isHandling = false;
-    
-    // Agregar una entrada al historial cuando se carga el POS
-    // Esto nos permite detectar cuando el usuario intenta salir
-    const currentState = window.history.state;
-    if (!currentState || !currentState.posEntry) {
-      console.warn('🔍 [POSClient] Agregando entrada al historial para detectar botón atrás...');
-      window.history.pushState({ posEntry: true, fromPOS: true }, '', window.location.href);
-    }
+    const posPath = window.location.pathname;
 
     // Función que se ejecuta cuando el usuario presiona "atrás"
-    const handlePopState = (event: PopStateEvent) => {
+    const handlePopState = () => {
       console.warn('🔍 [POSClient] ════════════════════════════════════════════════════');
       console.warn('🔍 [POSClient] popstate event detectado');
-      console.warn('🔍 [POSClient] pathname:', window.location.pathname);
-      console.warn('🔍 [POSClient] event.state:', event.state);
+      console.warn('🔍 [POSClient] pathname actual:', window.location.pathname);
+      console.warn('🔍 [POSClient] pathname guardado (POS):', posPath);
       console.warn('🔍 [POSClient] isHandling:', isHandling);
       
       // Prevenir múltiples ejecuciones
@@ -58,20 +50,20 @@ export function POSClient({
         return;
       }
 
-      // Si el estado anterior no tiene posEntry, significa que el usuario
-      // está intentando salir del POS (viene de una página anterior)
-      const isTryingToLeavePOS = !event.state?.posEntry;
+      // Si el pathname actual es diferente al POS, significa que el navegador
+      // ya navegó a otra página. Necesitamos interceptar y redirigir al dashboard.
       const currentPath = window.location.pathname;
-      const stillInPOS = currentPath.includes('/pos');
+      const wasInPOS = posPath.includes('/pos');
+      const nowInPOS = currentPath.includes('/pos');
       
-      console.warn('🔍 [POSClient] isTryingToLeavePOS:', isTryingToLeavePOS);
-      console.warn('🔍 [POSClient] stillInPOS:', stillInPOS);
+      console.warn('🔍 [POSClient] wasInPOS:', wasInPOS, '| nowInPOS:', nowInPOS);
 
-      if (isTryingToLeavePOS || stillInPOS) {
+      // Si estábamos en el POS y ahora no estamos (o seguimos en POS pero el usuario presionó atrás)
+      if (wasInPOS && (!nowInPOS || currentPath === posPath)) {
         isHandling = true;
         console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
-        console.warn('🔄 [POSClient] 🔙 BOTÓN ATRÁS DEL NAVEGADOR DETECTADO');
-        console.warn('🔄 [POSClient] Paso 1: Navegando rápidamente al dashboard...');
+        console.warn('🔄 [POSClient] 🔙 BOTÓN ATRÁS DEL NAVEGADOR DETECTADO DESDE POS');
+        console.warn('🔄 [POSClient] Navegando al dashboard...');
         
         // Construir URL del dashboard con restauranteId
         const dashboardUrl = restauranteId
@@ -84,22 +76,10 @@ export function POSClient({
         sessionStorage.setItem('dashboard_reload_timestamp', timestamp.toString());
         console.warn('🔄 [POSClient] Flag guardado en sessionStorage, timestamp:', timestamp);
         
-        // Volver a agregar la entrada del POS para mantener la posición
-        window.history.pushState({ posEntry: true, fromPOS: true }, '', window.location.href);
-        
-        // Primero navegar rápidamente al dashboard (sin recargar)
-        router.push(dashboardUrl);
-        console.warn('🔄 [POSClient] router.push() ejecutado');
-        
-        // Como último paso, después de un pequeño delay, recargar la página
-        // para asegurar que los datos se actualicen correctamente
-        setTimeout(() => {
-          console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
-          console.warn('🔄 [POSClient] 🔄 PASO FINAL: Recargando dashboard para actualizar datos...');
-          console.warn('🔄 [POSClient] Timestamp antes de recargar:', Date.now());
-          console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
-          window.location.reload();
-        }, 1);
+        // Navegar al dashboard usando window.location.href directamente
+        // Esto fuerza una recarga completa y asegura que los datos se actualicen
+        console.warn('🔄 [POSClient] Navegando a:', dashboardUrl);
+        window.location.href = dashboardUrl;
       } else {
         console.warn('🔍 [POSClient] No es necesario interceptar, continuando navegación normal');
       }
@@ -107,14 +87,14 @@ export function POSClient({
 
     // Escuchar el evento popstate (se dispara cuando el usuario presiona "atrás")
     window.addEventListener('popstate', handlePopState);
-    console.warn('✅ [POSClient] Listener de popstate registrado');
+    console.warn('✅ [POSClient] Listener de popstate registrado para path:', posPath);
 
     // Limpiar el listener cuando el componente se desmonte
     return () => {
       console.warn('🧹 [POSClient] Limpiando listener de popstate');
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [restauranteId, router]);
+  }, [restauranteId]);
 
   return (
     <div className="flex h-screen bg-background">
