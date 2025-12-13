@@ -12,7 +12,7 @@ const IMAGENES_DISPONIBLES = {
   plato: '/plato-casero.png',
   // Sopas
   sopa: '/sopa.png',
-  caldo: '/sopa.png',
+  caldo: '/caldo.png',
   // Bebidas
   jugo: '/glass-of-orange-juice.png',
   agua: '/bottled-water.png',
@@ -24,22 +24,24 @@ const IMAGENES_DISPONIBLES = {
   tinto: '/latte-coffee.png',
   aromatica: '/iced-tea.png',
   // Desayunos
-  desayuno: '/delicious-pizza.png',
-  huevo: '/crispy-chicken-wings.png',
+  desayuno: '/desayuno.png',
+  huevo: '/huevos.png',
+  huevos: '/huevos.png',
   pan: '/apple-pie-slice.png',
   // Proteínas y especiales
-  sobrebarriga: '/classic-beef-burger.png',
-  mojarra: '/crispy-chicken-wings.png',
-  lomo: '/classic-beef-burger.png',
-  churrasco: '/classic-beef-burger.png',
-  costillas: '/classic-beef-burger.png',
-  churrasquito: '/classic-beef-burger.png',
-  pechuga: '/crispy-chicken-wings.png',
+  especial: '/plato-especial.png',
+  sobrebarriga: '/plato-especial.png',
+  mojarra: '/plato-especial.png',
+  lomo: '/plato-especial.png',
+  churrasco: '/plato-especial.png',
+  costillas: '/plato-especial.png',
+  churrasquito: '/plato-especial.png',
+  pechuga: '/plato-especial.png',
   // Acompañamientos
   proteina: '/crispy-chicken-wings.png',
   papa: '/crispy-french-fries.png',
   patacon: '/crispy-french-fries.png',
-  arroz: '/vibrant-mixed-salad.png',
+  arroz: '/arroz.png',
   // Postres y dulces
   fruta: '/fruta.png',
   banano: '/fruta.png',
@@ -50,7 +52,8 @@ const IMAGENES_DISPONIBLES = {
   icopor: '/bottled-water.png',
   calentada: '/delicious-pizza.png',
   moñona: '/delicious-pizza.png',
-  rancheros: '/crispy-chicken-wings.png',
+  rancheros: '/huevos.png',
+  cacerola: '/huevos.png',
   // Por defecto
   default: '/plato-casero.png',
 };
