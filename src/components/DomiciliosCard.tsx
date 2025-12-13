@@ -119,20 +119,20 @@ export function DomiciliosCard({
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
-                      <th className="px-3 py-2 text-left">
-                        <span className="text-xs font-semibold text-muted-foreground">Dirección</span>
+                      <th className="px-4 py-3 text-left">
+                        <span className="text-sm font-semibold text-muted-foreground">Dirección</span>
                       </th>
-                      <th className="px-3 py-2 text-left">
-                        <span className="text-xs font-semibold text-muted-foreground">Ciudad</span>
+                      <th className="px-4 py-3 text-left">
+                        <span className="text-sm font-semibold text-muted-foreground">Ciudad</span>
                       </th>
-                      <th className="px-3 py-2 text-left">
-                        <span className="text-xs font-semibold text-muted-foreground">Referencia</span>
+                      <th className="px-4 py-3 text-left">
+                        <span className="text-sm font-semibold text-muted-foreground">Referencia</span>
                       </th>
-                      <th className="px-3 py-2 text-left">
-                        <span className="text-xs font-semibold text-muted-foreground">Cliente</span>
+                      <th className="px-4 py-3 text-left">
+                        <span className="text-sm font-semibold text-muted-foreground">Cliente</span>
                       </th>
-                      <th className="px-3 py-2 text-left">
-                        <span className="text-xs font-semibold text-muted-foreground">Estado</span>
+                      <th className="px-4 py-3 text-left">
+                        <span className="text-sm font-semibold text-muted-foreground">Estado</span>
                       </th>
                     </tr>
                   </thead>
@@ -161,28 +161,28 @@ export function DomiciliosCard({
                             onClick={() => handleRowClick(domicilio)}
                             className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/20"
                           >
-                            <td className="px-3 py-2">
-                              <span className="text-sm font-medium text-foreground">
+                            <td className="px-4 py-3">
+                              <span className="text-base font-medium text-foreground">
                                 {domicilio.direccion}
                               </span>
                             </td>
-                            <td className="px-3 py-2">
-                              <span className="text-sm text-muted-foreground">
+                            <td className="px-4 py-3">
+                              <span className="text-base text-muted-foreground">
                                 {domicilio.ciudad || 'N/A'}
                               </span>
                             </td>
-                            <td className="px-3 py-2">
-                              <span className="text-sm text-muted-foreground">
+                            <td className="px-4 py-3">
+                              <span className="text-base text-muted-foreground">
                                 {domicilio.referencia || 'N/A'}
                               </span>
                             </td>
-                            <td className="px-3 py-2">
-                              <span className="text-sm font-medium text-foreground">
+                            <td className="px-4 py-3">
+                              <span className="text-base font-medium text-foreground">
                                 {domicilio.cliente_nombre || `Cliente #${domicilio.cliente_id}`}
                               </span>
                             </td>
-                            <td className="px-3 py-2">
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-light ${coloresBadge[estadoVisual]}`}>
+                            <td className="px-4 py-3">
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-light ${coloresBadge[estadoVisual]}`}>
                                 {textoEstado[estadoVisual]}
                               </span>
                             </td>

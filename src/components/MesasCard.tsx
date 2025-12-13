@@ -94,14 +94,14 @@ export function MesasCard({
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="px-3 py-2 text-left">
-                  <span className="text-xs font-semibold text-muted-foreground">Mesa</span>
+                <th className="px-4 py-3 text-left">
+                  <span className="text-sm font-semibold text-muted-foreground">Mesa</span>
                 </th>
-                <th className="px-3 py-2 text-left">
-                  <span className="text-xs font-semibold text-muted-foreground">Capacidad</span>
+                <th className="px-4 py-3 text-left">
+                  <span className="text-sm font-semibold text-muted-foreground">Capacidad</span>
                 </th>
-                <th className="px-3 py-2 text-left">
-                  <span className="text-xs font-semibold text-muted-foreground">Estado</span>
+                <th className="px-4 py-3 text-left">
+                  <span className="text-sm font-semibold text-muted-foreground">Estado</span>
                 </th>
               </tr>
             </thead>
@@ -120,22 +120,22 @@ export function MesasCard({
                       onClick={() => handleRowClick(mesa)}
                       className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/20"
                     >
-                      <td className="px-3 py-2">
-                        <span className="text-sm font-medium text-foreground">
+                      <td className="px-4 py-3">
+                        <span className="text-base font-medium text-foreground">
                           Mesa
                           {' '}
                           {mesa.numero_mesa}
                         </span>
                       </td>
-                      <td className="px-3 py-2">
-                        <span className="text-sm text-muted-foreground">
+                      <td className="px-4 py-3">
+                        <span className="text-base text-muted-foreground">
                           {mesa.capacidad || 'N/A'}
                           {' '}
                           personas
                         </span>
                       </td>
-                      <td className="px-3 py-2">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-light ${coloresBadge[estadoVisual]}`}>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-light ${coloresBadge[estadoVisual]}`}>
                           {textoEstado[estadoVisual]}
                         </span>
                       </td>
