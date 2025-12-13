@@ -406,6 +406,7 @@ export async function crearCarrito(
 
 /**
  * Agrega un producto a un carrito existente
+ * Optimizado: usa UPSERT para evitar SELECT + INSERT/UPDATE
  */
 export async function agregarProductoACarrito(
   carritoId: number,
@@ -415,23 +416,61 @@ export async function agregarProductoACarrito(
 ) {
   const supabase = await createClient();
 
-  const subtotal = cantidad * precioUnitario;
+  // Usar UPSERT con ON CONFLICT para incrementar cantidad si existe
+  // Esto evita el SELECT previo y hace todo en una sola operación
+  const { data, error } = await supabase.rpc('upsert_carrito_producto', {
+    p_carrito_id: carritoId,
+    p_producto_restaurante_id: productoRestauranteId,
+    p_cantidad: cantidad,
+    p_precio_unitario: precioUnitario,
+  });
 
-  // Verificar si el producto ya existe en el carrito
+  if (error) {
+    // Si la función RPC no existe, usar el método tradicional
+    if (error.code === '42883' || error.message.includes('function') || error.message.includes('does not exist')) {
+      console.warn('⚠️ [agregarProductoACarrito] Función RPC no disponible, usando método tradicional');
+      return await agregarProductoACarritoFallback(
+        carritoId,
+        productoRestauranteId,
+        cantidad,
+        precioUnitario,
+      );
+    }
+    console.error('Error upserting carrito_producto:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Método fallback si la función RPC no está disponible
+ * Usa una consulta optimizada con SELECT solo de los campos necesarios
+ */
+async function agregarProductoACarritoFallback(
+  carritoId: number,
+  productoRestauranteId: number,
+  cantidad: number,
+  precioUnitario: number,
+) {
+  const supabase = await createClient();
+
+  // SELECT optimizado: solo campos necesarios, usando índice compuesto si existe
   const { data: productoExistente } = await supabase
     .from('carrito_producto')
-    .select('*')
+    .select('id, cantidad')
     .eq('carrito_id', carritoId)
     .eq('producto_restaurante_id', productoRestauranteId)
-    .single();
+    .maybeSingle();
 
   if (productoExistente) {
     // Actualizar cantidad existente
+    const nuevaCantidad = productoExistente.cantidad + cantidad;
     const { error } = await supabase
       .from('carrito_producto')
       .update({
-        cantidad: productoExistente.cantidad + cantidad,
-        subtotal: (productoExistente.cantidad + cantidad) * precioUnitario,
+        cantidad: nuevaCantidad,
+        subtotal: nuevaCantidad * precioUnitario,
       })
       .eq('id', productoExistente.id);
 
@@ -448,7 +487,7 @@ export async function agregarProductoACarrito(
         producto_restaurante_id: productoRestauranteId,
         cantidad,
         precio_unitario: precioUnitario,
-        subtotal,
+        subtotal: cantidad * precioUnitario,
       });
 
     if (error) {
@@ -615,7 +654,7 @@ export async function obtenerCarritoCompleto(
     const productoRestauranteIds = carritoProductos.map(cp => cp.producto_restaurante_id);
 
     // Paso 1: Obtener producto_restaurante con producto
-    const { data: productosRestaurante, error: errorProductos } = await supabase
+    const productosRestaurantePromise = supabase
       .from('producto_restaurante')
       .select(`
         id,
@@ -631,17 +670,26 @@ export async function obtenerCarritoCompleto(
       .in('id', productoRestauranteIds)
       .eq('restaurante_id', restauranteId);
 
-    if (errorProductos || !productosRestaurante) {
-      console.error('❌ [Service obtenerCarritoCompleto] Error obteniendo productos:', errorProductos);
-      return { success: false, carritoId: carrito.id, productos: [] };
-    }
-
-    // Paso 2: Obtener las categorías visibles para este restaurante
-    const { data: categoriasRestaurante } = await supabase
+    // Paso 2: Obtener las categorías visibles para este restaurante (en paralelo)
+    const categoriasRestaurantePromise = supabase
       .from('categoria_restaurante')
       .select('categoria_id, categoria:categoria_id (id, nombre)')
       .eq('restaurante_id', restauranteId)
       .eq('visible', true);
+
+    // Ejecutar ambas consultas en paralelo
+    const [
+      { data: productosRestaurante, error: errorProductos },
+      { data: categoriasRestaurante },
+    ] = await Promise.all([
+      productosRestaurantePromise,
+      categoriasRestaurantePromise,
+    ]);
+
+    if (errorProductos || !productosRestaurante) {
+      console.error('❌ [Service obtenerCarritoCompleto] Error obteniendo productos:', errorProductos);
+      return { success: false, carritoId: carrito.id, productos: [] };
+    }
 
     const categoriasVisiblesIds = new Set(
       categoriasRestaurante?.map(cr => cr.categoria_id) || []
