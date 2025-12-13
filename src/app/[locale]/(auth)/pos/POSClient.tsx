@@ -3,8 +3,8 @@
 import type { Product } from './context/cart-context';
 import type { CategoriaConSlug } from '@/services/producto.service';
 import { MapPin, Search, Table } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 import CartSidebar from '@/components/cart-sidebar';
 import CategorySidebar from '@/components/category-sidebar';
 import ProductGrid from '@/components/product-grid';
@@ -23,12 +23,61 @@ export function POSClient({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Obtener información del tipo de pedido
   const tipo = searchParams.get('tipo');
   const id = searchParams.get('id');
   const numero = searchParams.get('numero');
   const clienteId = searchParams.get('clienteId');
+  const restauranteId = searchParams.get('restauranteId');
+
+  // Función para navegar al dashboard (misma lógica que el botón "Back to Dashboard")
+  const handleBackToDashboard = useCallback(() => {
+    console.warn('🔄 [POSClient] Navegando a dashboard y refrescando datos...');
+    // Construir URL del dashboard con restauranteId si existe
+    const dashboardUrl = restauranteId
+      ? `/dashboard?restauranteId=${restauranteId}`
+      : '/dashboard';
+    
+    // Navegar al dashboard y refrescar
+    router.push(dashboardUrl);
+    router.refresh();
+  }, [restauranteId, router]);
+
+  // Interceptar el botón "atrás" del navegador
+  useEffect(() => {
+    // Agregar una entrada en el historial cuando se carga el POS
+    // Esto nos permite detectar cuando el usuario presiona "atrás"
+    const currentState = window.history.state;
+    if (!currentState || !currentState.posEntry) {
+      // Agregar una entrada en el historial con un flag para identificar que es del POS
+      window.history.pushState({ posEntry: true }, '', window.location.href);
+    }
+
+    // Función que se ejecuta cuando el usuario presiona "atrás"
+    const handlePopState = (event: PopStateEvent) => {
+      // Verificar si estamos en el POS (la URL contiene '/pos')
+      const isInPOS = window.location.pathname.includes('/pos');
+      
+      // Si el estado anterior no tiene el flag posEntry y estamos en el POS,
+      // significa que el usuario está intentando salir del POS
+      if (isInPOS && !event.state?.posEntry) {
+        // Volver a agregar la entrada del POS para mantener la posición
+        window.history.pushState({ posEntry: true }, '', window.location.href);
+        // Ejecutar nuestra lógica de navegación al dashboard
+        handleBackToDashboard();
+      }
+    };
+
+    // Escuchar el evento popstate (se dispara cuando el usuario presiona "atrás")
+    window.addEventListener('popstate', handlePopState);
+
+    // Limpiar el listener cuando el componente se desmonte
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [handleBackToDashboard]);
 
   return (
     <div className="flex h-screen bg-background">
