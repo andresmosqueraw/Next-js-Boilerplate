@@ -614,21 +614,18 @@ export async function obtenerCarritoCompleto(
     // Obtener todos los producto_restaurante_id
     const productoRestauranteIds = carritoProductos.map(cp => cp.producto_restaurante_id);
 
-    // Obtener producto_restaurante con producto y categoria
+    // Paso 1: Obtener producto_restaurante con producto
     const { data: productosRestaurante, error: errorProductos } = await supabase
       .from('producto_restaurante')
       .select(`
         id,
         producto_id,
+        precio_venta,
         producto:producto_id (
           id,
           nombre,
-          precio,
-          categoria_id,
-          categoria:categoria_id (
-            id,
-            nombre
-          )
+          descripcion,
+          precio
         )
       `)
       .in('id', productoRestauranteIds)
@@ -638,6 +635,43 @@ export async function obtenerCarritoCompleto(
       console.error('❌ [Service obtenerCarritoCompleto] Error obteniendo productos:', errorProductos);
       return { success: false, carritoId: carrito.id, productos: [] };
     }
+
+    // Paso 2: Obtener las categorías visibles para este restaurante
+    const { data: categoriasRestaurante } = await supabase
+      .from('categoria_restaurante')
+      .select('categoria_id, categoria:categoria_id (id, nombre)')
+      .eq('restaurante_id', restauranteId)
+      .eq('visible', true);
+
+    const categoriasVisiblesIds = new Set(
+      categoriasRestaurante?.map(cr => cr.categoria_id) || []
+    );
+
+    // Paso 3: Obtener las relaciones producto_categoria para todos los productos
+    const productoIds = productosRestaurante.map(pr => pr.producto_id);
+    const { data: productoCategorias } = await supabase
+      .from('producto_categoria')
+      .select('producto_id, categoria_id, categoria:categoria_id (id, nombre)')
+      .in('producto_id', productoIds);
+
+    // Paso 4: Crear un mapa de producto_id -> categoría (solo categorías visibles para el restaurante)
+    const productoCategoriaMap = new Map<number, { id: number; nombre: string }>();
+    productoCategorias?.forEach((pc) => {
+      const categoriaId = pc.categoria_id;
+      // Solo incluir si la categoría está visible para este restaurante
+      if (categoriasVisiblesIds.has(categoriaId)) {
+        const categoria = Array.isArray(pc.categoria) ? pc.categoria[0] : pc.categoria;
+        if (categoria && typeof categoria === 'object' && 'nombre' in categoria) {
+          // Usar la primera categoría encontrada
+          if (!productoCategoriaMap.has(pc.producto_id)) {
+            productoCategoriaMap.set(pc.producto_id, {
+              id: categoria.id,
+              nombre: String(categoria.nombre),
+            });
+          }
+        }
+      }
+    });
 
     // Convertir a formato Product[] con quantity
     const productos: Array<Product & { quantity: number }> = carritoProductos.map((cp) => {
@@ -657,7 +691,8 @@ export async function obtenerCarritoCompleto(
         return null;
       }
 
-      const categoria = producto.categoria as { id: number; nombre: string } | null | undefined;
+      // Obtener categoría del mapa
+      const categoria = productoCategoriaMap.get(producto.id);
 
       // Asignar imagen basada en el ID del producto
       const imagenIndex = producto.id % 15;
