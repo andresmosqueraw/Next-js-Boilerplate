@@ -1,6 +1,6 @@
 'use client';
 
-import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import { Loader2, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { useCart } from '../app/[locale]/(auth)/pos/context/cart-context';
 export default function CartSidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { cart, removeFromCart, updateQuantity, cartTotal, itemCount } = useCart();
+  const { cart, removeFromCart, updateQuantity, cartTotal, itemCount, updatingItems } = useCart();
 
   const handleCheckout = () => {
     // Obtener parámetros de la URL actual (tipo de pedido)
@@ -55,57 +55,68 @@ export default function CartSidebar() {
             )
           : (
               <div className="space-y-4">
-                {cart.map(item => (
-                  <div key={item.id} className="flex gap-3">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border">
-                      <img src={item.image || '/placeholder.svg'} alt={item.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="flex flex-1 flex-col">
-                      <div className="flex justify-between">
-                        <h3 className="line-clamp-1 font-medium">{item.name}</h3>
-                        <p className="font-medium">
-                          $
-                          {(item.price * item.quantity).toFixed(2)}
-                        </p>
+                {cart.map(item => {
+                  const isUpdating = updatingItems.has(item.id);
+                  return (
+                    <div key={item.id} className={`flex gap-3 ${isUpdating ? 'opacity-60' : ''}`}>
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border">
+                        <img src={item.image || '/placeholder.svg'} alt={item.name} className="h-full w-full object-cover" />
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        $
-                        {item.price.toFixed(2)}
-                        {' '}
-                        cada uno
-                      </p>
-                      <div className="mt-auto flex items-center justify-between">
-                        <div className="flex items-center">
+                      <div className="flex flex-1 flex-col">
+                        <div className="flex justify-between">
+                          <h3 className="line-clamp-1 font-medium">{item.name}</h3>
+                          <div className="flex items-center gap-2">
+                            {isUpdating && (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                            <p className="font-medium">
+                              $
+                              {(item.price * item.quantity).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          $
+                          {item.price.toFixed(2)}
+                          {' '}
+                          cada uno
+                        </p>
+                        <div className="mt-auto flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              disabled={isUpdating}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-8 text-center">{item.quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              disabled={isUpdating}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="icon"
-                            className="h-7 w-7"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="h-7 w-7 text-muted-foreground"
+                            onClick={() => removeFromCart(item.id)}
+                            disabled={isUpdating}
                           >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-8 text-center">{item.quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          >
-                            <Plus className="h-3 w-3" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground"
-                          onClick={() => removeFromCart(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
       </div>
