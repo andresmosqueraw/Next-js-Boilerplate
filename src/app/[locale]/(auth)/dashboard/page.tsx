@@ -29,17 +29,17 @@ export default async function Page({
 }: {
   searchParams: Promise<{ restauranteId?: string }>;
 }) {
-  const [mesas, domicilios, restaurantes, resolvedSearchParams] = await Promise.all([
-    getMesas(),
-    getDomiciliosConRelaciones(),
-    getRestaurantes(),
-    searchParams,
-  ]);
-
+  const resolvedSearchParams = await searchParams;
+  
   // Determinar qué restaurante usar: el de la URL o el primero por defecto
   const restauranteIdFromUrl = resolvedSearchParams?.restauranteId
     ? Number.parseInt(resolvedSearchParams.restauranteId, 10)
     : null;
+
+  const [mesas, restaurantes] = await Promise.all([
+    getMesas(),
+    getRestaurantes(),
+  ]);
   
   const restauranteSeleccionado = restauranteIdFromUrl
     ? restaurantes.find(r => r.id === restauranteIdFromUrl) || restaurantes[0]
@@ -47,6 +47,10 @@ export default async function Page({
 
   // Seleccionar el restaurante como predeterminado
   const restauranteDefault = restaurantes.length > 0 ? restauranteSeleccionado : undefined;
+
+  // Obtener domicilios filtrados por restaurante (si está seleccionado)
+  // Esto usa cliente_restaurante para mostrar todos los domicilios de clientes conocidos
+  const domicilios = await getDomiciliosConRelaciones(restauranteDefault?.id);
 
   // Obtener mesas y domicilios con carritos activos (con productos) para el restaurante seleccionado
   const [mesasConCarrito, domiciliosConCarrito] = restauranteDefault

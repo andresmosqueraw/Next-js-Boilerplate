@@ -57,16 +57,40 @@ export async function getDomicilios(): Promise<Domicilio[]> {
 
 /**
  * Obtiene todos los domicilios de clientes registrados en restaurantes
- * La relación es: cliente_restaurante → cliente → domicilio
- * También mapea qué restaurantes han hecho pedidos a cada domicilio (para el estado "Con pedido")
+ * Basado en la consulta SQL optimizada: cliente_restaurante → cliente → domicilio
+ * Usa cliente_ranking para priorizar clientes activos (con compras) sobre potenciales
+ * 
+ * @param restauranteId - Opcional: filtrar por restaurante específico. Si no se proporciona, retorna todos.
  */
-export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaurantes[]> {
+export async function getDomiciliosConRelaciones(restauranteId?: number): Promise<DomicilioConRestaurantes[]> {
   const supabase = await createClient();
 
-  // Paso 1: Obtener todos los clientes registrados en restaurantes (cliente_restaurante)
-  const { data: clientesRestaurante, error: clientesRestError } = await supabase
+  // Paso 1: Obtener clientes registrados en restaurantes (cliente_restaurante)
+  // Si se proporciona restauranteId, filtrar por ese restaurante
+  let clientesRestauranteQuery = supabase
     .from('cliente_restaurante')
-    .select('cliente_id, restaurante_id');
+    .select('cliente_id, restaurante_id, ultima_interaccion');
+
+  if (restauranteId) {
+    clientesRestauranteQuery = clientesRestauranteQuery.eq('restaurante_id', restauranteId);
+  }
+
+  // Paso 2: Obtener información de cliente_ranking en paralelo (para priorizar clientes activos)
+  let clienteRankingQuery = supabase
+    .from('cliente_ranking')
+    .select('cliente_id, restaurante_id, numero_compras');
+
+  if (restauranteId) {
+    clienteRankingQuery = clienteRankingQuery.eq('restaurante_id', restauranteId);
+  }
+
+  const [clientesRestauranteResult, clienteRankingResult] = await Promise.all([
+    clientesRestauranteQuery,
+    clienteRankingQuery,
+  ]);
+
+  const { data: clientesRestaurante, error: clientesRestError } = clientesRestauranteResult;
+  const { data: clienteRanking, error: rankingError } = clienteRankingResult;
 
   if (clientesRestError) {
     console.error('Error fetching cliente_restaurante:', clientesRestError);
@@ -77,16 +101,39 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
     return [];
   }
 
-  // Crear mapa de cliente_id -> restaurante_ids
+  // Crear mapa de cliente_id -> restaurante_ids y ordenar por prioridad
   const clienteRestaurantesMap = new Map<number, Set<number>>();
+  const clientePrioridadMap = new Map<number, { restauranteId: number; numeroCompras: number; ultimaInteraccion: Date }[]>();
+
   clientesRestaurante.forEach((cr) => {
     if (!clienteRestaurantesMap.has(cr.cliente_id)) {
       clienteRestaurantesMap.set(cr.cliente_id, new Set());
     }
     clienteRestaurantesMap.get(cr.cliente_id)!.add(cr.restaurante_id);
+
+    // Guardar información de prioridad
+    if (!clientePrioridadMap.has(cr.cliente_id)) {
+      clientePrioridadMap.set(cr.cliente_id, []);
+    }
+    clientePrioridadMap.get(cr.cliente_id)!.push({
+      restauranteId: cr.restaurante_id,
+      numeroCompras: 0,
+      ultimaInteraccion: new Date(cr.ultima_interaccion || Date.now()),
+    });
   });
 
-  // Paso 2: Obtener todos los domicilios de estos clientes
+  // Actualizar con información de cliente_ranking (clientes activos)
+  clienteRanking?.forEach((rank) => {
+    const prioridades = clientePrioridadMap.get(rank.cliente_id);
+    if (prioridades) {
+      const prioridad = prioridades.find(p => p.restauranteId === rank.restaurante_id);
+      if (prioridad) {
+        prioridad.numeroCompras = rank.numero_compras || 0;
+      }
+    }
+  });
+
+  // Paso 3: Obtener todos los domicilios de estos clientes
   const clienteIds = Array.from(clienteRestaurantesMap.keys());
   const { data: domicilios, error: domiciliosError } = await supabase
     .from('domicilio')
@@ -109,7 +156,7 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
     return [];
   }
 
-  // Paso 3: Obtener información de pedidos para determinar restaurantes que han hecho pedidos
+  // Paso 4: Obtener información de pedidos para determinar restaurantes que han hecho pedidos
   // Esto es para el estado "Con pedido" vs "Disponible"
   const [tiposPedidoResult, carritosResult] = await Promise.all([
     supabase
@@ -152,10 +199,7 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
     }
   });
 
-  // Paso 4: Combinar la información
-  // Para cada domicilio, incluir:
-  // - restaurantes_ids: restaurantes donde el cliente está registrado (de cliente_restaurante)
-  // - También incluir restaurantes que han hecho pedidos (de carritos históricos)
+  // Paso 5: Combinar la información y ordenar por prioridad
   const domiciliosConRestaurantes = domicilios.map((domicilio) => {
     const cliente = (domicilio as any).cliente;
     const clienteNombre = cliente?.nombre || undefined;
@@ -172,6 +216,10 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
       ...Array.from(restaurantesRegistrados),
       ...Array.from(restaurantesConPedidos),
     ]);
+
+    // Obtener prioridad del cliente (número de compras)
+    const prioridades = clientePrioridadMap.get(clienteId) || [];
+    const maxCompras = Math.max(...prioridades.map(p => p.numeroCompras), 0);
     
     const { cliente: _, ...domicilioSinCliente } = domicilio as any;
     
@@ -179,10 +227,22 @@ export async function getDomiciliosConRelaciones(): Promise<DomicilioConRestaura
       ...domicilioSinCliente,
       restaurantes_ids: Array.from(todosLosRestaurantes),
       cliente_nombre: clienteNombre,
-    } as DomicilioConRestaurantes;
+      _prioridad: maxCompras, // Para ordenamiento
+    } as DomicilioConRestaurantes & { _prioridad: number };
   });
 
-  return domiciliosConRestaurantes;
+  // Ordenar: primero clientes activos (con compras), luego por última interacción
+  domiciliosConRestaurantes.sort((a, b) => {
+    // Priorizar por número de compras (clientes activos primero)
+    if (b._prioridad !== a._prioridad) {
+      return b._prioridad - a._prioridad;
+    }
+    // Luego por fecha de creación (más recientes primero)
+    return new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime();
+  });
+
+  // Remover campo temporal de prioridad
+  return domiciliosConRestaurantes.map(({ _prioridad, ...domicilio }) => domicilio);
 }
 
 export async function getMesasByRestaurante(restauranteId: number): Promise<Mesa[]> {
