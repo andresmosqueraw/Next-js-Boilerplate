@@ -234,312 +234,108 @@ export async function getDomiciliosByRestaurante(restauranteId: number): Promise
 
 /**
  * Obtiene los IDs de las mesas que tienen carritos activos con productos
+ * Optimizado: reduce consultas y elimina logs innecesarios
  */
 export async function getMesasConCarritoActivo(restauranteId: number): Promise<number[]> {
   const supabase = await createClient();
 
-  console.warn('🔍 [getMesasConCarritoActivo] INICIO - Buscando mesas con carrito activo:', {
-    restauranteId,
-  });
-
-  // Paso 1: Obtener carritos activos del restaurante
-  console.warn('📝 [getMesasConCarritoActivo] PASO 1: Consultando carritos activos en Supabase...');
+  // Paso 1: Obtener carritos activos
   const { data: carritos, error: carritosError } = await supabase
     .from('carrito')
-    .select('id, tipo_pedido_id, estado')
+    .select('id, tipo_pedido_id')
     .eq('restaurante_id', restauranteId)
     .in('estado', ['pendiente', 'en preparación']);
 
-  console.warn('📦 [getMesasConCarritoActivo] Carritos encontrados:', {
-    count: carritos?.length || 0,
-    carritos: carritos?.map(c => ({
-      id: c.id,
-      tipoPedidoId: c.tipo_pedido_id,
-      estado: c.estado,
-    })),
-  });
-
   if (carritosError || !carritos || carritos.length === 0) {
-    console.warn('⚠️ [getMesasConCarritoActivo] No hay carritos activos o hubo error:', carritosError);
     return [];
   }
 
-  // Paso 2: Verificar cuáles tienen productos
-  console.warn('📝 [getMesasConCarritoActivo] PASO 2: Verificando productos en carritos...');
+  // Paso 2: Verificar productos (en paralelo con paso 3)
   const carritoIds = carritos.map(c => c.id);
-  const { data: productos, error: productosError } = await supabase
-    .from('carrito_producto')
-    .select('carrito_id, cantidad')
-    .in('carrito_id', carritoIds);
+  const [productosResult, tiposPedidoResult] = await Promise.all([
+    supabase
+      .from('carrito_producto')
+      .select('carrito_id')
+      .in('carrito_id', carritoIds),
+    supabase
+      .from('tipo_pedido')
+      .select('id, mesa_id')
+      .in('id', carritos.map(c => c.tipo_pedido_id))
+      .not('mesa_id', 'is', null),
+  ]);
 
-  console.warn('🛒 [getMesasConCarritoActivo] Productos encontrados:', {
-    count: productos?.length || 0,
-    detalleProductos: productos,
-  });
+  const { data: productos } = productosResult;
+  const { data: tiposPedido, error: tiposError } = tiposPedidoResult;
 
-  if (productosError || !productos || productos.length === 0) {
-    console.warn('⚠️ [getMesasConCarritoActivo] No hay productos en carritos o hubo error:', productosError);
+  if (!productos || productos.length === 0 || tiposError || !tiposPedido) {
     return [];
   }
 
-  // IDs de carritos que tienen productos
+  // Filtrar: solo tipo_pedido de carritos que tienen productos
   const carritosConProductos = new Set(productos.map(p => p.carrito_id));
-  const carritosActivos = carritos.filter(c => carritosConProductos.has(c.id));
+  const tipoPedidoIdsConProductos = new Set(
+    carritos
+      .filter(c => carritosConProductos.has(c.id))
+      .map(c => c.tipo_pedido_id)
+  );
 
-  console.warn('✅ [getMesasConCarritoActivo] Carritos activos con productos:', {
-    count: carritosActivos.length,
-    carritoIds: carritosActivos.map(c => c.id),
-  });
-
-  // Paso 3: Obtener los tipo_pedido_ids
-  console.warn('📝 [getMesasConCarritoActivo] PASO 3: Obteniendo tipo_pedido_ids...');
-  const tipoPedidoIds = carritosActivos.map(c => c.tipo_pedido_id);
-
-  // Paso 4: Obtener las mesa_ids
-  console.warn('📝 [getMesasConCarritoActivo] PASO 4: Buscando mesa_ids en tipo_pedido...');
-  const { data: tiposPedido, error: tiposError } = await supabase
-    .from('tipo_pedido')
-    .select('mesa_id')
-    .in('id', tipoPedidoIds)
-    .not('mesa_id', 'is', null);
-
-  console.warn('🍽️ [getMesasConCarritoActivo] Tipos pedidos encontrados:', {
-    count: tiposPedido?.length || 0,
-    detalles: tiposPedido,
-  });
-
-  if (tiposError || !tiposPedido) {
-    console.warn('⚠️ [getMesasConCarritoActivo] Error obteniendo tipo_pedido:', tiposError);
-    return [];
-  }
-
-  const mesaIds = tiposPedido
+  return tiposPedido
+    .filter(tp => tipoPedidoIdsConProductos.has(tp.id))
     .map(tp => tp.mesa_id)
     .filter((id): id is number => id !== null);
-
-  console.warn('🎉 [getMesasConCarritoActivo] RESULTADO FINAL - Mesas con carrito activo:', {
-    count: mesaIds.length,
-    mesaIds,
-    interpretacion: mesaIds.length > 0
-      ? 'Estas mesas DEBEN mostrarse como OCUPADAS en el dashboard'
-      : 'No hay mesas ocupadas - todas DISPONIBLES',
-  });
-
-  return mesaIds;
 }
 
 /**
  * Obtiene los IDs de los domicilios que tienen carritos activos con productos
+ * Optimizado: reduce consultas y elimina logs innecesarios
  */
 export async function getDomiciliosConCarritoActivo(restauranteId: number): Promise<number[]> {
   const supabase = await createClient();
 
-  console.warn('🔍 [getDomiciliosConCarritoActivo] INICIO - Buscando domicilios con carrito activo:', {
-    restauranteId,
-  });
-
-  // Paso 1: Obtener carritos activos del restaurante
-  console.warn('📝 [getDomiciliosConCarritoActivo] PASO 1: Consultando carritos activos en Supabase...');
-  console.warn('  ↳ Filtrando por restaurante_id:', restauranteId);
+  // Paso 1: Obtener carritos activos
   const { data: carritos, error: carritosError } = await supabase
     .from('carrito')
-    .select('id, tipo_pedido_id, estado, restaurante_id')
+    .select('id, tipo_pedido_id')
     .eq('restaurante_id', restauranteId)
     .in('estado', ['pendiente', 'en preparación']);
 
-  console.warn('📦 [getDomiciliosConCarritoActivo] Carritos encontrados:', {
-    count: carritos?.length || 0,
-    restauranteId,
-    carritos: carritos?.map(c => ({
-      id: c.id,
-      tipoPedidoId: c.tipo_pedido_id,
-      estado: c.estado,
-      restauranteId: c.restaurante_id,
-    })),
-  });
-
-  // DEBUG: Verificar TODOS los carritos activos (sin filtrar por restaurante) para diagnóstico
-  const { data: todosLosCarritos, error: errorTodos } = await supabase
-    .from('carrito')
-    .select('id, tipo_pedido_id, estado, restaurante_id')
-    .in('estado', ['pendiente', 'en preparación']);
-  
-  console.warn('🔍 [getDomiciliosConCarritoActivo] DEBUG - TODOS los carritos activos (sin filtrar por restaurante):', {
-    count: todosLosCarritos?.length || 0,
-    carritos: todosLosCarritos?.map(c => ({
-      id: c.id,
-      tipoPedidoId: c.tipo_pedido_id,
-      estado: c.estado,
-      restauranteId: c.restaurante_id,
-    })),
-  });
-
-  // DEBUG: Verificar qué tipo_pedido tienen los carritos de otros restaurantes (especialmente domicilios)
-  if (todosLosCarritos && todosLosCarritos.length > 0) {
-    const otrosRestaurantes = todosLosCarritos.filter(c => c.restaurante_id !== restauranteId);
-    if (otrosRestaurantes.length > 0) {
-      console.warn('🔍 [getDomiciliosConCarritoActivo] DEBUG - Carritos de otros restaurantes:', {
-        count: otrosRestaurantes.length,
-        carritos: otrosRestaurantes.map(c => ({
-          id: c.id,
-          tipoPedidoId: c.tipo_pedido_id,
-          restauranteId: c.restaurante_id,
-        })),
-      });
-
-      // Verificar qué tipo_pedido tienen estos carritos
-      for (const carrito of otrosRestaurantes) {
-        const { data: tipoPedidoDetalle, error: errorDetalle } = await supabase
-          .from('tipo_pedido')
-          .select('id, mesa_id, domicilio_id')
-          .eq('id', carrito.tipo_pedido_id)
-          .single();
-        
-        console.warn(`🔍 [getDomiciliosConCarritoActivo] DEBUG - tipo_pedido para carrito ${carrito.id} (restaurante ${carrito.restaurante_id}):`, {
-          tipoPedidoId: carrito.tipo_pedido_id,
-          tipoPedido: tipoPedidoDetalle,
-          error: errorDetalle,
-          esDomicilio: tipoPedidoDetalle?.domicilio_id !== null,
-          esMesa: tipoPedidoDetalle?.mesa_id !== null,
-        });
-      }
-    }
-  }
-
   if (carritosError || !carritos || carritos.length === 0) {
-    console.warn('⚠️ [getDomiciliosConCarritoActivo] No hay carritos activos o hubo error:', carritosError);
     return [];
   }
 
-  // Paso 2: Verificar cuáles tienen productos
-  console.warn('📝 [getDomiciliosConCarritoActivo] PASO 2: Verificando productos en carritos...');
+  // Paso 2 y 3: Verificar productos y obtener tipo_pedido en paralelo
   const carritoIds = carritos.map(c => c.id);
-  const { data: productos, error: productosError } = await supabase
-    .from('carrito_producto')
-    .select('carrito_id, cantidad')
-    .in('carrito_id', carritoIds);
+  const tipoPedidoIds = carritos.map(c => c.tipo_pedido_id);
 
-  console.warn('🛒 [getDomiciliosConCarritoActivo] Productos encontrados:', {
-    count: productos?.length || 0,
-    detalleProductos: productos,
-  });
-
-  if (productosError || !productos || productos.length === 0) {
-    console.warn('⚠️ [getDomiciliosConCarritoActivo] No hay productos en carritos o hubo error:', productosError);
-    return [];
-  }
-
-  // IDs de carritos que tienen productos
-  const carritosConProductos = new Set(productos.map(p => p.carrito_id));
-  const carritosActivos = carritos.filter(c => carritosConProductos.has(c.id));
-
-  console.warn('✅ [getDomiciliosConCarritoActivo] Carritos activos con productos:', {
-    count: carritosActivos.length,
-    carritoIds: carritosActivos.map(c => c.id),
-    detalles: carritosActivos.map(c => ({
-      carritoId: c.id,
-      tipoPedidoId: c.tipo_pedido_id,
-      estado: c.estado,
-    })),
-  });
-
-  // Paso 3: Obtener los tipo_pedido_ids
-  console.warn('📝 [getDomiciliosConCarritoActivo] PASO 3: Obteniendo tipo_pedido_ids...');
-  const tipoPedidoIds = carritosActivos.map(c => c.tipo_pedido_id);
-  
-  console.warn('🔍 [getDomiciliosConCarritoActivo] tipo_pedido_ids a buscar:', {
-    count: tipoPedidoIds.length,
-    tipoPedidoIds,
-  });
-
-  // Verificar directamente qué tipo_pedido están asociados a estos carritos
-  // Esto nos ayudará a entender si el problema es que tienen mesa_id en lugar de domicilio_id
-  for (const carrito of carritosActivos) {
-    const { data: tipoPedidoDetalle, error: errorDetalle } = await supabase
+  const [productosResult, tiposPedidoResult] = await Promise.all([
+    supabase
+      .from('carrito_producto')
+      .select('carrito_id')
+      .in('carrito_id', carritoIds),
+    supabase
       .from('tipo_pedido')
-      .select('id, mesa_id, domicilio_id')
-      .eq('id', carrito.tipo_pedido_id)
-      .single();
-    
-    // Obtener restaurante_id del carrito original
-    const carritoOriginal = carritos.find(c => c.id === carrito.id);
-    
-    console.warn(`🔍 [getDomiciliosConCarritoActivo] Detalle tipo_pedido para carrito ${carrito.id}:`, {
-      carritoId: carrito.id,
-      restauranteId: carritoOriginal?.restaurante_id || restauranteId,
-      tipoPedidoId: carrito.tipo_pedido_id,
-      tipoPedido: tipoPedidoDetalle,
-      error: errorDetalle,
-      esDomicilio: tipoPedidoDetalle?.domicilio_id !== null,
-      esMesa: tipoPedidoDetalle?.mesa_id !== null,
-      domicilioId: tipoPedidoDetalle?.domicilio_id,
-      mesaId: tipoPedidoDetalle?.mesa_id,
-    });
-    
-    // Si es un domicilio, verificar que el domicilio existe
-    if (tipoPedidoDetalle?.domicilio_id) {
-      const { data: domicilio, error: errorDomicilio } = await supabase
-        .from('domicilio')
-        .select('id, direccion, cliente_id')
-        .eq('id', tipoPedidoDetalle.domicilio_id)
-        .single();
-      
-      console.warn(`  ↳ Domicilio asociado:`, {
-        domicilioId: tipoPedidoDetalle.domicilio_id,
-        domicilio,
-        error: errorDomicilio,
-      });
-    }
-  }
+      .select('id, domicilio_id')
+      .in('id', tipoPedidoIds)
+      .not('domicilio_id', 'is', null),
+  ]);
 
-  // Paso 4: Obtener los domicilio_ids
-  console.warn('📝 [getDomiciliosConCarritoActivo] PASO 4: Buscando domicilio_ids en tipo_pedido...');
-  
-  // Primero, obtener TODOS los tipo_pedido para ver qué hay
-  const { data: todosLosTiposPedido, error: todosError } = await supabase
-    .from('tipo_pedido')
-    .select('id, mesa_id, domicilio_id')
-    .in('id', tipoPedidoIds);
-  
-  console.warn('🔍 [getDomiciliosConCarritoActivo] Todos los tipo_pedido encontrados (sin filtrar):', {
-    count: todosLosTiposPedido?.length || 0,
-    detalles: todosLosTiposPedido,
-  });
-  
-  // Ahora filtrar solo los que tienen domicilio_id
-  const { data: tiposPedido, error: tiposError } = await supabase
-    .from('tipo_pedido')
-    .select('id, domicilio_id, mesa_id')
-    .in('id', tipoPedidoIds)
-    .not('domicilio_id', 'is', null);
+  const { data: productos } = productosResult;
+  const { data: tiposPedido, error: tiposError } = tiposPedidoResult;
 
-  console.warn('📍 [getDomiciliosConCarritoActivo] Tipos de pedido encontrados (con domicilio_id):', {
-    count: tiposPedido?.length || 0,
-    tiposPedido: tiposPedido,
-    error: tiposError,
-  });
-
-  if (tiposError) {
-    console.warn('⚠️ [getDomiciliosConCarritoActivo] Error obteniendo tipos_pedido:', tiposError);
+  if (!productos || productos.length === 0 || tiposError || !tiposPedido) {
     return [];
   }
 
-  if (!tiposPedido || tiposPedido.length === 0) {
-    console.warn('⚠️ [getDomiciliosConCarritoActivo] No se encontraron tipo_pedido con domicilio_id. Esto podría significar que:');
-    console.warn('   1. Los tipo_pedido son para mesas, no para domicilios');
-    console.warn('   2. Los tipo_pedido_ids no existen en la tabla tipo_pedido');
-    console.warn('   3. Los tipo_pedido tienen domicilio_id = NULL');
-    return [];
-  }
+  // Filtrar: solo tipo_pedido de carritos que tienen productos
+  const carritosConProductos = new Set(productos.map(p => p.carrito_id));
+  const tipoPedidoIdsConProductos = new Set(
+    carritos
+      .filter(c => carritosConProductos.has(c.id))
+      .map(c => c.tipo_pedido_id)
+  );
 
-  const domicilioIds = tiposPedido
+  return tiposPedido
+    .filter(tp => tipoPedidoIdsConProductos.has(tp.id))
     .map(tp => tp.domicilio_id)
     .filter((id): id is number => id !== null);
-
-  console.warn('✅ [getDomiciliosConCarritoActivo] FINAL - Domicilios con carrito activo:', {
-    count: domicilioIds.length,
-    domicilioIds,
-  });
-
-  return domicilioIds;
 }
