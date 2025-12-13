@@ -34,39 +34,44 @@ export function POSClient({
 
   // Función para navegar al dashboard (misma lógica que el botón "Back to Dashboard")
   const handleBackToDashboard = useCallback(() => {
-    console.warn('🔄 [POSClient] Navegando a dashboard y refrescando datos...');
+    console.warn('🔄 [POSClient] Navegando a dashboard...');
     // Construir URL del dashboard con restauranteId si existe
     const dashboardUrl = restauranteId
       ? `/dashboard?restauranteId=${restauranteId}`
       : '/dashboard';
     
-    // Navegar al dashboard y refrescar
+    // Navegar al dashboard (sin refresh para evitar delays)
     router.push(dashboardUrl);
-    router.refresh();
   }, [restauranteId, router]);
 
   // Interceptar el botón "atrás" del navegador
   useEffect(() => {
-    // Agregar una entrada en el historial cuando se carga el POS
-    // Esto nos permite detectar cuando el usuario presiona "atrás"
-    const currentState = window.history.state;
-    if (!currentState || !currentState.posEntry) {
-      // Agregar una entrada en el historial con un flag para identificar que es del POS
-      window.history.pushState({ posEntry: true }, '', window.location.href);
-    }
+    let isHandling = false;
 
     // Función que se ejecuta cuando el usuario presiona "atrás"
-    const handlePopState = (event: PopStateEvent) => {
-      // Verificar si estamos en el POS (la URL contiene '/pos')
-      const isInPOS = window.location.pathname.includes('/pos');
-      
-      // Si el estado anterior no tiene el flag posEntry y estamos en el POS,
-      // significa que el usuario está intentando salir del POS
-      if (isInPOS && !event.state?.posEntry) {
-        // Volver a agregar la entrada del POS para mantener la posición
-        window.history.pushState({ posEntry: true }, '', window.location.href);
-        // Ejecutar nuestra lógica de navegación al dashboard
-        handleBackToDashboard();
+    const handlePopState = () => {
+      // Prevenir múltiples ejecuciones
+      if (isHandling) {
+        return;
+      }
+
+      // Verificar si todavía estamos en el POS
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('/pos')) {
+        isHandling = true;
+        console.warn('🔄 [POSClient] Botón atrás detectado, navegando al dashboard...');
+        
+        // Usar replace en lugar de push para reemplazar la entrada actual del historial
+        const dashboardUrl = restauranteId
+          ? `/dashboard?restauranteId=${restauranteId}`
+          : '/dashboard';
+        
+        router.replace(dashboardUrl);
+        
+        // Resetear el flag después de un breve delay
+        setTimeout(() => {
+          isHandling = false;
+        }, 500);
       }
     };
 
@@ -77,7 +82,7 @@ export function POSClient({
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [handleBackToDashboard]);
+  }, [restauranteId, router]);
 
   return (
     <div className="flex h-screen bg-background">
