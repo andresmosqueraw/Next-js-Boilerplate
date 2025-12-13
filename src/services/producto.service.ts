@@ -4,10 +4,15 @@ import { createClient } from '@/libs/supabase/server';
 
 // Imágenes disponibles para asignar según heurísticas
 const IMAGENES_DISPONIBLES = {
-  // Platos principales
-  plato: '/classic-beef-burger.png',
+  // Platos principales (orden específico primero)
+  'plato ejecutivo': '/plato-ejecutivo.png',
+  'plato casero': '/plato-casero.png',
+  ejecutivo: '/plato-ejecutivo.png',
+  casero: '/plato-casero.png',
+  plato: '/plato-casero.png',
   // Sopas
-  sopa: '/vibrant-mixed-salad.png',
+  sopa: '/sopa.png',
+  caldo: '/sopa.png',
   // Bebidas
   jugo: '/glass-of-orange-juice.png',
   agua: '/bottled-water.png',
@@ -36,19 +41,18 @@ const IMAGENES_DISPONIBLES = {
   patacon: '/crispy-french-fries.png',
   arroz: '/vibrant-mixed-salad.png',
   // Postres y dulces
-  fruta: '/apple-pie-slice.png',
-  banano: '/apple-pie-slice.png',
+  fruta: '/fruta.png',
+  banano: '/fruta.png',
   torta: '/chocolate-cake-slice.png',
   gelatina: '/ice-cream-sundae.png',
   leche: '/cheesecake-slice.png',
   // Otros
-  caldo: '/vibrant-mixed-salad.png',
   icopor: '/bottled-water.png',
   calentada: '/delicious-pizza.png',
   moñona: '/delicious-pizza.png',
   rancheros: '/crispy-chicken-wings.png',
   // Por defecto
-  default: '/classic-beef-burger.png',
+  default: '/plato-casero.png',
 };
 
 /**
@@ -60,8 +64,16 @@ function asignarImagenAProducto(nombreProducto: string, productoId: number): str
   // Buscar palabras clave en el nombre del producto
   const palabrasClave = Object.keys(IMAGENES_DISPONIBLES).filter(key => key !== 'default');
   
-  // Buscar coincidencias (ordenadas por especificidad: palabras más largas primero)
-  const palabrasOrdenadas = palabrasClave.sort((a, b) => b.length - a.length);
+  // Buscar coincidencias (ordenadas por especificidad: frases completas primero, luego palabras más largas)
+  const palabrasOrdenadas = palabrasClave.sort((a, b) => {
+    // Priorizar frases de múltiples palabras
+    const aIsPhrase = a.includes(' ');
+    const bIsPhrase = b.includes(' ');
+    if (aIsPhrase && !bIsPhrase) return -1;
+    if (!aIsPhrase && bIsPhrase) return 1;
+    // Si ambos son frases o palabras, ordenar por longitud
+    return b.length - a.length;
+  });
   
   for (const palabra of palabrasOrdenadas) {
     if (nombreLower.includes(palabra)) {
