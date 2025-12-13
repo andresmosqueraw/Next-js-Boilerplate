@@ -46,7 +46,7 @@ export default function ProductGrid({
           </div>
           <CardContent className="p-3">
             <div>
-              <h3 className="line-clamp-1 font-medium">{product.name}</h3>
+              <h3 className="break-words font-medium leading-tight">{product.name}</h3>
               <p className="text-sm text-muted-foreground">
                 $
                 {product.price.toFixed(2)}
