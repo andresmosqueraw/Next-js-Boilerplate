@@ -88,7 +88,7 @@ export default function Home() {
           </svg>
         </a>
 
-        <div className="pointer-events-none absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-muted-foreground transition duration-200 hover:text-foreground md:flex md:space-x-2">
+        <div className="pointer-events-none hidden flex-1 flex-row items-center justify-start space-x-2 text-sm font-medium text-muted-foreground transition duration-200 hover:text-foreground md:flex md:space-x-2 md:ml-8">
           <button
             type="button"
             className="pointer-events-auto relative cursor-pointer px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
