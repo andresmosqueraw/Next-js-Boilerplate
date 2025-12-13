@@ -1,6 +1,6 @@
 import type { Product } from '@/app/[locale]/(auth)/pos/context/cart-context';
 import { createClient } from '@/libs/supabase/server';
-import { mapearProductosARestaurante } from './producto.service';
+import { mapearProductosARestaurante, asignarImagenAProducto } from './producto.service';
 
 export type TipoPedidoData = {
   tipo: 'mesa' | 'domicilio';
@@ -755,26 +755,8 @@ export async function obtenerCarritoCompleto(
       // Obtener categoría del mapa
       const categoria = productoCategoriaMap.get(producto.id);
 
-      // Asignar imagen basada en el ID del producto
-      const imagenIndex = producto.id % 15;
-      const imagenes = [
-        '/classic-beef-burger.png',
-        '/delicious-pizza.png',
-        '/vibrant-mixed-salad.png',
-        '/crispy-chicken-wings.png',
-        '/crispy-french-fries.png',
-        '/refreshing-cola.png',
-        '/iced-tea.png',
-        '/glass-of-orange-juice.png',
-        '/latte-coffee.png',
-        '/bottled-water.png',
-        '/chocolate-cake-slice.png',
-        '/cheesecake-slice.png',
-        '/ice-cream-sundae.png',
-        '/apple-pie-slice.png',
-        '/chocolate-brownie.png',
-      ];
-      const imagen = imagenes[imagenIndex] || '/placeholder.svg';
+      // Asignar imagen usando las mismas heurísticas que en el punto de venta
+      const imagen = asignarImagenAProducto(producto.nombre, producto.id);
 
       // Mapear categoría a slug
       let categoriaSlug = 'all';

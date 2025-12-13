@@ -61,7 +61,7 @@ const IMAGENES_DISPONIBLES = {
 /**
  * Asigna una imagen basada en heurísticas del nombre del producto
  */
-function asignarImagenAProducto(nombreProducto: string, productoId: number): string {
+export function asignarImagenAProducto(nombreProducto: string, productoId: number): string {
   const nombreLower = nombreProducto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Normalizar y quitar acentos
   
   // Buscar palabras clave en el nombre del producto
