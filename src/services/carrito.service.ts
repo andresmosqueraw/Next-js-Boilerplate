@@ -418,17 +418,19 @@ export async function agregarProductoACarrito(
 
   // Usar UPSERT con ON CONFLICT para incrementar cantidad si existe
   // Esto evita el SELECT previo y hace todo en una sola operación
+  const startTime = Date.now();
   const { data, error } = await supabase.rpc('upsert_carrito_producto', {
     p_carrito_id: carritoId,
     p_producto_restaurante_id: productoRestauranteId,
     p_cantidad: cantidad,
     p_precio_unitario: precioUnitario,
   });
+  const duration = Date.now() - startTime;
 
   if (error) {
     // Si la función RPC no existe, usar el método tradicional
     if (error.code === '42883' || error.message.includes('function') || error.message.includes('does not exist')) {
-      console.warn('⚠️ [agregarProductoACarrito] Función RPC no disponible, usando método tradicional');
+      console.warn('⚠️ [agregarProductoACarrito] Función RPC no disponible, usando método fallback');
       return await agregarProductoACarritoFallback(
         carritoId,
         productoRestauranteId,
@@ -436,10 +438,11 @@ export async function agregarProductoACarrito(
         precioUnitario,
       );
     }
-    console.error('Error upserting carrito_producto:', error);
+    console.error('❌ [agregarProductoACarrito] Error en función RPC:', error);
     return { success: false, error: error.message };
   }
 
+  console.log(`✅ [agregarProductoACarrito] Función RPC optimizada usada exitosamente (${duration}ms)`);
   return { success: true };
 }
 
@@ -454,6 +457,7 @@ async function agregarProductoACarritoFallback(
   precioUnitario: number,
 ) {
   const supabase = await createClient();
+  const startTime = Date.now();
 
   // SELECT optimizado: solo campos necesarios, usando índice compuesto si existe
   const { data: productoExistente } = await supabase
@@ -496,6 +500,8 @@ async function agregarProductoACarritoFallback(
     }
   }
 
+  const duration = Date.now() - startTime;
+  console.log(`⚠️ [agregarProductoACarrito] Método fallback usado (${duration}ms) - Considera ejecutar optimizaciones_carrito.sql en Supabase`);
   return { success: true };
 }
 
