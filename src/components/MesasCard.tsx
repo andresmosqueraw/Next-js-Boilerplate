@@ -1,6 +1,7 @@
 'use client';
 
 import type { Mesa } from '@/types/database';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -105,37 +106,43 @@ export function MesasCard({
               </tr>
             </thead>
             <tbody>
-              {mesasGrupo.map((mesa) => {
-                const estadoVisual = getEstadoVisual(mesa);
+              <AnimatePresence>
+                {mesasGrupo.map((mesa, index) => {
+                  const estadoVisual = getEstadoVisual(mesa);
 
-                return (
-                  <tr
-                    key={mesa.id}
-                    onClick={() => handleRowClick(mesa)}
-                    className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/20"
-                  >
-                    <td className="px-3 py-2">
-                      <span className="text-sm font-medium text-foreground">
-                        Mesa
-                        {' '}
-                        {mesa.numero_mesa}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className="text-sm text-muted-foreground">
-                        {mesa.capacidad || 'N/A'}
-                        {' '}
-                        personas
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-light ${coloresBadge[estadoVisual]}`}>
-                        {textoEstado[estadoVisual]}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                  return (
+                    <motion.tr
+                      key={mesa.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ delay: index * 0.03, duration: 0.2 }}
+                      onClick={() => handleRowClick(mesa)}
+                      className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/20"
+                    >
+                      <td className="px-3 py-2">
+                        <span className="text-sm font-medium text-foreground">
+                          Mesa
+                          {' '}
+                          {mesa.numero_mesa}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className="text-sm text-muted-foreground">
+                          {mesa.capacidad || 'N/A'}
+                          {' '}
+                          personas
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-light ${coloresBadge[estadoVisual]}`}>
+                          {textoEstado[estadoVisual]}
+                        </span>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>

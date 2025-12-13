@@ -1,6 +1,7 @@
 'use client';
 
 import type { DomicilioConRestaurantes } from '@/services/restaurante.service';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -136,53 +137,59 @@ export function DomiciliosCard({
                     </tr>
                   </thead>
                   <tbody>
-                    {domiciliosFiltrados.map((domicilio) => {
-                      const estadoVisual = getEstadoVisual(domicilio);
+                    <AnimatePresence>
+                      {domiciliosFiltrados.map((domicilio, index) => {
+                        const estadoVisual = getEstadoVisual(domicilio);
 
-                      const coloresBadge = {
-                        'disponible': 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 dark:bg-emerald-950/40',
-                        'con-pedido': 'bg-red-500/15 text-red-500 border border-red-500/30 dark:bg-red-950/40',
-                      };
+                        const coloresBadge = {
+                          'disponible': 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 dark:bg-emerald-950/40',
+                          'con-pedido': 'bg-red-500/15 text-red-500 border border-red-500/30 dark:bg-red-950/40',
+                        };
 
-                      const textoEstado = {
-                        'disponible': 'Disponible',
-                        'con-pedido': 'Con pedido',
-                      };
+                        const textoEstado = {
+                          'disponible': 'Disponible',
+                          'con-pedido': 'Con pedido',
+                        };
 
-                      return (
-                        <tr
-                          key={domicilio.id}
-                          onClick={() => handleRowClick(domicilio)}
-                          className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/20"
-                        >
-                          <td className="px-3 py-2">
-                            <span className="text-sm font-medium text-foreground">
-                              {domicilio.direccion}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2">
-                            <span className="text-sm text-muted-foreground">
-                              {domicilio.ciudad || 'N/A'}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2">
-                            <span className="text-sm text-muted-foreground">
-                              {domicilio.referencia || 'N/A'}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2">
-                            <span className="text-sm font-medium text-foreground">
-                              {domicilio.cliente_nombre || `Cliente #${domicilio.cliente_id}`}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2">
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-light ${coloresBadge[estadoVisual]}`}>
-                              {textoEstado[estadoVisual]}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                        return (
+                          <motion.tr
+                            key={domicilio.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ delay: index * 0.03, duration: 0.2 }}
+                            onClick={() => handleRowClick(domicilio)}
+                            className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/20"
+                          >
+                            <td className="px-3 py-2">
+                              <span className="text-sm font-medium text-foreground">
+                                {domicilio.direccion}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className="text-sm text-muted-foreground">
+                                {domicilio.ciudad || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className="text-sm text-muted-foreground">
+                                {domicilio.referencia || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className="text-sm font-medium text-foreground">
+                                {domicilio.cliente_nombre || `Cliente #${domicilio.cliente_id}`}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-light ${coloresBadge[estadoVisual]}`}>
+                                {textoEstado[estadoVisual]}
+                              </span>
+                            </td>
+                          </motion.tr>
+                        );
+                      })}
+                    </AnimatePresence>
                   </tbody>
                 </table>
               )}
