@@ -35,13 +35,24 @@ export function POSClient({
   useEffect(() => {
     let isHandling = false;
     const posPath = window.location.pathname;
+    
+    console.warn('✅ [POSClient] Componente montado, pathname:', posPath);
+    
+    // Agregar una entrada al historial cuando se carga el POS
+    // Esto nos permite detectar cuando el usuario intenta salir
+    const currentState = window.history.state;
+    if (!currentState || !currentState.posEntry) {
+      console.warn('🔍 [POSClient] Agregando entrada al historial para detectar botón atrás...');
+      window.history.pushState({ posEntry: true, fromPOS: true }, '', window.location.href);
+    }
 
     // Función que se ejecuta cuando el usuario presiona "atrás"
-    const handlePopState = () => {
+    const handlePopState = (event: PopStateEvent) => {
       console.warn('🔍 [POSClient] ════════════════════════════════════════════════════');
       console.warn('🔍 [POSClient] popstate event detectado');
       console.warn('🔍 [POSClient] pathname actual:', window.location.pathname);
       console.warn('🔍 [POSClient] pathname guardado (POS):', posPath);
+      console.warn('🔍 [POSClient] event.state:', event.state);
       console.warn('🔍 [POSClient] isHandling:', isHandling);
       
       // Prevenir múltiples ejecuciones
@@ -50,16 +61,16 @@ export function POSClient({
         return;
       }
 
-      // Si el pathname actual es diferente al POS, significa que el navegador
-      // ya navegó a otra página. Necesitamos interceptar y redirigir al dashboard.
+      // Si el estado anterior no tiene posEntry, significa que el usuario
+      // está intentando salir del POS (viene de una página anterior)
+      const isTryingToLeavePOS = !event.state?.posEntry;
       const currentPath = window.location.pathname;
-      const wasInPOS = posPath.includes('/pos');
-      const nowInPOS = currentPath.includes('/pos');
+      const stillInPOS = currentPath.includes('/pos');
       
-      console.warn('🔍 [POSClient] wasInPOS:', wasInPOS, '| nowInPOS:', nowInPOS);
+      console.warn('🔍 [POSClient] isTryingToLeavePOS:', isTryingToLeavePOS);
+      console.warn('🔍 [POSClient] stillInPOS:', stillInPOS);
 
-      // Si estábamos en el POS y ahora no estamos (o seguimos en POS pero el usuario presionó atrás)
-      if (wasInPOS && (!nowInPOS || currentPath === posPath)) {
+      if (isTryingToLeavePOS || stillInPOS) {
         isHandling = true;
         console.warn('🔄 [POSClient] ════════════════════════════════════════════════════');
         console.warn('🔄 [POSClient] 🔙 BOTÓN ATRÁS DEL NAVEGADOR DETECTADO DESDE POS');
@@ -76,7 +87,8 @@ export function POSClient({
         sessionStorage.setItem('dashboard_reload_timestamp', timestamp.toString());
         console.warn('🔄 [POSClient] Flag guardado en sessionStorage, timestamp:', timestamp);
         
-        // Navegar al dashboard usando window.location.href directamente
+        // NO agregar otra entrada al historial - eso causa el loop
+        // Navegar directamente al dashboard usando window.location.href
         // Esto fuerza una recarga completa y asegura que los datos se actualicen
         console.warn('🔄 [POSClient] Navegando a:', dashboardUrl);
         window.location.href = dashboardUrl;
