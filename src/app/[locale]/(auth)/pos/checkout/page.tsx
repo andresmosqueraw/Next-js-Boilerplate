@@ -152,20 +152,22 @@ export default function CheckoutPage() {
       {tipo && (
         <div
           className={`mb-6 rounded-lg border p-4 ${
-            tipo === 'mesa' ? 'border-green-200 bg-green-50' : 'border-blue-200 bg-blue-50'
+            tipo === 'mesa' 
+              ? 'border-emerald-500/30 bg-emerald-500/20 dark:border-emerald-500/50 dark:bg-emerald-500/10' 
+              : 'border-blue-500/30 bg-blue-500/20 dark:border-blue-500/50 dark:bg-blue-500/10'
           }`}
         >
           <div className="flex items-center gap-2">
             {tipo === 'mesa'
               ? (
                   <>
-                    <Table className="h-5 w-5 text-green-700" />
-                    <span className="font-semibold text-green-900">
+                    <Table className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    <span className="font-semibold text-emerald-900 dark:text-emerald-100">
                       Mesa
                       {' '}
                       {numero}
                     </span>
-                    <span className="text-sm text-green-700">
+                    <span className="text-sm text-emerald-700 dark:text-emerald-300">
                       (ID:
                       {' '}
                       {id}
@@ -175,9 +177,9 @@ export default function CheckoutPage() {
                 )
               : (
                   <>
-                    <MapPin className="h-5 w-5 text-blue-700" />
-                    <span className="font-semibold text-blue-900">Pedido a Domicilio</span>
-                    <span className="text-sm text-blue-700">
+                    <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <span className="font-semibold text-blue-900 dark:text-blue-100">Pedido a Domicilio</span>
+                    <span className="text-sm text-blue-700 dark:text-blue-300">
                       (Cliente ID:
                       {' '}
                       {clienteId}
@@ -194,7 +196,7 @@ export default function CheckoutPage() {
       <div className="grid gap-8 md:grid-cols-2">
         <div>
           <h2 className="mb-4 text-xl font-semibold">Order Summary</h2>
-          <div className="rounded-lg border bg-white p-4">
+          <div className="rounded-lg border bg-card p-4">
             {cart.map(item => (
               <div key={item.id} className="mb-3 flex justify-between">
                 <div>
@@ -245,7 +247,7 @@ export default function CheckoutPage() {
 
         <div>
           <h2 className="mb-4 text-xl font-semibold">Payment Method</h2>
-          <div className="rounded-lg border bg-white p-4">
+          <div className="rounded-lg border bg-card p-4">
             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
               <div className="flex items-center space-x-2 rounded-md border p-3">
                 <RadioGroupItem value="card" id="card" />
