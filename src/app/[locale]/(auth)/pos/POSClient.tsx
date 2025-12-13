@@ -60,16 +60,17 @@ export function POSClient({
       const currentPath = window.location.pathname;
       if (currentPath.includes('/pos')) {
         isHandling = true;
-        console.warn('🔄 [POSClient] Botón atrás detectado, navegando al dashboard y refrescando datos...');
+        console.warn('🔄 [POSClient] Botón atrás detectado, forzando navegación completa al dashboard...');
         
-        // Usar la misma lógica que el botón "Back to Dashboard"
-        // para asegurar que los datos se actualicen correctamente
-        handleBackToDashboard();
+        // Construir URL del dashboard con restauranteId
+        const dashboardUrl = restauranteId
+          ? `/dashboard?restauranteId=${restauranteId}`
+          : '/dashboard';
         
-        // Resetear el flag después de un breve delay
-        setTimeout(() => {
-          isHandling = false;
-        }, 1000);
+        // Usar window.location.href para forzar una navegación completa
+        // Esto asegura que todos los datos se recarguen desde el servidor
+        // y el estado se actualice correctamente (ocupado/disponible)
+        window.location.href = dashboardUrl;
       }
     };
 
@@ -80,7 +81,7 @@ export function POSClient({
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [restauranteId, router]);
+  }, [restauranteId]);
 
   return (
     <div className="flex h-screen bg-background">
