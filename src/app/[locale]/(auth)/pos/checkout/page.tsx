@@ -276,10 +276,12 @@ export default function CheckoutPage() {
                 <Input
                   id="cashReceived"
                   type="text"
+                  inputMode="decimal"
                   value={cashReceived}
                   onChange={e => setCashReceived(e.target.value)}
                   placeholder={`Ingrese la cantidad recibida (mínimo: $${total.toFixed(2)})`}
                   className="h-12 text-lg"
+                  readOnly
                 />
                 {cashReceived && isValidCashAmount && cashReceivedNumber >= total && (
                   <p className="text-lg text-muted-foreground">
@@ -292,6 +294,58 @@ export default function CheckoutPage() {
                     Por favor ingrese un número válido
                   </p>
                 )}
+
+                {/* Teclado numérico personalizado */}
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                    <Button
+                      key={num}
+                      type="button"
+                      variant="outline"
+                      className="h-14 text-xl font-semibold"
+                      onClick={() => setCashReceived(prev => prev + num.toString())}
+                    >
+                      {num}
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-14 text-xl font-semibold"
+                    onClick={() => setCashReceived(prev => `${prev}0`)}
+                  >
+                    0
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-14 text-xl font-semibold"
+                    onClick={() => setCashReceived((prev) => {
+                      if (!prev.includes('.')) {
+                        return `${prev}.`;
+                      }
+                      return prev;
+                    })}
+                  >
+                    .
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-14 text-lg font-semibold text-red-600 hover:text-red-700 dark:text-red-400"
+                    onClick={() => setCashReceived(prev => prev.slice(0, -1))}
+                  >
+                    ⌫
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-14 text-lg font-semibold text-red-600 hover:text-red-700 dark:text-red-400"
+                    onClick={() => setCashReceived('')}
+                  >
+                    Limpiar
+                  </Button>
+                </div>
               </div>
             )}
 
