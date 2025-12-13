@@ -1,6 +1,6 @@
 import type { Product } from '@/app/[locale]/(auth)/pos/context/cart-context';
 import { createClient } from '@/libs/supabase/server';
-import { mapearProductosARestaurante, asignarImagenAProducto } from './producto.service';
+import { asignarImagenAProducto, mapearProductosARestaurante } from './producto.service';
 
 export type TipoPedidoData = {
   tipo: 'mesa' | 'domicilio';
@@ -419,7 +419,7 @@ export async function agregarProductoACarrito(
   // Usar UPSERT con ON CONFLICT para incrementar cantidad si existe
   // Esto evita el SELECT previo y hace todo en una sola operación
   const startTime = Date.now();
-  const { data, error } = await supabase.rpc('upsert_carrito_producto', {
+  const { error } = await supabase.rpc('upsert_carrito_producto', {
     p_carrito_id: carritoId,
     p_producto_restaurante_id: productoRestauranteId,
     p_cantidad: cantidad,
@@ -698,13 +698,13 @@ export async function obtenerCarritoCompleto(
     }
 
     const categoriasVisiblesIds = new Set(
-      categoriasRestaurante?.map(cr => cr.categoria_id) || []
+      categoriasRestaurante?.map(cr => cr.categoria_id) || [],
     );
 
     // Paso 3: Obtener las relaciones producto_categoria para todos los productos
     // Usar los producto_id que ya tenemos de la primera consulta
     const productoIds = productosRestaurante.map(pr => pr.producto_id);
-    
+
     // Si no hay productos, retornar vacío
     if (productoIds.length === 0) {
       return { success: true, carritoId: carrito.id, productos: [] };

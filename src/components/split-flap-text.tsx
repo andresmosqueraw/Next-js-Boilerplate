@@ -42,7 +42,8 @@ const SplitFlapTile = memo(({
 
       const flipInterval = setInterval(() => {
         if (flipCount < totalFlips) {
-          const randomChar = charset[Math.floor(Math.random() * charset.length)];
+          const randomIndex = Math.floor(Math.random() * charset.length);
+          const randomChar = charset[randomIndex] || ' ';
           setDisplayChar(randomChar);
           flipCount++;
         } else {
@@ -55,6 +56,7 @@ const SplitFlapTile = memo(({
       prevCharRef.current = targetChar;
       return () => clearInterval(flipInterval);
     }
+    return undefined;
   }, [targetChar, charset, index, flipSpeedMs, baseFlips]);
 
   const directionColorClass

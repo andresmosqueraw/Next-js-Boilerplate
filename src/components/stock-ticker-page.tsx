@@ -9,7 +9,6 @@ import { WatchlistTable } from './watchlist-table';
 
 export function StockTickerPage() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [soundEnabled, setSoundEnabled] = useState(false);
   const [stocks, setStocks] = useState<Stock[]>([]);
 
   useEffect(() => {
@@ -30,7 +29,10 @@ export function StockTickerPage() {
           }
 
           indicesToUpdate.forEach((index) => {
-            updatedStocks[index] = simulateStockUpdate(updatedStocks[index]);
+            const stock = updatedStocks[index];
+            if (stock) {
+              updatedStocks[index] = simulateStockUpdate(stock);
+            }
           });
 
           return updatedStocks;
@@ -65,14 +67,10 @@ export function StockTickerPage() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
-  const toggleSound = useCallback(() => {
-    setSoundEnabled(prev => !prev);
-  }, []);
-
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
       <div className="bg-background pb-8 text-foreground transition-colors duration-300">
-        <Header theme={theme} soundEnabled={soundEnabled} onToggleTheme={toggleTheme} onToggleSound={toggleSound} />
+        <Header theme={theme} onToggleTheme={toggleTheme} />
         <main className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
@@ -80,7 +78,6 @@ export function StockTickerPage() {
                 stocks={stocks}
                 onAddStock={addStock}
                 onRemoveStock={removeStock}
-                soundEnabled={soundEnabled}
               />
             </div>
             <div className="lg:col-span-1">

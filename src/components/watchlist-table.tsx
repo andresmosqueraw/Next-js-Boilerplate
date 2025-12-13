@@ -24,12 +24,11 @@ type WatchlistTableProps = {
   stocks: Stock[];
   onAddStock: (symbol: string, name: string) => void;
   onRemoveStock: (id: string) => void;
-  soundEnabled: boolean;
 };
 
 const columnHelper = createColumnHelper<Stock>();
 
-export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled }: WatchlistTableProps) {
+export function WatchlistTable({ stocks, onAddStock, onRemoveStock }: WatchlistTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [newSymbol, setNewSymbol] = useState('');
@@ -54,7 +53,6 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
               value={row.original.symbol}
               charset="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
               direction={row.original.direction}
-              soundEnabled={soundEnabled}
             />
           </div>
         ),
@@ -81,7 +79,6 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
             value={`$${row.original.price.toFixed(2)}`}
             charset="0123456789.$"
             direction={row.original.direction}
-            soundEnabled={soundEnabled}
           />
         ),
       }),
@@ -101,7 +98,6 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
             value={`${row.original.change >= 0 ? '+' : ''}${row.original.change.toFixed(2)}`}
             charset="0123456789.+-"
             direction={row.original.direction}
-            soundEnabled={soundEnabled}
           />
         ),
       }),
@@ -125,7 +121,7 @@ export function WatchlistTable({ stocks, onAddStock, onRemoveStock, soundEnabled
         ),
       }),
     ],
-    [onRemoveStock, soundEnabled],
+    [onRemoveStock],
   );
 
   const table = useReactTable({

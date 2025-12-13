@@ -58,7 +58,7 @@ export async function getDomicilios(): Promise<Domicilio[]> {
 /**
  * Obtiene todos los domicilios de clientes registrados en restaurantes usando RPC optimizado
  * Usa la función RPC get_clientes_y_domicilios_por_restaurante para máxima eficiencia
- * 
+ *
  * @param restauranteId - Requerido: ID del restaurante para filtrar
  */
 export async function getDomiciliosConRelaciones(restauranteId?: number): Promise<DomicilioConRestaurantes[]> {
@@ -99,7 +99,7 @@ export async function getDomiciliosConRelaciones(restauranteId?: number): Promis
   });
 
   // Obtener información completa de domicilios (solo campos faltantes)
-  let domiciliosCompletos = new Map<number, { referencia: string | null; creado_en: string }>();
+  const domiciliosCompletos = new Map<number, { referencia: string | null; creado_en: string }>();
   if (domicilioIds.length > 0) {
     const { data: domiciliosData, error: domiciliosError } = await supabase
       .from('domicilio')
@@ -152,7 +152,7 @@ export async function getDomiciliosConRelaciones(restauranteId?: number): Promis
       }
       const restaurantes = tipoPedidoRestaurantesMap.get(tp.id);
       if (restaurantes) {
-        restaurantes.forEach(restId => {
+        restaurantes.forEach((restId) => {
           domicilioPedidosMap.get(tp.domicilio_id)!.add(restId);
         });
       }
@@ -180,7 +180,7 @@ export async function getDomiciliosConRelaciones(restauranteId?: number): Promis
 
       // Restaurantes que han hecho pedidos a este domicilio
       const restaurantesConPedidos = domicilioPedidosMap.get(domicilioId) || new Set();
-      
+
       // Combinar: restaurante actual (donde está registrado) + restaurantes con pedidos
       const todosLosRestaurantes = new Set([restauranteId, ...Array.from(restaurantesConPedidos)]);
 
@@ -335,7 +335,7 @@ export async function getMesasConCarritoActivo(restauranteId: number): Promise<n
   const tipoPedidoIdsConProductos = new Set(
     carritos
       .filter(c => carritosConProductos.has(c.id))
-      .map(c => c.tipo_pedido_id)
+      .map(c => c.tipo_pedido_id),
   );
 
   return tiposPedido
@@ -390,7 +390,7 @@ export async function getDomiciliosConCarritoActivo(restauranteId: number): Prom
   const tipoPedidoIdsConProductos = new Set(
     carritos
       .filter(c => carritosConProductos.has(c.id))
-      .map(c => c.tipo_pedido_id)
+      .map(c => c.tipo_pedido_id),
   );
 
   return tiposPedido

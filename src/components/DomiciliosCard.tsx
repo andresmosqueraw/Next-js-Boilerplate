@@ -53,11 +53,11 @@ export function DomiciliosCard({
     }
     const filterLower = filter.toLowerCase();
     return domicilios.filter(domicilio =>
-      domicilio.direccion.toLowerCase().includes(filterLower) ||
-      domicilio.ciudad?.toLowerCase().includes(filterLower) ||
-      domicilio.referencia?.toLowerCase().includes(filterLower) ||
-      domicilio.cliente_nombre?.toLowerCase().includes(filterLower) ||
-      domicilio.cliente_id.toString().includes(filterLower),
+      domicilio.direccion.toLowerCase().includes(filterLower)
+      || domicilio.ciudad?.toLowerCase().includes(filterLower)
+      || domicilio.referencia?.toLowerCase().includes(filterLower)
+      || domicilio.cliente_nombre?.toLowerCase().includes(filterLower)
+      || domicilio.cliente_id.toString().includes(filterLower),
     );
   }, [domicilios, filter]);
 
@@ -95,12 +95,12 @@ export function DomiciliosCard({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-500 border border-emerald-500/30 dark:bg-emerald-950/40">
+        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-500 dark:bg-emerald-950/40">
           {domiciliosDisponibles.length}
           {' '}
           Disponibles
         </span>
-        <span className="rounded-full bg-red-500/15 px-3 py-1 text-sm font-medium text-red-500 border border-red-500/30 dark:bg-red-950/40">
+        <span className="rounded-full border border-red-500/30 bg-red-500/15 px-3 py-1 text-sm font-medium text-red-500 dark:bg-red-950/40">
           {domiciliosConPedido.length}
           {' '}
           Con pedido

@@ -21,11 +21,21 @@ export default function CartSidebar() {
 
     // Construir URL del checkout con los parámetros
     const checkoutParams = new URLSearchParams();
-    if (tipo) checkoutParams.set('tipo', tipo);
-    if (id) checkoutParams.set('id', id);
-    if (numero) checkoutParams.set('numero', numero);
-    if (clienteId) checkoutParams.set('clienteId', clienteId);
-    if (restauranteId) checkoutParams.set('restauranteId', restauranteId);
+    if (tipo) {
+      checkoutParams.set('tipo', tipo);
+    }
+    if (id) {
+      checkoutParams.set('id', id);
+    }
+    if (numero) {
+      checkoutParams.set('numero', numero);
+    }
+    if (clienteId) {
+      checkoutParams.set('clienteId', clienteId);
+    }
+    if (restauranteId) {
+      checkoutParams.set('restauranteId', restauranteId);
+    }
 
     router.push(`/pos/checkout?${checkoutParams.toString()}`);
   };
@@ -55,17 +65,17 @@ export default function CartSidebar() {
             )
           : (
               <div className="space-y-4">
-                {cart.map(item => {
+                {cart.map((item) => {
                   const isUpdating = updatingItems.has(item.id);
                   return (
                     <div key={item.id} className={`flex gap-3 ${isUpdating ? 'opacity-60' : ''}`}>
                       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border">
                         <img src={item.image || '/placeholder.svg'} alt={item.name} className="h-full w-full object-cover" />
                       </div>
-                      <div className="flex flex-1 flex-col min-w-0">
+                      <div className="flex min-w-0 flex-1 flex-col">
                         <div className="flex justify-between gap-2">
-                          <h3 className="break-words font-medium leading-tight flex-1">{item.name}</h3>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <h3 className="flex-1 leading-tight font-medium break-words">{item.name}</h3>
+                          <div className="flex shrink-0 items-center gap-2">
                             {isUpdating && (
                               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                             )}

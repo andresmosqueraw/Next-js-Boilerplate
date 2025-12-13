@@ -2,8 +2,6 @@
 
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,6 +10,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export function DashboardHeader() {
@@ -30,7 +30,7 @@ export function DashboardHeader() {
     const savedTheme = localStorage.getItem('kuenta-theme') as 'dark' | 'light' | null;
     const htmlElement = document.documentElement;
     const bodyElement = document.body;
-    
+
     if (savedTheme) {
       // Aplicar el tema guardado
       if (savedTheme === 'dark') {
@@ -71,11 +71,11 @@ export function DashboardHeader() {
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    
+
     // Aplicar el tema al documento HTML y body
     const htmlElement = document.documentElement;
     const bodyElement = document.body;
-    
+
     if (newTheme === 'dark') {
       htmlElement.classList.add('dark');
       bodyElement.classList.add('dark');
@@ -83,7 +83,7 @@ export function DashboardHeader() {
       htmlElement.classList.remove('dark');
       bodyElement.classList.remove('dark');
     }
-    
+
     // Guardar la preferencia en localStorage
     localStorage.setItem('kuenta-theme', newTheme);
   };
@@ -96,7 +96,7 @@ export function DashboardHeader() {
           orientation="vertical"
           className="mr-2 data-[orientation=vertical]:h-4"
         />
-        <div className="flex items-center gap-3 flex-1">
+        <div className="flex flex-1 items-center gap-3">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
@@ -113,7 +113,7 @@ export function DashboardHeader() {
         </div>
 
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold tracking-tight text-foreground hidden sm:block">Kuenta</h1>
+          <h1 className="hidden text-xl font-bold tracking-tight text-foreground sm:block">Kuenta</h1>
           <span className="hidden rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-500 sm:inline-block">
             LIVE
           </span>
@@ -139,4 +139,3 @@ export function DashboardHeader() {
     </header>
   );
 }
-

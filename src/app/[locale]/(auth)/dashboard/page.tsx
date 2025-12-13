@@ -1,12 +1,12 @@
 import { AppSidebar } from '@/components/app-sidebar';
-import { DashboardContent } from '@/components/DashboardContent';
 import { DashboardHeader } from '@/components/dashboard-header';
+import { DashboardContent } from '@/components/DashboardContent';
+import { RestaurantUrlSync } from '@/components/RestaurantUrlSync';
 import {
   SidebarInset,
   SidebarProvider,
 } from '@/components/ui/sidebar';
 import { RestaurantProvider } from '@/contexts/RestaurantContext';
-import { RestaurantUrlSync } from '@/components/RestaurantUrlSync';
 import {
   getDomiciliosConCarritoActivo,
   getDomiciliosConRelaciones,
@@ -21,7 +21,7 @@ export default async function Page({
   searchParams: Promise<{ restauranteId?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  
+
   // Determinar qué restaurante usar: el de la URL o el primero por defecto
   const restauranteIdFromUrl = resolvedSearchParams?.restauranteId
     ? Number.parseInt(resolvedSearchParams.restauranteId, 10)
@@ -31,7 +31,7 @@ export default async function Page({
     getMesas(),
     getRestaurantes(),
   ]);
-  
+
   const restauranteSeleccionado = restauranteIdFromUrl
     ? restaurantes.find(r => r.id === restauranteIdFromUrl) || restaurantes[0]
     : restaurantes[0];
@@ -65,16 +65,16 @@ export default async function Page({
       <RestaurantUrlSync restaurantes={restaurantes} />
       <SidebarProvider defaultOpen={false}>
         <AppSidebar restaurantes={restaurantes} />
-      <SidebarInset>
-        <DashboardHeader />
+        <SidebarInset>
+          <DashboardHeader />
           <DashboardContent
             todasLasMesas={mesas}
             todosLosDomicilios={domicilios}
             mesasConCarrito={mesasConCarrito}
             domiciliosConCarrito={domiciliosConCarrito}
           />
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
     </RestaurantProvider>
   );
 }

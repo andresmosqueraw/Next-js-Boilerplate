@@ -99,16 +99,16 @@ export default function CategorySidebar({
   const handleBackToDashboard = async () => {
     setIsNavigating(true);
     console.warn('🔄 [CategorySidebar] Navegando a dashboard y refrescando datos...');
-    
+
     try {
       // Obtener restauranteId de la URL del POS para mantener el restaurante seleccionado
       const restauranteId = searchParams.get('restauranteId');
-      
+
       // Construir URL del dashboard con restauranteId si existe
       const dashboardUrl = restauranteId
         ? `/dashboard?restauranteId=${restauranteId}`
         : '/dashboard';
-      
+
       // Navegar al dashboard - el revalidatePath del API ya invalidó el cache
       // pero hacemos refresh explícito para asegurar datos frescos
       router.push(dashboardUrl);
@@ -127,11 +127,13 @@ export default function CategorySidebar({
         onClick={handleBackToDashboard}
         disabled={isNavigating}
       >
-        {isNavigating ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <ArrowLeft className="mr-2 h-4 w-4" />
-        )}
+        {isNavigating
+          ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )
+          : (
+              <ArrowLeft className="mr-2 h-4 w-4" />
+            )}
         {isNavigating ? 'Cargando...' : 'Volver al Dashboard'}
       </Button>
       <h2 className="mb-4 text-lg font-semibold">Categorías</h2>

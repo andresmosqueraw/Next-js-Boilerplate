@@ -28,44 +28,44 @@ export function DashboardContent({
     console.warn('🔍 [DashboardContent] Verificando sessionStorage...');
     const reloadFromBack = sessionStorage.getItem('dashboard_reload_from_back');
     const reloadTimestamp = sessionStorage.getItem('dashboard_reload_timestamp');
-    
-    console.warn('🔍 [DashboardContent] Valores encontrados:', { 
-      reloadFromBack, 
+
+    console.warn('🔍 [DashboardContent] Valores encontrados:', {
+      reloadFromBack,
       reloadTimestamp,
       timestamp: reloadTimestamp ? Number.parseInt(reloadTimestamp, 10) : null,
       now: Date.now(),
     });
-    
+
     if (reloadFromBack === 'true' && reloadTimestamp) {
       const timestamp = Number.parseInt(reloadTimestamp, 10);
       const now = Date.now();
       const diff = now - timestamp;
-      
+
       console.warn('🔍 [DashboardContent] Diferencia de tiempo:', diff, 'ms');
-      
+
       // Verificar si debe recargar 2 veces
       const reloadTwice = sessionStorage.getItem('dashboard_reload_twice') === 'true';
-      
+
       if (reloadTwice) {
         console.warn('🔄 [DashboardContent] Recargando página 2 veces...');
         // Limpiar el flag inmediatamente para evitar loops
         sessionStorage.removeItem('dashboard_reload_twice');
         sessionStorage.removeItem('dashboard_reload_from_back');
         sessionStorage.removeItem('dashboard_reload_timestamp');
-        
+
         // Primera recarga
         setTimeout(() => {
           window.location.reload();
         }, 100);
-        
+
         // Segunda recarga (se ejecutará después de la primera)
         setTimeout(() => {
           window.location.reload();
         }, 300);
-        
+
         return;
       }
-      
+
       // Mostrar indicador si la recarga fue hace menos de 5 segundos (aumentado para debug)
       if (diff < 5000) {
         console.warn('✅ [DashboardContent] ════════════════════════════════════════════════════');
@@ -73,13 +73,13 @@ export function DashboardContent({
         console.warn('✅ [DashboardContent] ✅ Timestamp:', timestamp, '| Ahora:', now, '| Diff:', diff, 'ms');
         console.warn('✅ [DashboardContent] ✅ Los datos se han actualizado correctamente');
         console.warn('✅ [DashboardContent] ════════════════════════════════════════════════════');
-        
+
         setShowReloadIndicator(true);
-        
+
         // Limpiar el flag después de mostrar el indicador
         sessionStorage.removeItem('dashboard_reload_from_back');
         sessionStorage.removeItem('dashboard_reload_timestamp');
-        
+
         // Ocultar el indicador después de 5 segundos
         setTimeout(() => {
           setShowReloadIndicator(false);
@@ -167,7 +167,7 @@ export function DashboardContent({
           </p>
         </div>
       )}
-      
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mesas y Domicilios</h1>
       </div>

@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { crearVenta } from '@/services/venta.service';
+import type { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { NextResponse } from 'next/server';
+import { crearVenta } from '@/services/venta.service';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     console.warn('💰 [API /venta/crear] Recibida petición');
     console.warn('💰 [API /venta/crear] Datos recibidos:', body);
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!carritoId || !restauranteId || total === undefined || !tipoDePedido || !metodoPago) {
       return NextResponse.json(
         { success: false, error: 'Faltan campos requeridos' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
       dineroRecibido: Number(dineroRecibido),
       cambioDado: Number(cambioDado),
       tipoDePedido: tipoDePedido as 'MESA' | 'DOMICILIO',
-      metodoPago: metodoPago,
+      metodoPago,
     });
 
     // Revalidar el dashboard para reflejar los cambios
@@ -48,8 +49,7 @@ export async function POST(request: NextRequest) {
     console.error('❌ [API /venta/crear] Error:', error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Error desconocido' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

@@ -49,18 +49,18 @@ export function POSClient({
       if (stillInPOS) {
         isHandling = true;
         console.warn('🔄 [POSClient] Botón atrás detectado, navegando al dashboard y recargando 2 veces...');
-        
+
         // Construir URL del dashboard con restauranteId
         const dashboardUrl = restauranteId
           ? `/dashboard?restauranteId=${restauranteId}`
           : '/dashboard';
-        
+
         // Marcar en sessionStorage que viene del botón atrás y que debe recargar 2 veces
         const timestamp = Date.now();
         sessionStorage.setItem('dashboard_reload_from_back', 'true');
         sessionStorage.setItem('dashboard_reload_timestamp', timestamp.toString());
         sessionStorage.setItem('dashboard_reload_twice', 'true');
-        
+
         // Navegar al dashboard - las recargas se harán en el dashboard
         window.location.href = dashboardUrl;
       }

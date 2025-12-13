@@ -18,7 +18,7 @@ export default async function POSPage({
     : [[], []];
 
   if (!restauranteId) {
-  return (
+    return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600">Error</h1>
@@ -39,7 +39,7 @@ export default async function POSPage({
             Este restaurante no tiene productos disponibles
           </p>
         </div>
-    </div>
+      </div>
     );
   }
 

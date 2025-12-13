@@ -158,7 +158,7 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
       alert('Error al agregar el producto. Por favor, intenta de nuevo.');
     } finally {
       // Quitar el loading
-      setUpdatingItems(prev => {
+      setUpdatingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(product.id);
         return newSet;
@@ -199,7 +199,7 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
       alert('Error al eliminar el producto. Por favor, intenta de nuevo.');
     } finally {
       // Quitar el loading
-      setUpdatingItems(prev => {
+      setUpdatingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(productId);
         return newSet;
@@ -256,7 +256,7 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
       alert('Error al actualizar la cantidad. Por favor, intenta de nuevo.');
     } finally {
       // Quitar el loading
-      setUpdatingItems(prev => {
+      setUpdatingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(productId);
         return newSet;
@@ -301,13 +301,13 @@ export function CartProvider({ children, tipo, id, restauranteId }: CartProvider
 
   const contextValue = useMemo(
     () => ({
-        cart,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        cartTotal,
-        itemCount,
+      cart,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      cartTotal,
+      itemCount,
       isLoading,
       carritoId,
       updatingItems,

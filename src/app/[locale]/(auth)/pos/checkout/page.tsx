@@ -5,10 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
 import { useCart } from '../context/cart-context';
 
 export default function CheckoutPage() {
@@ -27,7 +27,7 @@ export default function CheckoutPage() {
   const restauranteId = searchParams.get('restauranteId');
 
   const total = cartTotal;
-  const change = paymentMethod === 'cash' && cashReceived 
+  const change = paymentMethod === 'cash' && cashReceived
     ? Math.max(0, Number.parseFloat(cashReceived) - total)
     : 0;
 
@@ -45,10 +45,10 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      const dineroRecibido = paymentMethod === 'cash' 
+      const dineroRecibido = paymentMethod === 'cash'
         ? Number.parseFloat(cashReceived)
         : total;
-      
+
       const tipoDePedido = tipo === 'mesa' ? 'MESA' : 'DOMICILIO';
 
       const response = await fetch('/api/venta/crear', {
@@ -60,8 +60,8 @@ export default function CheckoutPage() {
           carritoId,
           restauranteId: Number(restauranteId),
           clienteId: clienteId ? Number(clienteId) : null,
-          total: total,
-          dineroRecibido: dineroRecibido,
+          total,
+          dineroRecibido,
           cambioDado: change,
           tipoDePedido,
           metodoPago: paymentMethod === 'card' ? 'tarjeta' : 'efectivo',
@@ -151,8 +151,8 @@ export default function CheckoutPage() {
       {tipo && (
         <div
           className={`mb-6 rounded-lg border p-4 ${
-            tipo === 'mesa' 
-              ? 'border-emerald-500/30 bg-emerald-500/20 dark:border-emerald-500/50 dark:bg-emerald-500/10' 
+            tipo === 'mesa'
+              ? 'border-emerald-500/30 bg-emerald-500/20 dark:border-emerald-500/50 dark:bg-emerald-500/10'
               : 'border-blue-500/30 bg-blue-500/20 dark:border-blue-500/50 dark:bg-blue-500/10'
           }`}
         >
@@ -260,7 +260,7 @@ export default function CheckoutPage() {
                   step="0.01"
                   min={total}
                   value={cashReceived}
-                  onChange={(e) => setCashReceived(e.target.value)}
+                  onChange={e => setCashReceived(e.target.value)}
                   placeholder={`Mínimo: $${total.toFixed(2)}`}
                 />
                 {cashReceived && Number.parseFloat(cashReceived) >= total && (
@@ -272,9 +272,9 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            <Button 
-              className="mt-6 w-full" 
-              size="lg" 
+            <Button
+              className="mt-6 w-full"
+              size="lg"
               onClick={handlePayment}
               disabled={isProcessing || (paymentMethod === 'cash' && (!cashReceived || Number.parseFloat(cashReceived) < total))}
             >

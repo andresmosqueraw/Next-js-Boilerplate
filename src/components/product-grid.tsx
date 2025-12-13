@@ -32,33 +32,35 @@ export default function ProductGrid({
 
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-      {filteredProducts.map(product => {
+      {filteredProducts.map((product) => {
         const isAdding = updatingItems.has(product.id);
         return (
           <Card
             key={product.id}
             className={`group relative overflow-hidden transition-all duration-200 ${
-              isAdding 
-                ? 'opacity-60 cursor-wait' 
+              isAdding
+                ? 'cursor-wait opacity-60'
                 : 'cursor-pointer hover:scale-105 hover:shadow-md'
             }`}
             onClick={() => !isAdding && addToCart(product)}
           >
             <div className="relative aspect-square">
-              {isAdding ? (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
-                  <Loader2 className="h-10 w-10 animate-spin text-white" />
-                </div>
-              ) : (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                  <PlusCircle className="h-10 w-10 text-white" />
-                </div>
-              )}
+              {isAdding
+                ? (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+                      <Loader2 className="h-10 w-10 animate-spin text-white" />
+                    </div>
+                  )
+                : (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                      <PlusCircle className="h-10 w-10 text-white" />
+                    </div>
+                  )}
               <Image src={product.image || '/placeholder.svg'} alt={product.name} fill className="object-cover" />
             </div>
             <CardContent className="p-3">
               <div>
-                <h3 className="break-words text-base font-medium leading-tight">{product.name}</h3>
+                <h3 className="text-base leading-tight font-medium break-words">{product.name}</h3>
                 <p className="text-base font-semibold text-foreground">
                   $
                   {product.price.toFixed(2)}

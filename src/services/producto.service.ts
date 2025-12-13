@@ -7,83 +7,87 @@ const IMAGENES_DISPONIBLES = {
   // Platos principales (orden específico primero)
   'plato ejecutivo': '/plato-ejecutivo.png',
   'plato casero': '/plato-casero.png',
-  ejecutivo: '/plato-ejecutivo.png',
-  casero: '/plato-casero.png',
-  plato: '/plato-casero.png',
+  'ejecutivo': '/plato-ejecutivo.png',
+  'casero': '/plato-casero.png',
+  'plato': '/plato-casero.png',
   // Sopas
-  sopa: '/sopa.png',
-  caldo: '/caldo.png',
+  'sopa': '/sopa.png',
+  'caldo': '/caldo.png',
   // Bebidas
-  jugo: '/glass-of-orange-juice.png',
-  agua: '/bottled-water.png',
-  cola: '/refreshing-cola.png',
-  limonada: '/iced-tea.png',
+  'jugo': '/glass-of-orange-juice.png',
+  'agua': '/bottled-water.png',
+  'cola': '/refreshing-cola.png',
+  'limonada': '/iced-tea.png',
   // Café y bebidas calientes
-  cafe: '/latte-coffee.png',
-  chocolate: '/chocolate-cake-slice.png',
-  tinto: '/latte-coffee.png',
-  aromatica: '/iced-tea.png',
+  'cafe': '/latte-coffee.png',
+  'chocolate': '/chocolate-cake-slice.png',
+  'tinto': '/latte-coffee.png',
+  'aromatica': '/iced-tea.png',
   // Desayunos
-  desayuno: '/desayuno.png',
-  huevo: '/huevos.png',
-  huevos: '/huevos.png',
-  pan: '/apple-pie-slice.png',
+  'desayuno': '/desayuno.png',
+  'huevo': '/huevos.png',
+  'huevos': '/huevos.png',
+  'pan': '/apple-pie-slice.png',
   // Proteínas y especiales
-  especial: '/plato-especial.png',
-  sobrebarriga: '/plato-especial.png',
-  mojarra: '/plato-especial.png',
-  lomo: '/plato-especial.png',
-  churrasco: '/plato-especial.png',
-  costillas: '/plato-especial.png',
-  churrasquito: '/plato-especial.png',
-  pechuga: '/plato-especial.png',
+  'especial': '/plato-especial.png',
+  'sobrebarriga': '/plato-especial.png',
+  'mojarra': '/plato-especial.png',
+  'lomo': '/plato-especial.png',
+  'churrasco': '/plato-especial.png',
+  'costillas': '/plato-especial.png',
+  'churrasquito': '/plato-especial.png',
+  'pechuga': '/plato-especial.png',
   // Acompañamientos
-  proteina: '/crispy-chicken-wings.png',
-  papa: '/crispy-french-fries.png',
-  patacon: '/crispy-french-fries.png',
-  arroz: '/arroz.png',
+  'proteina': '/crispy-chicken-wings.png',
+  'papa': '/crispy-french-fries.png',
+  'patacon': '/crispy-french-fries.png',
+  'arroz': '/arroz.png',
   // Postres y dulces
-  fruta: '/fruta.png',
-  banano: '/fruta.png',
-  torta: '/chocolate-cake-slice.png',
-  gelatina: '/ice-cream-sundae.png',
-  leche: '/cheesecake-slice.png',
+  'fruta': '/fruta.png',
+  'banano': '/fruta.png',
+  'torta': '/chocolate-cake-slice.png',
+  'gelatina': '/ice-cream-sundae.png',
+  'leche': '/cheesecake-slice.png',
   // Otros
-  icopor: '/bottled-water.png',
-  calentada: '/delicious-pizza.png',
-  moñona: '/delicious-pizza.png',
-  rancheros: '/huevos.png',
-  cacerola: '/huevos.png',
+  'icopor': '/bottled-water.png',
+  'calentada': '/delicious-pizza.png',
+  'moñona': '/delicious-pizza.png',
+  'rancheros': '/huevos.png',
+  'cacerola': '/huevos.png',
   // Por defecto
-  default: '/plato-casero.png',
+  'default': '/plato-casero.png',
 };
 
 /**
  * Asigna una imagen basada en heurísticas del nombre del producto
  */
-export function asignarImagenAProducto(nombreProducto: string, productoId: number): string {
-  const nombreLower = nombreProducto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Normalizar y quitar acentos
-  
+export function asignarImagenAProducto(nombreProducto: string, _productoId: number): string {
+  const nombreLower = nombreProducto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036F]/g, ''); // Normalizar y quitar acentos
+
   // Buscar palabras clave en el nombre del producto
   const palabrasClave = Object.keys(IMAGENES_DISPONIBLES).filter(key => key !== 'default');
-  
+
   // Buscar coincidencias (ordenadas por especificidad: frases completas primero, luego palabras más largas)
   const palabrasOrdenadas = palabrasClave.sort((a, b) => {
     // Priorizar frases de múltiples palabras
     const aIsPhrase = a.includes(' ');
     const bIsPhrase = b.includes(' ');
-    if (aIsPhrase && !bIsPhrase) return -1;
-    if (!aIsPhrase && bIsPhrase) return 1;
+    if (aIsPhrase && !bIsPhrase) {
+      return -1;
+    }
+    if (!aIsPhrase && bIsPhrase) {
+      return 1;
+    }
     // Si ambos son frases o palabras, ordenar por longitud
     return b.length - a.length;
   });
-  
+
   for (const palabra of palabrasOrdenadas) {
     if (nombreLower.includes(palabra)) {
       return IMAGENES_DISPONIBLES[palabra as keyof typeof IMAGENES_DISPONIBLES] || IMAGENES_DISPONIBLES.default;
     }
   }
-  
+
   // Si no hay coincidencia, usar imagen por defecto
   return IMAGENES_DISPONIBLES.default;
 }
@@ -168,7 +172,7 @@ export async function getProductosByRestaurante(
   }
 
   const categoriasVisiblesIds = new Set(
-    categoriasRestaurante?.map(cr => cr.categoria_id) || []
+    categoriasRestaurante?.map(cr => cr.categoria_id) || [],
   );
 
   // Paso 3: Obtener las relaciones producto_categoria para todos los productos
@@ -230,12 +234,13 @@ export async function getProductosByRestaurante(
     });
 
   console.log(`✅ [getProductosByRestaurante] Cargados ${productos.length} productos para restaurante ${restauranteId}`);
-  if (productos.length > 0) {
+  const primerProducto = productos[0];
+  if (primerProducto) {
     console.log(`📦 [getProductosByRestaurante] Primer producto:`, {
-      id: productos[0].id,
-      name: productos[0].name,
-      price: productos[0].price,
-      category: productos[0].category,
+      id: primerProducto.id,
+      name: primerProducto.name,
+      price: primerProducto.price,
+      category: primerProducto.category,
     });
   }
 
@@ -325,7 +330,7 @@ export async function getCategoriasByRestaurante(
   const supabase = await createClient();
 
   console.log(`🔍 [getCategoriasByRestaurante] Buscando categorías para restaurante ${restauranteId}`);
-  
+
   const { data, error } = await supabase
     .from('categoria_restaurante')
     .select(`

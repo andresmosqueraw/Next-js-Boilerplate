@@ -52,9 +52,9 @@ export function MesasCard({
     }
     const filterLower = filter.toLowerCase();
     return mesas.filter(mesa =>
-      mesa.numero_mesa.toString().includes(filterLower) ||
-      mesa.capacidad?.toString().includes(filterLower) ||
-      mesa.restaurante_id.toString().includes(filterLower),
+      mesa.numero_mesa.toString().includes(filterLower)
+      || mesa.capacidad?.toString().includes(filterLower)
+      || mesa.restaurante_id.toString().includes(filterLower),
     );
   }, [mesas, filter]);
 
@@ -166,12 +166,12 @@ export function MesasCard({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-500 border border-emerald-500/30 dark:bg-emerald-950/40">
+        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-500 dark:bg-emerald-950/40">
           {mesasDisponibles.length}
           {' '}
           Disponibles
         </span>
-        <span className="rounded-full bg-red-500/15 px-3 py-1 text-sm font-medium text-red-500 border border-red-500/30 dark:bg-red-950/40">
+        <span className="rounded-full border border-red-500/30 bg-red-500/15 px-3 py-1 text-sm font-medium text-red-500 dark:bg-red-950/40">
           {mesasOcupadas.length}
           {' '}
           Ocupadas
