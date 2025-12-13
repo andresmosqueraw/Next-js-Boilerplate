@@ -97,9 +97,17 @@ export async function getDomiciliosConRelaciones(restauranteId?: number): Promis
     return [];
   }
 
+  if (rankingError) {
+    console.warn('⚠️ [getDomiciliosConRelaciones] Error fetching cliente_ranking (continuando sin información de compras):', rankingError);
+  }
+
   if (!clientesRestaurante || clientesRestaurante.length === 0) {
+    console.warn(`⚠️ [getDomiciliosConRelaciones] No hay clientes registrados en cliente_restaurante${restauranteId ? ` para restaurante ${restauranteId}` : ''}`);
     return [];
   }
+
+  console.log(`✅ [getDomiciliosConRelaciones] Encontrados ${clientesRestaurante.length} clientes en cliente_restaurante${restauranteId ? ` para restaurante ${restauranteId}` : ''}`);
+  console.log(`📊 [getDomiciliosConRelaciones] Encontrados ${clienteRanking?.length || 0} clientes activos en cliente_ranking${restauranteId ? ` para restaurante ${restauranteId}` : ''}`);
 
   // Crear mapa de cliente_id -> restaurante_ids y ordenar por prioridad
   const clienteRestaurantesMap = new Map<number, Set<number>>();
@@ -123,15 +131,27 @@ export async function getDomiciliosConRelaciones(restauranteId?: number): Promis
   });
 
   // Actualizar con información de cliente_ranking (clientes activos)
+  // Esto corresponde al LEFT JOIN en la consulta SQL
+  // Los clientes que tienen registro en cliente_ranking son ACTIVOS (han comprado)
+  // Los que no tienen registro son POTENCIALES (solo registrados)
   clienteRanking?.forEach((rank) => {
     const prioridades = clientePrioridadMap.get(rank.cliente_id);
     if (prioridades) {
       const prioridad = prioridades.find(p => p.restauranteId === rank.restaurante_id);
       if (prioridad) {
         prioridad.numeroCompras = rank.numero_compras || 0;
+      } else {
+        // Si el cliente está en cliente_ranking pero no en cliente_restaurante para este restaurante,
+        // agregarlo (esto no debería pasar normalmente, pero por si acaso)
+        console.warn(`⚠️ [getDomiciliosConRelaciones] Cliente ${rank.cliente_id} en cliente_ranking pero no en cliente_restaurante para restaurante ${rank.restaurante_id}`);
       }
     }
   });
+
+  // Contar clientes activos vs potenciales
+  const clientesActivos = new Set(clienteRanking?.map(r => r.cliente_id) || []);
+  const clientesPotenciales = Array.from(clienteRestaurantesMap.keys()).filter(id => !clientesActivos.has(id));
+  console.log(`📈 [getDomiciliosConRelaciones] Clientes ACTIVOS (con compras): ${clientesActivos.size}, POTENCIALES (solo registrados): ${clientesPotenciales.length}`);
 
   // Paso 3: Obtener todos los domicilios de estos clientes
   const clienteIds = Array.from(clienteRestaurantesMap.keys());
@@ -153,8 +173,11 @@ export async function getDomiciliosConRelaciones(restauranteId?: number): Promis
   }
 
   if (!domicilios || domicilios.length === 0) {
+    console.warn(`⚠️ [getDomiciliosConRelaciones] No hay domicilios para los ${clienteIds.length} clientes encontrados`);
     return [];
   }
+
+  console.log(`✅ [getDomiciliosConRelaciones] Encontrados ${domicilios.length} domicilios para ${clienteIds.length} clientes`);
 
   // Paso 4: Obtener información de pedidos para determinar restaurantes que han hecho pedidos
   // Esto es para el estado "Con pedido" vs "Disponible"
@@ -217,9 +240,13 @@ export async function getDomiciliosConRelaciones(restauranteId?: number): Promis
       ...Array.from(restaurantesConPedidos),
     ]);
 
-    // Obtener prioridad del cliente (número de compras)
+    // Obtener prioridad del cliente (número de compras y última interacción)
     const prioridades = clientePrioridadMap.get(clienteId) || [];
     const maxCompras = Math.max(...prioridades.map(p => p.numeroCompras), 0);
+    // Obtener la última interacción más reciente del cliente con cualquier restaurante
+    const ultimaInteraccion = prioridades.length > 0
+      ? new Date(Math.max(...prioridades.map(p => p.ultimaInteraccion.getTime())))
+      : new Date(0);
     
     const { cliente: _, ...domicilioSinCliente } = domicilio as any;
     
@@ -227,22 +254,26 @@ export async function getDomiciliosConRelaciones(restauranteId?: number): Promis
       ...domicilioSinCliente,
       restaurantes_ids: Array.from(todosLosRestaurantes),
       cliente_nombre: clienteNombre,
-      _prioridad: maxCompras, // Para ordenamiento
-    } as DomicilioConRestaurantes & { _prioridad: number };
+      _prioridad: maxCompras, // Para ordenamiento por número de compras
+      _ultimaInteraccion: ultimaInteraccion, // Para ordenamiento secundario
+    } as DomicilioConRestaurantes & { _prioridad: number; _ultimaInteraccion: Date };
   });
 
   // Ordenar: primero clientes activos (con compras), luego por última interacción
+  // Esto corresponde al ORDER BY de la consulta SQL: total_compras DESC, ultima_interaccion DESC
   domiciliosConRestaurantes.sort((a, b) => {
-    // Priorizar por número de compras (clientes activos primero)
+    // 1. Priorizar por número de compras (clientes activos primero)
     if (b._prioridad !== a._prioridad) {
       return b._prioridad - a._prioridad;
     }
-    // Luego por fecha de creación (más recientes primero)
-    return new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime();
+    // 2. Luego por última interacción (más recientes primero)
+    return b._ultimaInteraccion.getTime() - a._ultimaInteraccion.getTime();
   });
 
-  // Remover campo temporal de prioridad
-  return domiciliosConRestaurantes.map(({ _prioridad, ...domicilio }) => domicilio);
+  console.log(`✅ [getDomiciliosConRelaciones] Retornando ${domiciliosConRestaurantes.length} domicilios ordenados (activos primero, luego por última interacción)`);
+
+  // Remover campos temporales de prioridad
+  return domiciliosConRestaurantes.map(({ _prioridad, _ultimaInteraccion, ...domicilio }) => domicilio);
 }
 
 export async function getMesasByRestaurante(restauranteId: number): Promise<Mesa[]> {
