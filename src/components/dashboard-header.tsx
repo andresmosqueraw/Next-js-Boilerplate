@@ -32,7 +32,7 @@ export function DashboardHeader() {
   }, []);
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('es-ES', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -41,7 +41,7 @@ export function DashboardHeader() {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
