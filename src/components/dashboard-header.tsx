@@ -5,18 +5,30 @@ import { useEffect, useState } from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useRestaurant } from '@/contexts/RestaurantContext';
 
 export function DashboardHeader() {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const { selectedRestaurant } = useRestaurant();
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window === 'undefined') {
+      return 'dark';
+    }
+    const savedTheme = localStorage.getItem('kuenta-theme') as 'dark' | 'light' | null;
+    if (savedTheme) {
+      return savedTheme;
+    }
+    const htmlElement = document.documentElement;
+    const bodyElement = document.body;
+    const isDark = htmlElement.classList.contains('dark') || bodyElement.classList.contains('dark');
+    return isDark ? 'dark' : 'light';
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -26,30 +38,20 @@ export function DashboardHeader() {
   }, []);
 
   useEffect(() => {
-    // Leer el tema guardado en localStorage o detectar el tema actual
-    const savedTheme = localStorage.getItem('kuenta-theme') as 'dark' | 'light' | null;
+    // Aplicar el tema guardado al DOM
     const htmlElement = document.documentElement;
     const bodyElement = document.body;
 
-    if (savedTheme) {
-      // Aplicar el tema guardado
-      if (savedTheme === 'dark') {
-        htmlElement.classList.add('dark');
-        bodyElement.classList.add('dark');
-      } else {
-        htmlElement.classList.remove('dark');
-        bodyElement.classList.remove('dark');
-      }
-      setTheme(savedTheme);
+    if (theme === 'dark') {
+      htmlElement.classList.add('dark');
+      bodyElement.classList.add('dark');
     } else {
-      // Detectar el tema actual del HTML/body
-      const isDark = htmlElement.classList.contains('dark') || bodyElement.classList.contains('dark');
-      const initialTheme = isDark ? 'dark' : 'light';
-      setTheme(initialTheme);
-      // Guardar el tema inicial
-      localStorage.setItem('kuenta-theme', initialTheme);
+      htmlElement.classList.remove('dark');
+      bodyElement.classList.remove('dark');
     }
-  }, []);
+    // Guardar el tema en localStorage
+    localStorage.setItem('kuenta-theme', theme);
+  }, [theme]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('es-ES', {
@@ -90,36 +92,41 @@ export function DashboardHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/50 backdrop-blur-sm">
-      <div className="flex h-16 shrink-0 items-center gap-2 px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator
-          orientation="vertical"
-          className="mr-2 data-[orientation=vertical]:h-4"
-        />
-        <div className="flex flex-1 items-center gap-3">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">
-                  Dashboard
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Mesas y Domicilios</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+      <div className="relative flex h-16 shrink-0 items-center gap-2 px-4">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mr-2 data-[orientation=vertical]:h-4"
+          />
+          <div className="flex items-center gap-3">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbPage>
+                    Mesas y Domicilios
+                    {selectedRestaurant && (
+                      <span className="ml-2">
+                        -
+                        {' '}
+                        <span className="font-bold">{selectedRestaurant.nombre}</span>
+                      </span>
+                    )}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <h1 className="hidden text-xl font-bold tracking-tight text-foreground sm:block">Kuenta</h1>
+        <div className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3">
           <span className="hidden rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-500 sm:inline-block">
             LIVE
           </span>
+          <h1 className="hidden text-xl font-bold tracking-tight text-foreground sm:block">Kuenta</h1>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-4">
           <div className="hidden flex-col items-end font-mono text-sm sm:flex">
             <span className="text-xs text-muted-foreground">{formatDate(currentTime)}</span>
             <span className="text-foreground tabular-nums">{formatTime(currentTime)}</span>
