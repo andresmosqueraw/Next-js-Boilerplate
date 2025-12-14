@@ -81,7 +81,7 @@ export default function CheckoutPage() {
           dineroRecibido,
           cambioDado: change,
           tipoDePedido,
-          metodoPago: paymentMethod === 'card' ? 'tarjeta' : 'efectivo',
+          metodoPago: paymentMethod === 'card' ? 'nequi' : 'efectivo',
         }),
       });
 
@@ -251,17 +251,39 @@ export default function CheckoutPage() {
           <h2 className="mb-4 text-xl font-semibold">Método de Pago</h2>
           <div className="rounded-lg border bg-card p-4">
             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-              <div className="flex items-center space-x-2 rounded-md border p-3">
+              <div
+                className="flex cursor-pointer items-center space-x-2 rounded-md border p-3 transition-colors hover:bg-accent"
+                onClick={() => setPaymentMethod('card')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setPaymentMethod('card');
+                  }
+                }}
+              >
                 <RadioGroupItem value="card" id="card" />
-                <Label htmlFor="card" className="flex items-center">
+                <Label htmlFor="card" className="flex cursor-pointer items-center">
                   <CreditCard className="mr-2 h-4 w-4" />
-                  Tarjeta de Crédito/Débito
+                  Nequi
                 </Label>
               </div>
 
-              <div className="mt-3 flex items-center space-x-2 rounded-md border p-3">
+              <div
+                className="mt-3 flex cursor-pointer items-center space-x-2 rounded-md border p-3 transition-colors hover:bg-accent"
+                onClick={() => setPaymentMethod('cash')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setPaymentMethod('cash');
+                  }
+                }}
+              >
                 <RadioGroupItem value="cash" id="cash" />
-                <Label htmlFor="cash" className="flex items-center">
+                <Label htmlFor="cash" className="flex cursor-pointer items-center">
                   <Wallet className="mr-2 h-4 w-4" />
                   Efectivo
                 </Label>
